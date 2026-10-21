@@ -5,7 +5,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => ({
-  base: '/Invitaciones/',
+  base: process.env.VITE_BASE_PATH || '/Invitaciones/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

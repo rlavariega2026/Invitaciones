@@ -36,6 +36,13 @@ jobs:
         env:
           VITE_BASE_PATH: /invitaciones/
 
+      - name: Include Hostinger routing configuration
+        run: |
+          test -f public/.htaccess
+          cp public/.htaccess dist/.htaccess
+          test -f dist/index.html
+          test -f dist/.htaccess
+
       - name: Upload Hostinger files
         uses: actions/upload-artifact@v4
         with:

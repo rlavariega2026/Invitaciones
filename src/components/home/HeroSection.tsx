@@ -106,7 +106,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         : 'text-neutral-400 hover:text-neutral-200'
                     }`}
                   >
-                    {idx === 0 ? 'Boda Sofía & Mateo' : idx === 1 ? 'XV Años Valentina' : 'Misión Infantil Leo'}
+                    {d.id === 'demo-erase-una-vez-04' || d.slug === 'demo-erase-una-vez'
+                      ? '📖 Érase una Vez'
+                      : idx === 0
+                      ? 'Boda Sofía & Mateo'
+                      : idx === 1
+                      ? 'XV Años Valentina'
+                      : 'Misión Infantil Leo'}
                   </button>
                 ))}
               </div>

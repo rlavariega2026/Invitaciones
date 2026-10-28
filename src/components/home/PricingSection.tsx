@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Check, Sparkles, ArrowRight, Shield } from 'lucide-react';
 import { PricingPlan } from '../../types';
 
@@ -11,8 +11,6 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
   pricing,
   onSelectPlan,
 }) => {
-  const [currency, setCurrency] = useState<'MXN' | 'USD'>('MXN');
-
   return (
     <section id="pricing" className="py-24 border-t border-neutral-900 bg-neutral-950/40">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -20,47 +18,20 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
           <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-400">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Inversión Transparente & Sin Sorpresas</span>
+            <span>Paquetes & Experiencias a Medida</span>
           </div>
           <h2 className="font-playfair text-3xl sm:text-4xl lg:text-5xl font-normal text-neutral-100">
             Elige el Paquete Ideal para tu Evento
           </h2>
           <p className="text-base text-neutral-400">
-            Un solo pago por evento. Incluye alojamiento web de alta velocidad, soporte técnico y actualizaciones ilimitadas antes de tu fecha especial.
+            Cada paquete incluye diseño exclusivo, alojamiento web de alta velocidad y soporte técnico antes de tu fecha especial.
           </p>
-
-          {/* Currency Toggle */}
-          <div className="pt-4 flex items-center justify-center">
-            <div className="flex items-center rounded-lg border border-neutral-800 bg-neutral-900 p-1">
-              <button
-                onClick={() => setCurrency('MXN')}
-                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  currency === 'MXN'
-                    ? 'bg-amber-500 text-neutral-950 font-bold shadow'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                Pesos Mexicanos (MXN)
-              </button>
-              <button
-                onClick={() => setCurrency('USD')}
-                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  currency === 'USD'
-                    ? 'bg-amber-500 text-neutral-950 font-bold shadow'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                Dólares (USD)
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* 3 Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
           {pricing.map((plan) => {
             const isPopular = plan.isPopular;
-            const price = currency === 'MXN' ? `$${plan.priceMxn} MXN` : `$${plan.priceUsd} USD`;
 
             return (
               <div
@@ -89,12 +60,12 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                     </p>
                   </div>
 
-                  {/* Price */}
+                  {/* Consultation Label (No specific price numbers) */}
                   <div className="mt-6 mb-8 flex items-baseline gap-2">
-                    <span className="font-playfair text-4xl font-extrabold text-neutral-100 tabular-nums">
-                      {price}
+                    <span className="font-cinzel text-lg font-bold text-amber-300">
+                      Cotización a Medida
                     </span>
-                    <span className="text-xs text-neutral-500">pago único</span>
+                    <span className="text-xs text-neutral-500">· Plan {plan.name}</span>
                   </div>
 
                   {/* Features List */}

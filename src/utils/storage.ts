@@ -64,7 +64,22 @@ export const getStoredInvitations = (): Invitation[] => {
       return INITIAL_DEMOS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_DEMOS;
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_DEMOS;
+
+    // Ensure all stored invitations have entrance button design & text, and update demos
+    const updated = parsed.map((item: Invitation) => {
+      const demo = INITIAL_DEMOS.find((d) => d.id === item.id || d.slug === item.slug);
+      return {
+        ...item,
+        entranceButtonDesign: item.entranceButtonDesign || demo?.entranceButtonDesign || 'wax_seal',
+        entranceButtonText: item.entranceButtonText || demo?.entranceButtonText || 'Tienes una invitación',
+      };
+    });
+
+    const missingDemos = INITIAL_DEMOS.filter((demo) => !updated.some((p: Invitation) => p.id === demo.id || p.slug === demo.slug));
+    const merged = missingDemos.length > 0 ? [...updated, ...missingDemos] : updated;
+    localStorage.setItem(STORAGE_KEYS.INVITATIONS, JSON.stringify(merged));
+    return merged;
   } catch {
     return INITIAL_DEMOS;
   }
@@ -116,7 +131,15 @@ export const getStoredTemplates = (): Template[] => {
       localStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(INITIAL_TEMPLATES));
       return INITIAL_TEMPLATES;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_TEMPLATES;
+    const missingTemplates = INITIAL_TEMPLATES.filter((tmpl) => !parsed.some((p: Template) => p.id === tmpl.id));
+    if (missingTemplates.length > 0) {
+      const merged = [...missingTemplates, ...parsed];
+      localStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(merged));
+      return merged;
+    }
+    return parsed;
   } catch {
     return INITIAL_TEMPLATES;
   }

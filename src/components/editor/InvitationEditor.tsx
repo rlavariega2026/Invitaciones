@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   ArrowRight,
@@ -20,6 +20,10 @@ import {
   Monitor,
   Share2,
   MessageCircle,
+  Upload,
+  Star,
+  RefreshCw,
+  Eye,
 } from 'lucide-react';
 import {
   Invitation,
@@ -27,12 +31,16 @@ import {
   EventCategory,
   TemplateStyle,
   EnvelopeAnimationType,
+  EntranceButtonDesign,
   ItineraryItem,
   GiftRegistryItem,
 } from '../../types';
 import { saveOrUpdateInvitation } from '../../utils/storage';
 import { generateQrSvgDataUri } from '../../utils/calendarAndQr';
 import { CelebrationParticles } from '../common/CelebrationParticles';
+import { compressAndReadFile, compressMultipleFiles } from '../../utils/imageUpload';
+import { EditorLivePreview } from './EditorLivePreview';
+import { EntranceButtonSelector } from '../invitation/EntranceButtonCollection';
 
 interface InvitationEditorProps {
   initialInvitation?: Invitation | null;
@@ -44,6 +52,7 @@ interface InvitationEditorProps {
 }
 
 const CURATED_SAMPLE_IMAGES = [
+  { label: 'Libro Érase una vez — Encuadernación', url: '/src/assets/images/erase_una_vez_book_preview_1792605109334.jpg' },
   { label: 'Boda Italiana al Atardecer', url: '/src/assets/images/demo_wedding_portrait_1792595402081.jpg' },
   { label: 'Papelería Nupcial de Lujo & Anillos', url: '/src/assets/images/hero_invitations_showcase_1792595400987.jpg' },
   { label: 'XV Años Esmeralda Real', url: '/src/assets/images/demo_quince_portrait_1792595402137.jpg' },
@@ -64,6 +73,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [activeEditorTab, setActiveEditorTab] = useState<'form' | 'preview' | 'split'>('split');
 
   // Form State
   const [category, setCategory] = useState<EventCategory>(
@@ -72,8 +82,12 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     initialInvitation?.templateId || initialTemplate?.id || 'tmpl-boda-gold'
   );
-  const [title, setTitle] = useState(initialInvitation?.title || 'Nuestra Boda de Ensueño');
-  const [headline, setHeadline] = useState(initialInvitation?.headline || 'Nuestra Boda');
+  const [title, setTitle] = useState(
+    initialInvitation?.title || (initialTemplate?.name ? `Invitación — ${initialTemplate.name}` : 'Nuestra Boda de Ensueño')
+  );
+  const [headline, setHeadline] = useState(
+    initialInvitation?.headline || initialTemplate?.defaultHeadline || 'Nuestra Boda'
+  );
   const [hostNames, setHostNames] = useState(initialInvitation?.hostNames || 'Sofía & Mateo');
   const [parentsNames, setParentsNames] = useState(initialInvitation?.parentsNames || '');
   const [godparentsNames, setGodparentsNames] = useState(initialInvitation?.godparentsNames || '');
@@ -84,7 +98,9 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
   // Media
   const [coverImage, setCoverImage] = useState(
-    initialInvitation?.coverImage || '/src/assets/images/demo_wedding_portrait_1792595402081.jpg'
+    initialInvitation?.coverImage ||
+    initialTemplate?.previewImage ||
+    '/src/assets/images/demo_wedding_portrait_1792595402081.jpg'
   );
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>(
@@ -94,17 +110,119 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     ]
   );
 
-  // Styles & Fonts
-  const [style, setStyle] = useState<TemplateStyle>(initialInvitation?.style || 'luxury_gold');
+  // Image upload states & refs
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [coverDragOver, setCoverDragOver] = useState(false);
+  const [galleryDragOver, setGalleryDragOver] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingCover(true);
+      const dataUrl = await compressAndReadFile(file);
+      setCoverImage(dataUrl);
+      if (!galleryImages.includes(dataUrl)) {
+        setGalleryImages((prev) => [dataUrl, ...prev]);
+      }
+    } catch (err) {
+      console.error('Error al procesar foto de portada:', err);
+    } finally {
+      setIsUploadingCover(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleCoverDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setCoverDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    try {
+      setIsUploadingCover(true);
+      const dataUrl = await compressAndReadFile(file);
+      setCoverImage(dataUrl);
+      if (!galleryImages.includes(dataUrl)) {
+        setGalleryImages((prev) => [dataUrl, ...prev]);
+      }
+    } catch (err) {
+      console.error('Error al procesar archivo soltado:', err);
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const handleGalleryFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    try {
+      setIsUploadingGallery(true);
+      const dataUrls = await compressMultipleFiles(files);
+      setGalleryImages((prev) => [...prev, ...dataUrls]);
+    } catch (err) {
+      console.error('Error al procesar fotos de galería:', err);
+    } finally {
+      setIsUploadingGallery(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleGalleryDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setGalleryDragOver(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    try {
+      setIsUploadingGallery(true);
+      const dataUrls = await compressMultipleFiles(files);
+      setGalleryImages((prev) => [...prev, ...dataUrls]);
+    } catch (err) {
+      console.error('Error al procesar archivos soltados:', err);
+    } finally {
+      setIsUploadingGallery(false);
+    }
+  };
+
+  const handleRemoveGalleryImage = (indexToRemove: number) => {
+    setGalleryImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleSetImageAsCover = (imgUrl: string) => {
+    setCoverImage(imgUrl);
+  };
+
+  const isInitialBook = initialInvitation?.templateId === 'tmpl-erase-una-vez-book' || initialInvitation?.style === 'premium_book' || initialTemplate?.id === 'tmpl-erase-una-vez-book' || initialTemplate?.style === 'premium_book';
+
+  const [style, setStyle] = useState<TemplateStyle>(
+    initialInvitation?.style || initialTemplate?.style || (isInitialBook ? 'premium_book' : 'luxury_gold')
+  );
   const [primaryColor, setPrimaryColor] = useState(initialInvitation?.primaryColor || '#d4af37');
   const [fontHeading, setFontHeading] = useState<'Cinzel' | 'Playfair Display' | 'Cormorant Garamond' | 'Plus Jakarta Sans'>(
-    initialInvitation?.fontHeading || 'Cinzel'
+    initialInvitation?.fontHeading || (isInitialBook ? 'Cormorant Garamond' : 'Cinzel')
   );
   const [envelopeAnimation, setEnvelopeAnimation] = useState<EnvelopeAnimationType>(
-    initialInvitation?.envelopeAnimation || 'wax_seal'
+    initialInvitation?.envelopeAnimation || (isInitialBook ? 'book_open' : 'wax_seal')
   );
+  const [bookCoverStyle, setBookCoverStyle] = useState<'romantic' | 'vintage' | 'editorial' | 'minimalist' | 'modern' | 'luxury_linen'>(
+    initialInvitation?.bookCoverStyle || 'luxury_linen'
+  );
+  const [entranceButtonDesign, setEntranceButtonDesign] = useState<EntranceButtonDesign>(
+    initialInvitation?.entranceButtonDesign || (isInitialBook ? 'gold_foil_card' : 'wax_seal')
+  );
+  const [entranceButtonText, setEntranceButtonText] = useState<string>(
+    initialInvitation?.entranceButtonText || 'Tienes una invitación'
+  );
+
+  // Personalized Guest Link generator state
+  const [guestLinkName, setGuestLinkName] = useState('');
+  const [guestLinkPasses, setGuestLinkPasses] = useState<number>(2);
+  const [copiedGuestLink, setCopiedGuestLink] = useState(false);
+
   const [musicTrackId, setMusicTrackId] = useState<'wedding_canon' | 'quince_waltz' | 'kids_cheerful' | 'acoustic_romance' | 'none'>(
-    initialInvitation?.musicTrackId || 'wedding_canon'
+    initialInvitation?.musicTrackId || (initialTemplate?.defaultMusic as any) || 'wedding_canon'
   );
   const [particlesEffect, setParticlesEffect] = useState<'petals' | 'sparkles' | 'confetti' | 'none'>(
     initialInvitation?.particlesEffect || 'petals'
@@ -151,7 +269,14 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     setDressCode(tmpl.defaultDressCode);
     setMusicTrackId(tmpl.defaultMusic);
 
-    if (tmpl.category === 'boda') {
+    if (tmpl.id === 'tmpl-erase-una-vez-book' || tmpl.style === 'premium_book') {
+      setStyle('premium_book');
+      setEnvelopeAnimation('book_open');
+      setFontHeading('Cormorant Garamond');
+      setCoverImage('/src/assets/images/erase_una_vez_book_preview_1792605109334.jpg');
+      setParticlesEffect('petals');
+      setBookCoverStyle('luxury_linen');
+    } else if (tmpl.category === 'boda') {
       setParticlesEffect('petals');
       setFontHeading('Cinzel');
       setEnvelopeAnimation('wax_seal');
@@ -219,6 +344,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
       primaryColor,
       fontHeading,
       envelopeAnimation,
+      bookCoverStyle,
+      bookPages: initialInvitation?.bookPages,
+      entranceButtonDesign,
+      entranceButtonText: entranceButtonText.trim() || 'Tienes una invitación',
       musicTrackId,
       dressCode,
       dressCodeDetails,
@@ -280,7 +409,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((step) => (
               <button
                 key={step}
-                onClick={() => setCurrentStep(step)}
+                onClick={() => {
+                  setCurrentStep(step);
+                  if (activeEditorTab === 'preview') setActiveEditorTab('form');
+                }}
                 className={`h-2.5 rounded-full transition-all ${
                   currentStep === step
                     ? 'w-7 bg-amber-500'
@@ -293,11 +425,52 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             ))}
           </div>
 
+          {/* Desktop Layout Mode Switcher */}
+          <div className="hidden lg:flex items-center gap-1 rounded-xl border border-neutral-800 bg-neutral-900 p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveEditorTab('split')}
+              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                activeEditorTab === 'split' ? 'bg-amber-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              }`}
+              title="Vista Dividida (Formulario + Previa)"
+            >
+              Dividida
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditorTab('form')}
+              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                activeEditorTab === 'form' ? 'bg-amber-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              }`}
+              title="Solo Formulario de Edición"
+            >
+              Solo Formulario
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveEditorTab('preview')}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                activeEditorTab === 'preview' ? 'bg-amber-500 text-neutral-950 shadow' : 'text-neutral-400 hover:text-white'
+              }`}
+              title="Solo Vista Previa en Vivo"
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              </span>
+              <span>Vista Previa</span>
+            </button>
+          </div>
+
           {/* Next / Previous Controls */}
           <div className="flex items-center gap-2">
             {currentStep > 1 && currentStep < 9 && (
               <button
-                onClick={() => setCurrentStep(currentStep - 1)}
+                onClick={() => {
+                  setCurrentStep(currentStep - 1);
+                  if (activeEditorTab === 'preview') setActiveEditorTab('form');
+                }}
                 className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-neutral-300 hover:bg-neutral-800"
               >
                 Anterior
@@ -305,7 +478,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             )}
             {currentStep < 8 && (
               <button
-                onClick={() => setCurrentStep(currentStep + 1)}
+                onClick={() => {
+                  setCurrentStep(currentStep + 1);
+                  if (activeEditorTab === 'preview') setActiveEditorTab('form');
+                }}
                 className="flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-neutral-950 hover:bg-amber-400"
               >
                 <span>Siguiente</span>
@@ -332,14 +508,49 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             )}
           </div>
         </div>
+
+        {/* Mobile Viewport Tab Switcher (Visible on screens < lg) */}
+        <div className="flex lg:hidden items-center justify-between gap-2 pt-3 mt-3 border-t border-neutral-800/80">
+          <div className="flex items-center rounded-xl border border-neutral-800 bg-neutral-900 p-1 w-full max-w-md mx-auto">
+            <button
+              type="button"
+              onClick={() => setActiveEditorTab('form')}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
+                activeEditorTab !== 'preview'
+                  ? 'bg-amber-500 text-neutral-950 shadow'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <span>Paso {currentStep}: Formulario</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveEditorTab('preview')}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
+                activeEditorTab === 'preview'
+                  ? 'bg-amber-500 text-neutral-950 shadow'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <Eye className="h-3.5 w-3.5" />
+              <span>Vista Previa en Vivo</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main Split Layout: Editor Form (Left) & Real-time Live Preview (Right) */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className={`grid grid-cols-1 ${activeEditorTab === 'split' ? 'lg:grid-cols-12' : 'grid-cols-1'} gap-8 items-start`}>
 
-          {/* LEFT: Step Content Form (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
+          {/* LEFT: Step Content Form */}
+          {(activeEditorTab === 'form' || activeEditorTab === 'split' || activeEditorTab !== 'preview') && (
+            <div className={`${activeEditorTab === 'split' ? 'lg:col-span-7' : 'max-w-3xl mx-auto w-full'} space-y-6`}>
 
             {/* ------------------------------------------------------------- */}
             {/* PASO 1: Elegir Tipo de Evento */}
@@ -356,26 +567,35 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[480px] overflow-y-auto pr-1">
                   {[
                     { id: 'boda', label: 'Boda', desc: 'Romance y alta etiqueta' },
                     { id: 'xv_anos', label: 'XV Años', desc: 'Gala y glamour' },
-                    { id: 'infantil', label: 'Fiesta Infantil', desc: 'Aventura y alegría' },
                     { id: 'cumpleanos', label: 'Cumpleaños', desc: 'Celebración de honor' },
-                    { id: 'bautizo', label: 'Bautizo', desc: 'Celestial y puro' },
                     { id: 'graduacion', label: 'Graduación', desc: 'Magna cum laude' },
+                    { id: 'bautizo', label: 'Bautizo', desc: 'Celestial y puro' },
+                    { id: 'primera_comunion', label: '1ª Comunión', desc: 'Eucaristía y bendición' },
+                    { id: 'baby_shower', label: 'Baby Shower', desc: 'Dulce espera y ternura' },
+                    { id: 'gender_reveal', label: 'Revelación Género', desc: '¿Niño o niña? Sorpresa' },
+                    { id: 'aniversario', label: 'Aniversario', desc: 'Bodas de plata y oro' },
+                    { id: 'infantil', label: 'Fiesta Infantil', desc: 'Aventura y alegría' },
+                    { id: 'corporativo', label: 'Corporativo', desc: 'Gala anual y summit' },
+                    { id: 'inauguracion', label: 'Inauguración', desc: 'Corte de listón y cóctel' },
+                    { id: 'despedida', label: 'Despedida', desc: 'Bachelorette y sunset' },
+                    { id: 'reunion_familiar', label: 'Reunión Familiar', desc: 'Unión y raíces familiares' },
+                    { id: 'personalizado', label: 'Personalizado', desc: 'Diseño a tu medida de autor' },
                   ].map((item) => (
                     <button
                       key={item.id}
                       onClick={() => setCategory(item.id as EventCategory)}
-                      className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all ${
+                      className={`flex flex-col items-start p-3.5 rounded-xl border text-left transition-all ${
                         category === item.id
-                          ? 'border-amber-400 bg-amber-500/10 text-white shadow-md'
-                          : 'border-neutral-800 bg-neutral-900 hover:border-neutral-700 text-neutral-300'
+                          ? 'border-amber-400 bg-amber-500/15 text-white shadow-md ring-1 ring-amber-400/40'
+                          : 'border-neutral-800 bg-neutral-900/80 hover:border-neutral-700 text-neutral-300'
                       }`}
                     >
-                      <span className="font-playfair text-base font-bold">{item.label}</span>
-                      <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
+                      <span className="font-playfair text-sm font-bold text-white">{item.label}</span>
+                      <span className="text-[10px] text-neutral-400 mt-1 line-clamp-1">{item.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -556,60 +776,296 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* PASO 4: Subir Fotografías */}
+            {/* PASO 4: Subir Fotografías Directamente a la App */}
             {/* ------------------------------------------------------------- */}
             {currentStep === 4 && (
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 sm:p-8 space-y-6">
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 sm:p-8 space-y-8">
                 <div>
                   <span className="text-xs font-mono uppercase tracking-wider text-amber-400">Paso 4 de 9</span>
                   <h2 className="font-playfair text-2xl font-bold text-neutral-100 mt-1">
-                    Fotografía de Portada y Galería
+                    Fotografías de Portada y Galería
                   </h2>
                   <p className="text-xs text-neutral-400 mt-1">
-                    Selecciona una imagen de alta resolución de nuestro catálogo curado o ingresa la URL de tu sesión de fotos.
+                    Sube tus fotos directamente desde tu teléfono, tableta o computadora. No requieres enlaces externos: se optimizan y guardan de inmediato en la aplicación.
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-amber-400 block">
-                    Fotografías Curadas de Alta Gama (Selecciona tu portada)
-                  </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {CURATED_SAMPLE_IMAGES.map((img, idx) => {
-                      const isCover = coverImage === img.url;
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => setCoverImage(img.url)}
-                          className={`group relative aspect-[3/4] rounded-xl overflow-hidden border cursor-pointer ${
-                            isCover ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-neutral-800'
-                          }`}
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.label}
-                            className="h-full w-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
-                            <span className="text-[10px] text-white leading-tight">{img.label}</span>
-                          </div>
-                          {isCover && (
-                            <div className="absolute top-2 right-2 rounded-full bg-amber-500 p-1 text-neutral-950">
-                              <Check className="h-3 w-3" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                {/* 1. SECCIÓN: FOTO DE PORTADA */}
+                <div className="space-y-4 rounded-2xl border border-neutral-800/80 bg-neutral-950/60 p-5 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-amber-400 block">
+                        1. Fotografía de Portada de la Invitación
+                      </span>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        Esta imagen se presentará en la cubierta del libro o portada principal de tu evento.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => coverFileInputRef.current?.click()}
+                      disabled={isUploadingCover}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-950 hover:bg-amber-400 transition-colors shadow"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{isUploadingCover ? 'Procesando...' : 'Subir desde mi Dispositivo'}</span>
+                    </button>
                   </div>
 
-                  {/* Custom URL input */}
-                  <div className="pt-4 border-t border-neutral-800 space-y-2">
-                    <label className="block text-xs font-medium text-neutral-300">
-                      O pega una URL de imagen personalizada:
-                    </label>
-                    <div className="flex gap-2">
+                  {/* Hidden cover file input */}
+                  <input
+                    type="file"
+                    ref={coverFileInputRef}
+                    accept="image/*"
+                    onChange={handleCoverFileUpload}
+                    className="hidden"
+                  />
+
+                  {/* Drag and Drop Zone or Current Preview */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setCoverDragOver(true);
+                    }}
+                    onDragLeave={() => setCoverDragOver(false)}
+                    onDrop={handleCoverDrop}
+                    className={`relative rounded-xl border-2 border-dashed p-4 transition-all ${
+                      coverDragOver
+                        ? 'border-amber-400 bg-amber-500/10'
+                        : 'border-neutral-800 bg-neutral-900/50 hover:border-neutral-700'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row items-center gap-5">
+                      {/* Active cover photo thumbnail */}
+                      <div className="relative aspect-[3/4] w-28 sm:w-32 rounded-xl overflow-hidden border-2 border-amber-400/50 shadow-xl bg-neutral-950 shrink-0">
+                        <img
+                          src={coverImage}
+                          alt="Portada seleccionada"
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute top-1 right-1 rounded-full bg-amber-500 p-1 text-neutral-950">
+                          <Check className="h-3 w-3" />
+                        </div>
+                      </div>
+
+                      {/* Info & action buttons */}
+                      <div className="space-y-3 text-center sm:text-left flex-1">
+                        <div>
+                          <span className="inline-block rounded-md bg-amber-500/15 border border-amber-400/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+                            Portada Activa
+                          </span>
+                          <h4 className="text-sm font-semibold text-neutral-200 mt-1">
+                            Foto Principal Lista
+                          </h4>
+                          <p className="text-xs text-neutral-400 mt-0.5">
+                            Puedes arrastrar aquí cualquier foto desde tus archivos o hacer clic en el botón para reemplazarla.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                          <button
+                            type="button"
+                            onClick={() => coverFileInputRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs text-neutral-200 hover:bg-neutral-700 hover:text-white"
+                          >
+                            <RefreshCw className="h-3 w-3 text-amber-400" />
+                            <span>Cambiar por otra foto</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Curated Sample Images Option */}
+                  <div className="pt-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400 block mb-2">
+                      O selecciona una de nuestras portadas de muestra:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {CURATED_SAMPLE_IMAGES.map((img, idx) => {
+                        const isCover = coverImage === img.url;
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => setCoverImage(img.url)}
+                            className={`group relative aspect-[3/4] rounded-xl overflow-hidden border cursor-pointer transition-all ${
+                              isCover
+                                ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-md'
+                                : 'border-neutral-800 opacity-75 hover:opacity-100 hover:border-neutral-700'
+                            }`}
+                          >
+                            <img
+                              src={img.url}
+                              alt={img.label}
+                              className="h-full w-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2">
+                              <span className="text-[10px] text-white leading-tight line-clamp-1">{img.label}</span>
+                            </div>
+                            {isCover && (
+                              <div className="absolute top-1.5 right-1.5 rounded-full bg-amber-500 p-1 text-neutral-950">
+                                <Check className="h-3 w-3" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. SECCIÓN: ÁLBUM Y GALERÍA (MÚLTIPLES FOTOS) */}
+                <div className="space-y-4 rounded-2xl border border-neutral-800/80 bg-neutral-950/60 p-5 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-amber-400 block">
+                        2. Álbum Fotográfico & Presentación Deslizable
+                      </span>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        Sube las fotos de tu sesión o momentos especiales. Tus invitados podrán deslizarlas interactivamente en el libro.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => galleryFileInputRef.current?.click()}
+                      disabled={isUploadingGallery}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/50 bg-amber-500/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-500 hover:text-neutral-950 transition-colors shadow"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>{isUploadingGallery ? 'Cargando fotos...' : 'Subir Fotos al Álbum'}</span>
+                    </button>
+                  </div>
+
+                  {/* Hidden gallery file input with multiple support */}
+                  <input
+                    type="file"
+                    ref={galleryFileInputRef}
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryFilesUpload}
+                    className="hidden"
+                  />
+
+                  {/* Drag and Drop Zone for multiple photos */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setGalleryDragOver(true);
+                    }}
+                    onDragLeave={() => setGalleryDragOver(false)}
+                    onDrop={handleGalleryDrop}
+                    onClick={() => galleryFileInputRef.current?.click()}
+                    className={`rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all ${
+                      galleryDragOver
+                        ? 'border-amber-400 bg-amber-500/10'
+                        : 'border-neutral-800 bg-neutral-900/40 hover:border-amber-400/40 hover:bg-neutral-900/70'
+                    }`}
+                  >
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-800 text-amber-400 mb-2">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <p className="text-xs font-semibold text-neutral-200">
+                      Toca o arrastra aquí varias fotos a la vez
+                    </p>
+                    <p className="text-[11px] text-neutral-400 mt-1">
+                      Soporta JPG, PNG y WEBP. Se comprimen de forma automática para máxima velocidad.
+                    </p>
+                  </div>
+
+                  {/* Gallery Photos Grid */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between text-xs text-neutral-400">
+                      <span className="font-mono">
+                        Fotos en la galería: <strong className="text-amber-400">{galleryImages.length}</strong>
+                      </span>
+                      {galleryImages.length > 0 && (
+                        <span className="text-[11px] text-neutral-500">
+                          Toca ★ para convertir cualquier foto en portada
+                        </span>
+                      )}
+                    </div>
+
+                    {galleryImages.length === 0 ? (
+                      <div className="p-6 text-center rounded-xl border border-neutral-800 text-xs text-neutral-500">
+                        Aún no has agregado fotos a la galería. Sube tus primeras fotos arriba.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {galleryImages.map((img, idx) => {
+                          const isCurrentCover = coverImage === img;
+                          return (
+                            <div
+                              key={idx}
+                              className={`group relative aspect-[3/4] rounded-xl overflow-hidden border bg-neutral-950 transition-all ${
+                                isCurrentCover ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-neutral-800 hover:border-neutral-700'
+                              }`}
+                            >
+                              <img
+                                src={img}
+                                alt={`Foto ${idx + 1}`}
+                                className="h-full w-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+
+                              {/* Cover badge if active */}
+                              {isCurrentCover && (
+                                <div className="absolute top-1.5 left-1.5 rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-neutral-950 shadow">
+                                  Portada
+                                </div>
+                              )}
+
+                              {/* Hover Action Buttons */}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                                <div className="flex justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemoveGalleryImage(idx);
+                                    }}
+                                    className="p-1.5 rounded-lg bg-red-600/90 text-white hover:bg-red-500 shadow"
+                                    title="Eliminar foto de la galería"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSetImageAsCover(img);
+                                  }}
+                                  className={`w-full py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow ${
+                                    isCurrentCover
+                                      ? 'bg-amber-500 text-neutral-950'
+                                      : 'bg-neutral-900/90 text-amber-300 hover:bg-amber-500 hover:text-neutral-950'
+                                  }`}
+                                >
+                                  <Star className="h-3 w-3 fill-current" />
+                                  <span>{isCurrentCover ? 'Es la Portada' : 'Hacer Portada'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. SECCIÓN SECUNDARIA: ENLACE URL EXTERNO (OPCIONAL) */}
+                <div className="pt-2 border-t border-neutral-800/80">
+                  <details className="group">
+                    <summary className="text-xs text-neutral-500 cursor-pointer hover:text-neutral-300 transition-colors list-none flex items-center justify-between">
+                      <span>¿Prefieres ingresar una URL externa de imagen? (Opcional)</span>
+                      <span className="text-xs group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div className="mt-3 flex gap-2">
                       <input
                         type="url"
                         value={customImageUrl}
@@ -618,6 +1074,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                         className="flex-1 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-xs text-white focus:border-amber-400 focus:outline-none"
                       />
                       <button
+                        type="button"
                         onClick={() => {
                           if (customImageUrl.trim()) {
                             setCoverImage(customImageUrl.trim());
@@ -627,10 +1084,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                         }}
                         className="rounded-xl bg-neutral-800 px-4 py-2.5 text-xs font-semibold text-neutral-200 hover:bg-neutral-700"
                       >
-                        Usar
+                        Agregar
                       </button>
                     </div>
-                  </div>
+                  </details>
                 </div>
               </div>
             )}
@@ -731,18 +1188,27 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                   </p>
                 </div>
 
-                <div className="space-y-6 text-xs">
-                  {/* Opening envelope animation */}
-                  <div>
+                <div className="space-y-8 text-xs">
+                  {/* 1. SELECCIÓN DE PROPUESTAS DE BOTÓN 'TIENES UNA INVITACIÓN' (12 DISEÑOS) */}
+                  <EntranceButtonSelector
+                    selectedDesign={entranceButtonDesign}
+                    onSelectDesign={(design) => setEntranceButtonDesign(design)}
+                    buttonText={entranceButtonText}
+                    onChangeButtonText={(t) => setEntranceButtonText(t)}
+                  />
+
+                  {/* 2. Opening envelope animation */}
+                  <div className="pt-6 border-t border-neutral-800">
                     <label className="block font-semibold uppercase tracking-wider text-amber-400 mb-3">
                       Animación de Apertura
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                       {[
                         { id: 'wax_seal', label: 'Sello de Cera', desc: 'Monograma heráldico' },
                         { id: 'royal_curtain', label: 'Cortina Real', desc: 'Apertura de teatro' },
                         { id: 'ribbon_box', label: 'Lazo de Regalo', desc: 'Desempaque festivo' },
                         { id: 'minimalist_fold', label: 'Pliegue Minimal', desc: 'Despliegue sobrio' },
+                        { id: 'book_open', label: 'Libro 3D', desc: 'Páginas que se pasan' },
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -758,6 +1224,42 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                         </button>
                       ))}
                     </div>
+
+                    {/* Book Cover Style selector when 3D book animation or template is active */}
+                    {(envelopeAnimation === 'book_open' || style === 'premium_book') && (
+                      <div className="mt-4 pt-4 border-t border-neutral-800">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="block font-semibold uppercase tracking-wider text-amber-400">
+                            Estilo de Encuadernación / Portada del Libro
+                          </label>
+                          <span className="text-[11px] text-amber-300 font-mono">Exclusivo Libro 3D</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {[
+                            { id: 'luxury_linen', label: 'Lino de Lujo & Oro', desc: 'Textura azul marino profundo con grabados dorados' },
+                            { id: 'romantic', label: 'Romántico & Flores', desc: 'Tonos rosa empolvado y filigranas botánicas' },
+                            { id: 'vintage', label: 'Vintage Clásico', desc: 'Cuero envejecido, orlas renacentistas y pátina de época' },
+                            { id: 'editorial', label: 'Editorial Fine Art', desc: 'Diseño sobrio de galería, tipografía de alta costura' },
+                            { id: 'minimalist', label: 'Minimalista Contemporáneo', desc: 'Líneas limpias marfil, relieve sutil en seco' },
+                            { id: 'modern', label: 'Moderno Glam', desc: 'Negro mate con acentos metalizados vanguardistas' },
+                          ].map((cStyle) => (
+                            <button
+                              key={cStyle.id}
+                              type="button"
+                              onClick={() => setBookCoverStyle(cStyle.id as any)}
+                              className={`p-3.5 rounded-xl border text-left transition-all ${
+                                bookCoverStyle === cStyle.id
+                                  ? 'border-amber-400 bg-amber-500/15 text-white shadow-md shadow-amber-500/10'
+                                  : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:border-neutral-700'
+                              }`}
+                            >
+                              <span className="block text-xs font-semibold text-neutral-100">{cStyle.label}</span>
+                              <span className="block text-[10px] text-neutral-400 mt-1 leading-snug">{cStyle.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Soundtracks */}
@@ -1100,6 +1602,92 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                   </div>
                 </div>
 
+                {/* Personalized Guest Link Generator with Passes */}
+                <div className="rounded-2xl border border-amber-500/30 bg-neutral-950 p-6 space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                      Generador de Enlaces Personalizados con Pases de Honor
+                    </span>
+                    <p className="text-xs text-neutral-400">
+                      Crea un enlace único con el nombre de cada familia o invitado. Al abrirlo, verán su saludo exclusivo y su límite exacto de pases para el RSVP.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] text-neutral-400 mb-1">Nombre o Familia del Invitado</label>
+                      <input
+                        type="text"
+                        value={guestLinkName}
+                        onChange={(e) => setGuestLinkName(e.target.value)}
+                        placeholder="Ej. Familia Morales Fuentes o Lic. Carlos Arismendi"
+                        className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] text-neutral-400 mb-1">Pases Asignados</label>
+                      <select
+                        value={guestLinkPasses}
+                        onChange={(e) => setGuestLinkPasses(parseInt(e.target.value, 10))}
+                        className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-xs text-white focus:border-amber-400 focus:outline-none"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                          <option key={n} value={n}>
+                            {n} {n === 1 ? 'Pase de honor' : 'Pases de honor'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Generated Personalized Link Result */}
+                  {guestLinkName.trim() && (
+                    <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-neutral-200 font-semibold truncate">
+                          Invitación para: <span className="text-amber-300 font-bold">{guestLinkName.trim()}</span> ({guestLinkPasses} {guestLinkPasses === 1 ? 'pase' : 'pases'})
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={`${shareUrl}?guest=${encodeURIComponent(guestLinkName.trim())}&pases=${guestLinkPasses}`}
+                          className="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs font-mono text-amber-300"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = `${shareUrl}?guest=${encodeURIComponent(guestLinkName.trim())}&pases=${guestLinkPasses}`;
+                            navigator.clipboard.writeText(url);
+                            setCopiedGuestLink(true);
+                            setTimeout(() => setCopiedGuestLink(false), 2000);
+                          }}
+                          className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-950 hover:bg-amber-400 transition-colors shadow flex items-center justify-center gap-1.5"
+                        >
+                          {copiedGuestLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          <span>{copiedGuestLink ? 'Copiado' : 'Copiar'}</span>
+                        </button>
+
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(
+                            `¡Hola ${guestLinkName.trim()}! Con muchísimo cariño te compartimos tu invitación exclusiva para nuestra celebración (${guestLinkPasses} ${guestLinkPasses === 1 ? 'pase reservado' : 'pases reservados'}): ${shareUrl}?guest=${encodeURIComponent(guestLinkName.trim())}&pases=${guestLinkPasses} \n\n¡Esperamos contar con tu grata presencia!`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-emerald-500 transition-colors"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>Enviar WhatsApp</span>
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* QR Code Printable Section */}
                 <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-6 flex flex-col sm:flex-row items-center gap-6">
                   <div className="p-3 bg-white rounded-2xl shadow-lg shrink-0">
@@ -1125,114 +1713,64 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
               </div>
             )}
           </div>
+          )}
 
-          {/* RIGHT: Real-time Live Preview Device (5 cols) */}
-          <div className="lg:col-span-5 sticky top-24">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
-                <span className="font-semibold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Vista Previa en Tiempo Real</span>
-                </span>
-                <div className="flex items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900 p-0.5">
+          {/* RIGHT: Real-time Live Preview Device */}
+          {(activeEditorTab === 'preview' || activeEditorTab === 'split') && (
+            <div className={`${activeEditorTab === 'split' ? 'lg:col-span-5 sticky top-24' : 'max-w-4xl mx-auto w-full'} space-y-4`}>
+              {/* Back to form banner when in single preview tab */}
+              {activeEditorTab === 'preview' && (
+                <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                    <span className="text-amber-300 font-medium">
+                      Vista previa interactiva en tiempo real (Paso {currentStep} de 9)
+                    </span>
+                  </div>
                   <button
-                    onClick={() => setPreviewDevice('mobile')}
-                    className={`p-1.5 rounded-md ${
-                      previewDevice === 'mobile' ? 'bg-amber-500 text-neutral-950 font-bold' : 'text-neutral-400'
-                    }`}
-                    title="Móvil"
+                    type="button"
+                    onClick={() => setActiveEditorTab('form')}
+                    className="flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-neutral-950 hover:bg-amber-400 shadow"
                   >
-                    <Smartphone className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setPreviewDevice('desktop')}
-                    className={`p-1.5 rounded-md ${
-                      previewDevice === 'desktop' ? 'bg-amber-500 text-neutral-950 font-bold' : 'text-neutral-400'
-                    }`}
-                    title="Desktop"
-                  >
-                    <Monitor className="h-3.5 w-3.5" />
+                    <span>Volver a Editar</span>
+                    <ArrowLeft className="h-3.5 w-3.5 rotate-180" />
                   </button>
                 </div>
-              </div>
+              )}
 
-              {/* Mockup Frame */}
-              <div
-                className={`mx-auto rounded-[38px] border-[5px] border-neutral-800 bg-neutral-950 p-2 shadow-2xl transition-all ${
-                  previewDevice === 'mobile' ? 'max-w-[310px]' : 'w-full'
-                }`}
-              >
-                {/* Speaker notch */}
-                <div className="mx-auto mb-2 h-3 w-20 rounded-full bg-neutral-800" />
-
-                {/* Mini Preview Screen */}
-                <div className="relative aspect-[9/17] w-full overflow-y-auto rounded-[30px] border border-neutral-800 bg-neutral-900 scrollbar-none text-left">
-                  {/* Background Cover */}
-                  <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-950">
-                    <img
-                      src={coverImage}
-                      alt="Portada"
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
-                    <div className="absolute inset-0 flex flex-col justify-end p-4 text-center">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">
-                        {headline}
-                      </span>
-                      <h3
-                        className="text-xl font-bold text-white drop-shadow my-1"
-                        style={{ fontFamily: fontHeading }}
-                      >
-                        {hostNames}
-                      </h3>
-                      <p className="text-[10px] text-neutral-300 font-mono">
-                        {eventDate} · {eventTime} hrs
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Body preview snippets */}
-                  <div className="p-4 space-y-4 text-center text-xs">
-                    <div className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-3">
-                      <span className="text-[10px] text-amber-400 font-semibold block mb-1">Ubicación</span>
-                      <p className="font-bold text-white text-[11px]">{venueName}</p>
-                      <p className="text-[10px] text-neutral-400 mt-0.5">{venueAddress}</p>
-                    </div>
-
-                    <div className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-3">
-                      <span className="text-[10px] text-amber-400 font-semibold block mb-1">Código de Vestimenta</span>
-                      <p className="font-bold text-white text-[11px]">{dressCode}</p>
-                    </div>
-
-                    {itinerary.length > 0 && (
-                      <div className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-3 text-left">
-                        <span className="text-[10px] text-amber-400 font-semibold block mb-2 text-center">Itinerario</span>
-                        <div className="space-y-1.5 text-[11px]">
-                          {itinerary.slice(0, 3).map((item, i) => (
-                            <div key={i} className="flex justify-between border-b border-neutral-900 pb-1">
-                              <span className="text-neutral-200">{item.title}</span>
-                              <span className="font-mono text-amber-400">{item.time}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {rsvpEnabled && (
-                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-center">
-                        <span className="text-[10px] font-bold text-amber-300 block">RSVP Habilitado</span>
-                        <span className="text-[10px] text-neutral-400">Confirmación directa en la web</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <EditorLivePreview
+                invitation={currentPreviewData}
+                defaultDevice={previewDevice}
+                onUpdateEntranceDesign={(design) => setEntranceButtonDesign(design)}
+                onUpdateEntranceText={(text) => setEntranceButtonText(text)}
+              />
             </div>
-          </div>
+          )}
 
         </div>
       </div>
+
+      {/* Mobile Floating Action Button (FAB) to quickly preview invitation anytime */}
+      {activeEditorTab !== 'preview' && (
+        <button
+          type="button"
+          onClick={() => {
+            setActiveEditorTab('preview');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="lg:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-3 text-xs font-bold uppercase tracking-wider text-neutral-950 shadow-2xl shadow-amber-500/40 hover:scale-105 active:scale-95 transition-all border border-amber-300/40"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-950 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-neutral-950" />
+          </span>
+          <Eye className="h-4 w-4" />
+          <span>Ver Previa en Vivo</span>
+        </button>
+      )}
     </div>
   );
 };

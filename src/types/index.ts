@@ -1,12 +1,21 @@
 export type EventCategory =
   | 'boda'
   | 'xv_anos'
-  | 'infantil'
   | 'cumpleanos'
-  | 'bautizo'
   | 'graduacion'
+  | 'bautizo'
+  | 'primera_comunion'
+  | 'baby_shower'
+  | 'gender_reveal'
   | 'aniversario'
-  | 'baby_shower';
+  | 'infantil'
+  | 'corporativo'
+  | 'inauguracion'
+  | 'despedida'
+  | 'reunion_familiar'
+  | 'personalizado';
+
+export type EntranceButtonDesign = string;
 
 export type TemplateStyle =
   | 'luxury_gold'
@@ -19,6 +28,8 @@ export type TemplateStyle =
   | 'boho_terracotta'
   | 'celestial_white'
   | 'academic_navy'
+  | 'editorial_chic'
+  | 'rose_gold'
   | 'premium_book';
 
 export type EnvelopeAnimationType = 'wax_seal' | 'ribbon_box' | 'royal_curtain' | 'minimalist_fold' | 'book_open';
@@ -86,6 +97,8 @@ export interface Invitation {
   isDemo?: boolean;
   bookCoverStyle?: 'romantic' | 'vintage' | 'editorial' | 'minimalist' | 'modern' | 'luxury_linen';
   bookPages?: BookPage[];
+  entranceButtonDesign?: EntranceButtonDesign;
+  entranceButtonText?: string;
 }
 
 export interface RSVPRecord {

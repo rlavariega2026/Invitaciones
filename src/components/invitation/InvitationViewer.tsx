@@ -30,33 +30,77 @@ import { musicPlayer } from '../../utils/audioSynth';
 import { CelebrationParticles } from '../common/CelebrationParticles';
 import { getGoogleCalendarUrl, downloadIcsFile, getWhatsAppRsvpUrl } from '../../utils/calendarAndQr';
 import { addRSVP, incrementInvitationVisit } from '../../utils/storage';
+import { InteractiveBookExperience } from './InteractiveBookExperience';
+import { EntranceButton } from './EntranceButtonCollection';
+import { BookLeafPhotoCarousel } from '../common/BookLeafPhotoCarousel';
 
 interface InvitationViewerProps {
   invitation: Invitation;
   onBackToHome?: () => void;
   onEditInvitation?: (invitation: Invitation) => void;
   isStandalone?: boolean;
+  isEmbedded?: boolean;
+  forceOpened?: boolean;
+  hideFloatingHeader?: boolean;
 }
+
+// Helper to extract personalized guest and allocated passes from URL query or hash
+const extractGuestFromUrl = (): { guestName: string; guestPasses: number } => {
+  try {
+    const fullHref = window.location.href;
+    const qIndex = fullHref.indexOf('?');
+    if (qIndex !== -1) {
+      const queryString = fullHref.slice(qIndex + 1);
+      const params = new URLSearchParams(queryString);
+      const name = params.get('guest') || params.get('invitado') || '';
+      const p = parseInt(params.get('pases') || params.get('passes') || '2', 10);
+      return {
+        guestName: decodeURIComponent(name).trim(),
+        guestPasses: isNaN(p) || p < 1 ? 2 : p,
+      };
+    }
+  } catch {}
+  return { guestName: '', guestPasses: 2 };
+};
 
 export const InvitationViewer: React.FC<InvitationViewerProps> = ({
   invitation,
   onBackToHome,
   onEditInvitation,
   isStandalone = false,
+  isEmbedded = false,
+  forceOpened = false,
+  hideFloatingHeader = false,
 }) => {
+  const isBookTemplate = invitation?.templateId === 'tmpl-erase-una-vez-book' || invitation?.style === 'premium_book';
+  const [useBookMode, setUseBookMode] = useState<boolean>(isBookTemplate);
+
+  // Personalized guest URL support (?guest=Familia+Perez&pases=3)
+  const [guestParam] = useState(() => extractGuestFromUrl());
+
+  useEffect(() => {
+    setUseBookMode(isBookTemplate);
+  }, [isBookTemplate, invitation?.templateId, invitation?.style]);
+
   // Opening Envelope State
-  const [isOpened, setIsOpened] = useState(false);
+  const [isOpened, setIsOpened] = useState(forceOpened);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [copiedClabe, setCopiedClabe] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [deviceFrameMode, setDeviceFrameMode] = useState<'mobile' | 'full'>('mobile');
   const [activePhotoModal, setActivePhotoModal] = useState<string | null>(null);
 
-  // RSVP Form State
-  const [rsvpGuestName, setRsvpGuestName] = useState('');
+  useEffect(() => {
+    if (forceOpened !== undefined) {
+      setIsOpened(forceOpened);
+    }
+  }, [forceOpened]);
+
+  // RSVP Form State with auto-filled guest name if present
+  const [rsvpGuestName, setRsvpGuestName] = useState(guestParam.guestName);
   const [rsvpGuestPhone, setRsvpGuestPhone] = useState('');
   const [rsvpAttending, setRsvpAttending] = useState(true);
-  const [rsvpGuestsCount, setRsvpGuestsCount] = useState(1);
+  const [rsvpGuestsCount, setRsvpGuestsCount] = useState(Math.min(guestParam.guestPasses, 2));
   const [rsvpDietary, setRsvpDietary] = useState('');
   const [rsvpMessage, setRsvpMessage] = useState('');
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
@@ -178,13 +222,28 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
     }
   };
 
+  if (useBookMode) {
+    return (
+      <InteractiveBookExperience
+        invitation={invitation}
+        onBackToHome={onBackToHome}
+        onEditInvitation={onEditInvitation}
+        onToggleContinuousView={() => setUseBookMode(false)}
+        isEmbedded={isEmbedded}
+        forceOpen={forceOpened}
+        hideFloatingHeader={hideFloatingHeader}
+      />
+    );
+  }
+
   return (
-    <div className="relative min-h-screen bg-neutral-950 text-neutral-100 selection:bg-amber-500/20">
+    <div className={`relative ${isEmbedded ? 'w-full h-full overflow-y-auto' : 'min-h-screen'} bg-neutral-950 text-neutral-100 selection:bg-amber-500/20`}>
       {/* Background celebration particles */}
-      <CelebrationParticles type={invitation.particlesEffect || 'petals'} intensity="gentle" />
+      <CelebrationParticles type={invitation.particlesEffect || 'petals'} intensity="gentle" isEmbedded={isEmbedded} />
 
       {/* Floating Viewport Switcher & Top Bar Controls */}
-      <div className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none">
+      {!hideFloatingHeader && (
+        <div className={`${isEmbedded ? 'absolute top-2 left-2 right-2' : 'fixed top-4 left-4 right-4'} z-40 flex items-center justify-between pointer-events-none`}>
         {/* Left: Back / Exit button */}
         <div className="pointer-events-auto flex items-center gap-2">
           {onBackToHome && (
@@ -203,6 +262,15 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
               className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-500/20 px-3.5 py-1.5 text-xs font-semibold text-amber-300 backdrop-blur-md hover:bg-amber-500/30 transition-colors shadow-lg"
             >
               <span>Editar Invitación</span>
+            </button>
+          )}
+
+          {isBookTemplate && (
+            <button
+              onClick={() => setUseBookMode(true)}
+              className="flex items-center gap-1.5 rounded-full border border-amber-500/60 bg-amber-500/20 px-3.5 py-1.5 text-xs font-semibold text-amber-300 backdrop-blur-md hover:bg-amber-500/30 transition-colors shadow-lg"
+            >
+              <span>Modo Libro 3D</span>
             </button>
           )}
         </div>
@@ -265,29 +333,20 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
           </button>
         </div>
       </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* 1. ENVELOPE OPENING OVERLAY (Unsealing experience) */}
       {/* ------------------------------------------------------------- */}
       {!isOpened && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/95 p-4 backdrop-blur-md">
+        <div className={`${isEmbedded ? 'absolute' : 'fixed'} inset-0 z-40 flex items-center justify-center bg-neutral-950/95 p-4 backdrop-blur-md`}>
           <div className="relative w-full max-w-md text-center space-y-6">
-            {/* Monogram Seal */}
-            <div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-full border-4 border-amber-400/40 bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 shadow-2xl shadow-amber-500/20 cursor-pointer animate-gentle-float group"
-              onClick={handleOpenEnvelope}
-            >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-amber-300/40 bg-amber-800/80 shadow-inner group-hover:scale-105 transition-transform">
-                <span className="font-cinzel text-2xl font-bold tracking-widest text-amber-200">
-                  {invitation.hostNames.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-            </div>
-
+            {/* Event Title & Hosts */}
             <div className="space-y-2">
               <span className="text-xs uppercase tracking-widest text-amber-400 font-semibold">
                 Tienes una invitación especial
               </span>
-              <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-white">
+              <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-white leading-tight">
                 {invitation.title}
               </h2>
               <p className="font-cormorant text-lg italic text-neutral-300 max-w-xs mx-auto">
@@ -295,14 +354,28 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
               </p>
             </div>
 
-            <div className="pt-4">
-              <button
+            {/* Personalized Guest Badge (If guest param is provided in URL) */}
+            {guestParam.guestName && (
+              <div className="mx-auto max-w-xs rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-center space-y-1">
+                <span className="text-[10px] uppercase tracking-widest text-amber-300 font-mono block">
+                  Pase Personalizado de Honor
+                </span>
+                <p className="text-sm font-bold text-white">
+                  {guestParam.guestName}
+                </p>
+                <p className="text-[11px] text-amber-200/90 font-medium">
+                  {guestParam.guestPasses} {guestParam.guestPasses === 1 ? 'Pase reservado' : 'Pases reservados'}
+                </p>
+              </div>
+            )}
+
+            {/* Selected Entrance Button (1 of 12 distinct visual designs) */}
+            <div className="py-2">
+              <EntranceButton
+                design={invitation.entranceButtonDesign || (invitation.envelopeAnimation as any) || 'wax_seal'}
+                text={invitation.entranceButtonText || 'Tienes una invitación'}
                 onClick={handleOpenEnvelope}
-                className="group relative inline-flex items-center gap-2.5 rounded-full border border-amber-400/60 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-8 py-4 text-xs font-bold uppercase tracking-wider text-neutral-950 shadow-2xl shadow-amber-500/30 transition-all hover:scale-105"
-              >
-                <Sparkles className="h-4 w-4" />
-                <span>Tocar para Abrir Sobre</span>
-              </button>
+              />
             </div>
 
             <p className="text-[11px] text-neutral-500">
@@ -315,7 +388,7 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
       {/* ------------------------------------------------------------- */}
       {/* 2. INVITATION CONTENT CONTAINER */}
       {/* ------------------------------------------------------------- */}
-      <div className={`mx-auto transition-all duration-300 ${deviceFrameMode === 'mobile' ? 'max-w-md py-16 px-3' : 'max-w-4xl py-20 px-6'}`}>
+      <div className={`mx-auto transition-all duration-300 ${isEmbedded ? 'max-w-md py-6 px-3' : deviceFrameMode === 'mobile' ? 'max-w-md py-16 px-3' : 'max-w-4xl py-20 px-6'}`}>
         <article className="overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900/90 shadow-2xl shadow-black backdrop-blur-xl">
 
           {/* HERO COVER HEADER */}
@@ -556,37 +629,15 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
               </div>
             )}
 
-            {/* PHOTO GALLERY */}
+            {/* PHOTO GALLERY — 3D Book Leaf-Turn Carousel */}
             {invitation.galleryImages && invitation.galleryImages.length > 0 && (
-              <div className="space-y-6">
-                <div className="text-center space-y-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-amber-400">
-                    Galería de Recuerdos
-                  </span>
-                  <h3 className="font-playfair text-2xl font-bold text-neutral-100">
-                    Nuestros Momentos
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {invitation.galleryImages.map((imgUrl, gIdx) => (
-                    <button
-                      key={gIdx}
-                      onClick={() => setActivePhotoModal(imgUrl)}
-                      className="group relative aspect-square overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950"
-                    >
-                      <img
-                        src={imgUrl}
-                        alt={`Galería ${gIdx + 1}`}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                        <Sparkles className="h-5 w-5 text-amber-300" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <div className="space-y-4">
+                <BookLeafPhotoCarousel
+                  photos={invitation.galleryImages}
+                  title="Galería de Recuerdos"
+                  subtitle="Desliza las fotos con tu dedo o ratón para hojear como papel real"
+                  onOpenPhotoModal={(imgUrl) => setActivePhotoModal(imgUrl)}
+                />
               </div>
             )}
 
@@ -751,15 +802,25 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
                     {rsvpAttending && (
                       <div className="space-y-4 pt-2">
                         <div>
-                          <label className="block text-xs font-medium text-neutral-300 mb-1">
-                            Número de Personas Asistentes
-                          </label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-medium text-neutral-300">
+                              Número de Personas Asistentes
+                            </label>
+                            {guestParam.guestName && (
+                              <span className="text-[10px] text-amber-300 font-mono">
+                                (Máximo {guestParam.guestPasses} {guestParam.guestPasses === 1 ? 'pase asignado' : 'pases asignados'})
+                              </span>
+                            )}
+                          </div>
                           <select
                             value={rsvpGuestsCount}
                             onChange={(e) => setRsvpGuestsCount(parseInt(e.target.value, 10))}
                             className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-xs text-white focus:border-amber-400 focus:outline-none"
                           >
-                            {[1, 2, 3, 4, 5, 6].map((num) => (
+                            {Array.from(
+                              { length: guestParam.guestName ? Math.max(1, guestParam.guestPasses) : 6 },
+                              (_, i) => i + 1
+                            ).map((num) => (
                               <option key={num} value={num}>
                                 {num} {num === 1 ? 'Persona' : 'Personas'}
                               </option>
@@ -842,7 +903,7 @@ export const InvitationViewer: React.FC<InvitationViewerProps> = ({
       {/* PHOTO LIGHTBOX MODAL */}
       {activePhotoModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md cursor-pointer"
+          className={`${isEmbedded ? 'absolute' : 'fixed'} inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md cursor-pointer`}
           onClick={() => setActivePhotoModal(null)}
         >
           <div className="relative max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl">

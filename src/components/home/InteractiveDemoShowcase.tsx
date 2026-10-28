@@ -25,18 +25,19 @@ export const InteractiveDemoShowcase: React.FC<InteractiveDemoShowcaseProps> = (
             <span>Experiencias Reales Interactivas</span>
           </div>
           <h2 className="font-playfair text-3xl sm:text-4xl lg:text-5xl font-normal text-neutral-100">
-            Descubre las Tres Demostraciones Oficiales
+            Descubre Nuestras Demostraciones Oficiales
           </h2>
           <p className="text-base text-neutral-400">
             Haz clic en cualquiera de nuestras experiencias terminadas. No necesitas registrarte para interactuar con la animación de sobre, música, itinerario y confirmación de asistencia.
           </p>
         </div>
 
-        {/* 3 Flagship Demo Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Flagship Demo Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {demos.map((demo) => {
             const isWedding = demo.slug === 'demo-boda';
             const isQuince = demo.slug === 'demo-xv';
+            const isBook = demo.slug === 'demo-erase-una-vez' || demo.style === 'premium_book';
 
             return (
               <div
@@ -55,7 +56,7 @@ export const InteractiveDemoShowcase: React.FC<InteractiveDemoShowcaseProps> = (
 
                   {/* Category Pill Tag */}
                   <div className="absolute top-4 left-4 rounded-md bg-neutral-950/80 px-3 py-1 text-xs font-medium text-amber-300 backdrop-blur-md border border-neutral-800">
-                    {isWedding ? 'Boda de Alta Costura' : isQuince ? 'XV Años Real' : 'Fiesta Infantil Temática'}
+                    {isBook ? '📖 Libro Digital 3D' : isWedding ? 'Boda de Alta Costura' : isQuince ? 'XV Años Real' : 'Fiesta Infantil Temática'}
                   </div>
 
                   {/* Sound icon badge */}

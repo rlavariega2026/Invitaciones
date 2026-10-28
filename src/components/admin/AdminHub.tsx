@@ -18,6 +18,11 @@ import {
   ExternalLink,
   ChevronRight,
   TrendingUp,
+  Copy,
+  Share2,
+  MessageCircle,
+  X,
+  Check,
 } from 'lucide-react';
 import { Invitation, RSVPRecord, PricingPlan, Coupon, Template } from '../../types';
 import {
@@ -95,6 +100,29 @@ export const AdminHub: React.FC<AdminHubProps> = ({
       return inv;
     });
     saveInvitations(updated);
+    onRefreshData();
+  };
+
+  // Guest link generator modal state
+  const [guestModalInv, setGuestModalInv] = useState<Invitation | null>(null);
+  const [modalGuestName, setModalGuestName] = useState('');
+  const [modalGuestPasses, setModalGuestPasses] = useState(2);
+  const [modalCopied, setModalCopied] = useState(false);
+
+  // Duplicate Invitation
+  const handleDuplicateInvitation = (inv: Invitation) => {
+    const timestamp = Date.now();
+    const cloned: Invitation = {
+      ...inv,
+      id: `inv-${timestamp}`,
+      slug: `${inv.slug}-copia-${String(timestamp).slice(-4)}`,
+      title: `Copia de ${inv.title}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      visitsCount: 0,
+      rsvpsCount: 0,
+      isDemo: false,
+    };
+    saveInvitations([cloned, ...invitations]);
     onRefreshData();
   };
 
@@ -391,13 +419,32 @@ export const AdminHub: React.FC<AdminHubProps> = ({
                           {inv.status}
                         </span>
                       </td>
-                      <td className="p-4 text-right space-x-2">
+                      <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
                         <button
                           onClick={() => onViewInvitation(inv.slug)}
                           className="rounded-lg border border-neutral-700 bg-neutral-800 p-1.5 text-neutral-300 hover:text-white"
-                          title="Abrir Invitación"
+                          title="Abrir Invitación en Vivo"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setGuestModalInv(inv);
+                            setModalGuestName('');
+                            setModalGuestPasses(2);
+                            setModalCopied(false);
+                          }}
+                          className="rounded-lg border border-amber-500/40 bg-amber-500/15 p-1.5 text-amber-300 hover:bg-amber-500 hover:text-neutral-950 transition-colors"
+                          title="Generar Enlace con Pases por Invitado"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDuplicateInvitation(inv)}
+                          className="rounded-lg border border-neutral-700 bg-neutral-800 p-1.5 text-neutral-300 hover:text-amber-300 transition-colors"
+                          title="Duplicar Invitación"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => onEditInvitation(inv)}
@@ -658,6 +705,112 @@ export const AdminHub: React.FC<AdminHubProps> = ({
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: GENERADOR DE ENLACE PERSONALIZADO CON PASES */}
+        {guestModalInv && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={() => setGuestModalInv(null)}
+          >
+            <div
+              className="relative w-full max-w-lg rounded-2xl border border-amber-500/40 bg-neutral-900 p-6 shadow-2xl space-y-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                    Generador de Pases Individuales
+                  </span>
+                  <h3 className="font-playfair text-xl font-bold text-white mt-0.5">
+                    {guestModalInv.title}
+                  </h3>
+                  <p className="text-xs text-neutral-400">{guestModalInv.hostNames}</p>
+                </div>
+                <button
+                  onClick={() => setGuestModalInv(null)}
+                  className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-neutral-300 font-semibold mb-1">
+                    Nombre o Familia del Invitado *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={modalGuestName}
+                    onChange={(e) => setModalGuestName(e.target.value)}
+                    placeholder="Ej. Familia Morales Silva o Ing. Carlos Mendívil"
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-white placeholder-neutral-500 focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-neutral-300 font-semibold mb-1">
+                    Número de Pases Asignados para RSVP
+                  </label>
+                  <select
+                    value={modalGuestPasses}
+                    onChange={(e) => setModalGuestPasses(parseInt(e.target.value, 10))}
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-white focus:border-amber-400 focus:outline-none"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                      <option key={n} value={n}>
+                        {n} {n === 1 ? 'Pase de honor' : 'Pases de honor'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {modalGuestName.trim() && (
+                  <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-3">
+                    <span className="text-[10px] uppercase tracking-wider text-amber-300 font-bold block">
+                      Enlace personalizado listo:
+                    </span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}${window.location.pathname}#/invitation/${guestModalInv.slug}?guest=${encodeURIComponent(modalGuestName.trim())}&pases=${modalGuestPasses}`}
+                      className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-[11px] font-mono text-amber-300 select-all"
+                    />
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${window.location.origin}${window.location.pathname}#/invitation/${guestModalInv.slug}?guest=${encodeURIComponent(modalGuestName.trim())}&pases=${modalGuestPasses}`;
+                          navigator.clipboard.writeText(url);
+                          setModalCopied(true);
+                          setTimeout(() => setModalCopied(false), 2000);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 hover:bg-amber-400"
+                      >
+                        {modalCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        <span>{modalCopied ? 'Copiado al portapapeles' : 'Copiar Enlace'}</span>
+                      </button>
+
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(
+                          `¡Hola ${modalGuestName.trim()}! Con gran alegría te compartimos tu pase e invitación interactiva (${modalGuestPasses} ${modalGuestPasses === 1 ? 'pase reservado' : 'pases reservados'}): ${window.location.origin}${window.location.pathname}#/invitation/${guestModalInv.slug}?guest=${encodeURIComponent(modalGuestName.trim())}&pases=${modalGuestPasses} \n\n¡Será un honor contar con tu presencia!`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-emerald-500"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -31,12 +31,17 @@ import { musicPlayer } from '../../utils/audioSynth';
 import { CelebrationParticles } from '../common/CelebrationParticles';
 import { getGoogleCalendarUrl, downloadIcsFile, getWhatsAppRsvpUrl } from '../../utils/calendarAndQr';
 import { addRSVP, incrementInvitationVisit } from '../../utils/storage';
+import { EntranceButton } from './EntranceButtonCollection';
+import { BookLeafPhotoCarousel } from '../common/BookLeafPhotoCarousel';
 
 interface InteractiveBookExperienceProps {
   invitation: Invitation;
   onBackToHome?: () => void;
   onEditInvitation?: (invitation: Invitation) => void;
   onToggleContinuousView?: () => void;
+  isEmbedded?: boolean;
+  forceOpen?: boolean;
+  hideFloatingHeader?: boolean;
 }
 
 export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps> = ({
@@ -44,11 +49,20 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
   onBackToHome,
   onEditInvitation,
   onToggleContinuousView,
+  isEmbedded = false,
+  forceOpen = false,
+  hideFloatingHeader = false,
 }) => {
   // Book state: 0 = Closed Book Cover, 1 to 7 = Inner Pages
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(forceOpen);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 7;
+
+  useEffect(() => {
+    if (forceOpen !== undefined) {
+      setIsOpen(forceOpen);
+    }
+  }, [forceOpen]);
 
   // Audio & Utilities
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -56,8 +70,16 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
   const [copiedLink, setCopiedLink] = useState(false);
   const [activePhotoModal, setActivePhotoModal] = useState<string | null>(null);
 
-  // Photo layout switcher for gallery page (1, 2, 3, or 4 photos)
-  const [galleryLayout, setGalleryLayout] = useState<'single' | 'duo' | 'trio' | 'quad'>('quad');
+  // Photo layout switcher for gallery page (carousel, quad, duo, trio, single)
+  const [galleryLayout, setGalleryLayout] = useState<'carousel' | 'quad' | 'duo' | 'trio' | 'single'>('carousel');
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+
+  // Book sliding / page-flip gesture state (Touch & Mouse)
+  const [isDraggingBook, setIsDraggingBook] = useState(false);
+  const [dragDistanceX, setDragDistanceX] = useState(0);
+  const [isFlipping, setIsFlipping] = useState<'next' | 'prev' | null>(null);
+  const dragStartX = useRef<number | null>(null);
+  const photoSwipeStartX = useRef<number | null>(null);
 
   // RSVP Form State
   const [rsvpGuestName, setRsvpGuestName] = useState('');
@@ -75,10 +97,6 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
     minutes: 0,
     seconds: 0,
   });
-
-  // Touch swipe support
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
 
   // Track page visit once
   useEffect(() => {
@@ -151,18 +169,176 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
   };
 
   const goToNextPage = () => {
+    if (isFlipping) return;
     if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
+      setIsFlipping('next');
+      setTimeout(() => {
+        setCurrentPage((prev) => prev + 1);
+        setIsFlipping(null);
+      }, 240);
     }
   };
 
   const goToPrevPage = () => {
+    if (isFlipping) return;
     if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+      setIsFlipping('prev');
+      setTimeout(() => {
+        setCurrentPage((prev) => prev - 1);
+        setIsFlipping(null);
+      }, 240);
     } else {
       setIsOpen(false);
     }
   };
+
+  // Mouse & Touch Gestures for sliding the book pages
+  const handleStartBookDrag = (clientX: number) => {
+    if (isPhotoDragging) return;
+    dragStartX.current = clientX;
+    setIsDraggingBook(true);
+    setDragDistanceX(0);
+  };
+
+  const handleMoveBookDrag = (clientX: number) => {
+    if (!isDraggingBook || dragStartX.current === null || isPhotoDragging) return;
+    const diff = clientX - dragStartX.current;
+    setDragDistanceX(diff);
+  };
+
+  const handleEndBookDrag = () => {
+    if (!isDraggingBook || dragStartX.current === null) {
+      setIsDraggingBook(false);
+      setDragDistanceX(0);
+      return;
+    }
+
+    if (dragDistanceX < -25) {
+      // Slid left -> Next page
+      goToNextPage();
+    } else if (dragDistanceX > 25) {
+      // Slid right -> Prev page
+      goToPrevPage();
+    }
+
+    setIsDraggingBook(false);
+    setDragDistanceX(0);
+    dragStartX.current = null;
+  };
+
+  // Photos list and carousel controls with rich fallback so there's always leaves to flip
+  const defaultFallbackPhotos = [
+    invitation.coverImage,
+    '/src/assets/images/demo_wedding_portrait_1792595402081.jpg',
+    '/src/assets/images/hero_invitations_showcase_1792595400987.jpg',
+    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
+  ];
+
+  const allAlbumPhotos = (
+    invitation.galleryImages && invitation.galleryImages.length >= 2
+      ? invitation.galleryImages
+      : defaultFallbackPhotos
+  ).filter(Boolean);
+
+  const [photoFlipping, setPhotoFlipping] = useState<'next' | 'prev' | null>(null);
+
+  const handleNextPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (photoFlipping) return;
+    setPhotoFlipping('next');
+    setTimeout(() => {
+      setActivePhotoIndex((prev) => (prev + 1) % allAlbumPhotos.length);
+      setPhotoFlipping(null);
+    }, 180);
+  };
+
+  const handlePrevPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (photoFlipping) return;
+    setPhotoFlipping('prev');
+    setTimeout(() => {
+      setActivePhotoIndex((prev) => (prev - 1 + allAlbumPhotos.length) % allAlbumPhotos.length);
+      setPhotoFlipping(null);
+    }, 180);
+  };
+
+  // Photo interactive sliding state (Touch & Mouse)
+  const [isPhotoDragging, setIsPhotoDragging] = useState(false);
+  const [photoDragX, setPhotoDragX] = useState(0);
+  const photoDragStartX = useRef<number | null>(null);
+
+  const handlePhotoMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    photoDragStartX.current = e.clientX;
+    setIsPhotoDragging(true);
+    setPhotoDragX(0);
+  };
+
+  const handlePhotoMouseMove = (e: React.MouseEvent) => {
+    if (!isPhotoDragging || photoDragStartX.current === null) return;
+    e.stopPropagation();
+    const diff = e.clientX - photoDragStartX.current;
+    setPhotoDragX(diff);
+  };
+
+  const handlePhotoMouseUp = (e?: React.MouseEvent) => {
+    if (!isPhotoDragging || photoDragStartX.current === null) {
+      setIsPhotoDragging(false);
+      setPhotoDragX(0);
+      return;
+    }
+    e?.stopPropagation();
+    if (photoDragX < -30) {
+      handleNextPhoto();
+    } else if (photoDragX > 30) {
+      handlePrevPhoto();
+    }
+    setIsPhotoDragging(false);
+    setPhotoDragX(0);
+    photoDragStartX.current = null;
+  };
+
+  const handlePhotoTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    photoDragStartX.current = e.touches[0].clientX;
+    setIsPhotoDragging(true);
+    setPhotoDragX(0);
+  };
+
+  const handlePhotoTouchMove = (e: React.TouchEvent) => {
+    if (!isPhotoDragging || photoDragStartX.current === null) return;
+    e.stopPropagation();
+    const diff = e.touches[0].clientX - photoDragStartX.current;
+    setPhotoDragX(diff);
+  };
+
+  const handlePhotoTouchEnd = (e?: React.TouchEvent) => {
+    if (!isPhotoDragging || photoDragStartX.current === null) {
+      setIsPhotoDragging(false);
+      setPhotoDragX(0);
+      return;
+    }
+    e?.stopPropagation();
+    if (photoDragX < -30) {
+      handleNextPhoto();
+    } else if (photoDragX > 30) {
+      handlePrevPhoto();
+    }
+    setIsPhotoDragging(false);
+    setPhotoDragX(0);
+    photoDragStartX.current = null;
+  };
+
+  const BOOK_CHAPTERS = [
+    { page: 1, label: 'Prólogo', icon: '📜' },
+    { page: 2, label: 'Portada', icon: '👑' },
+    { page: 3, label: 'Álbum Fotos', icon: '📷' },
+    { page: 4, label: 'El Gran Día', icon: '⏳' },
+    { page: 5, label: 'Ubicación', icon: '🏰' },
+    { page: 6, label: 'Regalos', icon: '🎁' },
+    { page: 7, label: 'Confirmar', icon: '✉️' },
+  ];
 
   const handleCopyClabe = (clabeText: string) => {
     navigator.clipboard.writeText(clabeText);
@@ -194,29 +370,6 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
     setRsvpSubmitted(true);
   };
 
-  // Touch Gestures
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const diff = touchStartX.current - touchEndX.current;
-    if (diff > 50) {
-      // Swiped Left -> Next page
-      goToNextPage();
-    } else if (diff < -50) {
-      // Swiped Right -> Prev page
-      goToPrevPage();
-    }
-    touchStartX.current = null;
-    touchEndX.current = null;
-  };
-
   const renderItineraryIcon = (iconName?: string) => {
     switch (iconName) {
       case 'Church':
@@ -239,119 +392,206 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
   // Cover Style themes
   const coverTheme = invitation.bookCoverStyle || 'luxury_linen';
 
+  const themeStyles = (() => {
+    switch (coverTheme) {
+      case 'romantic':
+        return {
+          outer: 'border-rose-300/40 bg-gradient-to-br from-stone-950 via-rose-950/60 to-neutral-950 hover:border-rose-300/60',
+          inner: 'border-rose-400/40',
+          subtitle: 'text-rose-300/90',
+          ornament: 'text-rose-400/70',
+          script: 'text-rose-200/90',
+          ribbon: 'from-rose-500 via-rose-700 to-rose-900 border-rose-300/50',
+          badge: 'bg-rose-500/20 text-rose-300 border-rose-400/30',
+          button: 'bg-gradient-to-r from-rose-500 via-rose-400 to-rose-500 text-neutral-950 shadow-rose-500/25 border-rose-300/60',
+        };
+      case 'vintage':
+        return {
+          outer: 'border-amber-600/50 bg-gradient-to-br from-amber-950 via-stone-900 to-amber-950/90 hover:border-amber-500/60',
+          inner: 'border-amber-500/50',
+          subtitle: 'text-amber-300/80',
+          ornament: 'text-amber-500/70',
+          script: 'text-amber-200/90',
+          ribbon: 'from-amber-700 via-yellow-800 to-amber-900 border-amber-400/50',
+          badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          button: 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-neutral-950 shadow-amber-600/25 border-amber-400/60',
+        };
+      case 'editorial':
+        return {
+          outer: 'border-stone-400/30 bg-gradient-to-br from-neutral-950 via-neutral-900 to-stone-950 hover:border-stone-400/50',
+          inner: 'border-stone-400/40',
+          subtitle: 'text-stone-300/80',
+          ornament: 'text-stone-400/60',
+          script: 'text-stone-200',
+          ribbon: 'from-stone-600 via-neutral-700 to-stone-800 border-stone-400/40',
+          badge: 'bg-stone-500/20 text-stone-300 border-stone-400/30',
+          button: 'bg-gradient-to-r from-stone-200 via-stone-300 to-stone-200 text-neutral-950 shadow-stone-400/25 border-stone-300',
+        };
+      case 'minimalist':
+        return {
+          outer: 'border-stone-500/30 bg-gradient-to-br from-stone-900 via-neutral-900 to-zinc-950 hover:border-stone-400/40',
+          inner: 'border-stone-500/30',
+          subtitle: 'text-stone-400',
+          ornament: 'text-stone-500/50',
+          script: 'text-stone-300',
+          ribbon: 'from-neutral-600 via-stone-700 to-neutral-800 border-neutral-400/30',
+          badge: 'bg-neutral-800 text-neutral-300 border-neutral-700',
+          button: 'bg-gradient-to-r from-stone-400 via-stone-300 to-stone-400 text-neutral-950 shadow-stone-500/20 border-stone-400',
+        };
+      case 'modern':
+        return {
+          outer: 'border-amber-400/50 bg-gradient-to-br from-black via-zinc-950 to-neutral-950 hover:border-amber-400/70',
+          inner: 'border-amber-400/60',
+          subtitle: 'text-amber-300',
+          ornament: 'text-amber-400/80',
+          script: 'text-amber-200',
+          ribbon: 'from-amber-500 via-amber-600 to-stone-900 border-amber-300/60',
+          badge: 'bg-amber-400/20 text-amber-300 border-amber-400/40',
+          button: 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-neutral-950 shadow-amber-400/30 border-amber-300',
+        };
+      case 'luxury_linen':
+      default:
+        return {
+          outer: 'border-amber-300/30 bg-gradient-to-br from-slate-950 via-neutral-900 to-stone-950 hover:border-amber-400/50',
+          inner: 'border-amber-400/40',
+          subtitle: 'text-amber-300/80',
+          ornament: 'text-amber-400/60',
+          script: 'text-amber-200/90',
+          ribbon: 'from-amber-600 via-rose-700 to-rose-800 border-amber-400/40',
+          badge: 'bg-amber-500/20 text-amber-300 border-amber-400/30',
+          button: 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-neutral-950 shadow-amber-500/25 border-amber-400/60',
+        };
+    }
+  })();
+
   return (
     <div
-      className="relative min-h-screen bg-neutral-950 text-neutral-100 selection:bg-amber-500/20 flex flex-col justify-between overflow-x-hidden"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      className={`relative ${isEmbedded ? 'w-full h-full overflow-hidden' : 'min-h-screen'} bg-neutral-950 text-neutral-100 selection:bg-amber-500/20 flex flex-col justify-between overflow-x-hidden`}
+      onTouchStart={(e) => handleStartBookDrag(e.touches[0].clientX)}
+      onTouchMove={(e) => handleMoveBookDrag(e.touches[0].clientX)}
+      onTouchEnd={handleEndBookDrag}
     >
       {/* Background celebration particles */}
-      <CelebrationParticles type={invitation.particlesEffect || 'petals'} intensity="gentle" />
+      <CelebrationParticles type={invitation.particlesEffect || 'petals'} intensity="gentle" isEmbedded={isEmbedded} />
 
       {/* Floating Top Action Bar */}
-      <header className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-2">
-          {onBackToHome && (
+      {!hideFloatingHeader && (
+        <header className={`${isEmbedded ? 'absolute top-2 left-2 right-2' : 'fixed top-4 left-4 right-4'} z-40 flex items-center justify-between pointer-events-none`}>
+          <div className="pointer-events-auto flex items-center gap-2">
+            {onBackToHome && (
+              <button
+                onClick={onBackToHome}
+                className="flex items-center gap-1.5 rounded-full border border-neutral-700/80 bg-neutral-900/90 px-3.5 py-1.5 text-xs font-medium text-neutral-200 backdrop-blur-md hover:bg-neutral-800 transition-colors shadow-lg"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>Volver a LAV</span>
+              </button>
+            )}
+
+            {onEditInvitation && (
+              <button
+                onClick={() => onEditInvitation(invitation)}
+                className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-500/20 px-3.5 py-1.5 text-xs font-semibold text-amber-300 backdrop-blur-md hover:bg-amber-500/30 transition-colors shadow-lg"
+              >
+                <span>Editar Libro</span>
+              </button>
+            )}
+
+            {onToggleContinuousView && (
+              <button
+                onClick={onToggleContinuousView}
+                className="hidden md:flex items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900/90 px-3 py-1.5 text-xs text-neutral-300 hover:text-white"
+                title="Alternar a modo desplazamiento vertical"
+              >
+                <span>Vista Continua</span>
+              </button>
+            )}
+          </div>
+
+          <div className="pointer-events-auto flex items-center gap-2">
+            {/* Audio toggle */}
+            {invitation.musicTrackId && invitation.musicTrackId !== 'none' && (
+              <button
+                onClick={toggleAudio}
+                className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md shadow-lg transition-all ${
+                  isPlayingAudio
+                    ? 'border-amber-400/80 bg-amber-500/20 text-amber-300'
+                    : 'border-neutral-700/80 bg-neutral-900/90 text-neutral-300 hover:bg-neutral-800'
+                }`}
+              >
+                {isPlayingAudio ? (
+                  <>
+                    <Volume2 className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                    <span className="hidden sm:inline">Pausar</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="h-3.5 w-3.5 text-neutral-400" />
+                    <span className="hidden sm:inline">Música</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Share link */}
             <button
-              onClick={onBackToHome}
+              onClick={handleCopyShareLink}
               className="flex items-center gap-1.5 rounded-full border border-neutral-700/80 bg-neutral-900/90 px-3.5 py-1.5 text-xs font-medium text-neutral-200 backdrop-blur-md hover:bg-neutral-800 transition-colors shadow-lg"
             >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              <span>Volver a LAV</span>
+              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{copiedLink ? 'Copiado' : 'Compartir'}</span>
             </button>
-          )}
-
-          {onEditInvitation && (
-            <button
-              onClick={() => onEditInvitation(invitation)}
-              className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-500/20 px-3.5 py-1.5 text-xs font-semibold text-amber-300 backdrop-blur-md hover:bg-amber-500/30 transition-colors shadow-lg"
-            >
-              <span>Editar Libro</span>
-            </button>
-          )}
-
-          {onToggleContinuousView && (
-            <button
-              onClick={onToggleContinuousView}
-              className="hidden md:flex items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900/90 px-3 py-1.5 text-xs text-neutral-300 hover:text-white"
-              title="Alternar a modo desplazamiento vertical"
-            >
-              <span>Vista Continua</span>
-            </button>
-          )}
-        </div>
-
-        <div className="pointer-events-auto flex items-center gap-2">
-          {/* Audio toggle */}
-          {invitation.musicTrackId && invitation.musicTrackId !== 'none' && (
-            <button
-              onClick={toggleAudio}
-              className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md shadow-lg transition-all ${
-                isPlayingAudio
-                  ? 'border-amber-400/80 bg-amber-500/20 text-amber-300'
-                  : 'border-neutral-700/80 bg-neutral-900/90 text-neutral-300 hover:bg-neutral-800'
-              }`}
-            >
-              {isPlayingAudio ? (
-                <>
-                  <Volume2 className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                  <span className="hidden sm:inline">Pausar</span>
-                </>
-              ) : (
-                <>
-                  <VolumeX className="h-3.5 w-3.5 text-neutral-400" />
-                  <span className="hidden sm:inline">Música</span>
-                </>
-              )}
-            </button>
-          )}
-
-          {/* Share link */}
-          <button
-            onClick={handleCopyShareLink}
-            className="flex items-center gap-1.5 rounded-full border border-neutral-700/80 bg-neutral-900/90 px-3.5 py-1.5 text-xs font-medium text-neutral-200 backdrop-blur-md hover:bg-neutral-800 transition-colors shadow-lg"
-          >
-            {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
-            <span className="hidden sm:inline">{copiedLink ? 'Copiado' : 'Compartir'}</span>
-          </button>
-        </div>
-      </header>
+          </div>
+        </header>
+      )}
 
       {/* --------------------------------------------------------------------- */}
       {/* 1. CLOSED BOOK FRONT COVER PRESENTATION */}
       {/* --------------------------------------------------------------------- */}
       {!isOpen ? (
-        <main className="flex-1 flex items-center justify-center p-4 sm:p-8 pt-20 pb-16">
-          <div className="relative w-full max-w-md perspective-[1200px] animate-gentle-float">
+        <main className={`flex-1 flex items-center justify-center ${isEmbedded ? 'p-2 pt-3 pb-3' : 'p-4 sm:p-8 pt-20 pb-16'}`}>
+          <div className={`relative w-full ${isEmbedded ? 'max-w-[310px]' : 'max-w-md'} perspective-[1200px] animate-gentle-float`}>
             {/* Hardcover Outer Frame */}
             <div
               onClick={handleOpenBook}
-              className="group relative aspect-[3/4] w-full rounded-2xl sm:rounded-3xl border-4 border-amber-300/30 bg-gradient-to-br from-stone-900 via-neutral-900 to-stone-950 p-6 sm:p-8 shadow-2xl shadow-black cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:border-amber-400/50"
+              onMouseDown={(e) => handleStartBookDrag(e.clientX)}
+              onMouseMove={(e) => handleMoveBookDrag(e.clientX)}
+              onMouseUp={() => {
+                if (dragDistanceX < -25) handleOpenBook();
+                handleEndBookDrag();
+              }}
+              onTouchStart={(e) => handleStartBookDrag(e.touches[0].clientX)}
+              onTouchMove={(e) => handleMoveBookDrag(e.touches[0].clientX)}
+              onTouchEnd={() => {
+                if (dragDistanceX < -25) handleOpenBook();
+                handleEndBookDrag();
+              }}
+              className={`group relative aspect-[3/4] w-full rounded-2xl sm:rounded-3xl border-4 p-6 sm:p-8 shadow-2xl shadow-black cursor-pointer transition-all duration-500 hover:scale-[1.02] ${themeStyles.outer}`}
               style={{
                 boxShadow:
                   '0 25px 50px -12px rgba(0,0,0,0.85), inset 4px 0 10px rgba(255,255,255,0.06), -12px 12px 24px rgba(0,0,0,0.7)',
+                transform: isDraggingBook ? `translateX(${dragDistanceX * 0.3}px) rotateY(${dragDistanceX * -0.05}deg)` : undefined,
               }}
             >
               {/* Spine shadow depth on left edge */}
               <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/80 via-black/40 to-transparent rounded-l-2xl sm:rounded-l-3xl border-r border-amber-500/20" />
 
               {/* Silk ribbon bookmark hanging from top */}
-              <div className="absolute -top-3 right-12 w-6 h-16 bg-gradient-to-b from-amber-600 via-rose-700 to-rose-800 shadow-md rounded-b-sm border-x border-amber-400/40 z-20 flex items-end justify-center pb-1">
+              <div className={`absolute -top-3 right-12 w-6 h-16 bg-gradient-to-b shadow-md rounded-b-sm border-x z-20 flex items-end justify-center pb-1 ${themeStyles.ribbon}`}>
                 <Bookmark className="h-3.5 w-3.5 text-amber-200 fill-amber-200/40" />
               </div>
 
               {/* Gilded Book Cover Border & Corner Ornaments */}
-              <div className="relative h-full w-full rounded-xl sm:rounded-2xl border-2 border-amber-400/40 p-6 flex flex-col justify-between items-center text-center overflow-hidden">
+              <div className={`relative h-full w-full rounded-xl sm:rounded-2xl border-2 p-6 flex flex-col justify-between items-center text-center overflow-hidden ${themeStyles.inner}`}>
                 {/* Vintage Corner Accents */}
-                <div className="absolute top-2 left-2 text-amber-400/60 font-cinzel text-xs">❦</div>
-                <div className="absolute top-2 right-2 text-amber-400/60 font-cinzel text-xs">❦</div>
-                <div className="absolute bottom-2 left-2 text-amber-400/60 font-cinzel text-xs">❦</div>
-                <div className="absolute bottom-2 right-2 text-amber-400/60 font-cinzel text-xs">❦</div>
+                <div className={`absolute top-2 left-2 font-cinzel text-xs ${themeStyles.ornament}`}>❦</div>
+                <div className={`absolute top-2 right-2 font-cinzel text-xs ${themeStyles.ornament}`}>❦</div>
+                <div className={`absolute bottom-2 left-2 font-cinzel text-xs ${themeStyles.ornament}`}>❦</div>
+                <div className={`absolute bottom-2 right-2 font-cinzel text-xs ${themeStyles.ornament}`}>❦</div>
 
                 {/* Subtitle / Edition */}
                 <div className="space-y-1 pt-4">
-                  <span className="font-cinzel text-[11px] font-semibold uppercase tracking-widest text-amber-300/80">
+                  <span className={`font-cinzel text-[11px] font-semibold uppercase tracking-widest ${themeStyles.subtitle}`}>
                     Edición Especial · Recuerdo Inolvidable
                   </span>
                   <div className="h-px w-16 bg-amber-400/40 mx-auto" />
@@ -359,7 +599,7 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
 
                 {/* Main Book Title: Érase una vez */}
                 <div className="my-auto space-y-3">
-                  <span className="font-cormorant text-2xl sm:text-3xl italic text-amber-200/90 block">
+                  <span className={`font-cormorant text-2xl sm:text-3xl italic block ${themeStyles.script}`}>
                     Érase una vez
                   </span>
                   <h1 className="font-playfair text-3xl sm:text-4xl font-bold tracking-tight text-white drop-shadow-md">
@@ -376,16 +616,14 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
                     {invitation.eventDate} · {invitation.venueName}
                   </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenBook();
-                    }}
-                    className="group relative flex w-full items-center justify-center gap-2 rounded-full border border-amber-400/60 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 py-3.5 text-xs font-bold uppercase tracking-wider text-neutral-950 shadow-xl shadow-amber-500/25 transition-transform group-hover:scale-105"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    <span>Tocar para Abrir el Libro</span>
-                  </button>
+                  <div className="w-full py-1">
+                    <EntranceButton
+                      design={invitation.entranceButtonDesign || 'wax_seal'}
+                      text={invitation.entranceButtonText || 'Tienes una invitación'}
+                      onClick={handleOpenBook}
+                      isCompact={true}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -399,16 +637,16 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
         /* --------------------------------------------------------------------- */
         /* 2. OPENED BOOK INTERACTIVE PAGES SPREAD */
         /* --------------------------------------------------------------------- */
-        <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 pt-16 pb-20 max-w-4xl mx-auto w-full">
+        <main className={`flex-1 flex flex-col items-center justify-between ${isEmbedded ? 'px-1 pt-1 pb-1 h-full max-h-full' : 'px-3 sm:px-6 pt-14 pb-16'} max-w-4xl mx-auto w-full`}>
 
           {/* Book Spine & Navigation Bar */}
-          <div className="mb-4 flex items-center justify-between w-full max-w-2xl px-2 text-xs text-neutral-400">
+          <div className={`${isEmbedded ? 'mb-1 px-1' : 'mb-3 px-2'} flex items-center justify-between w-full max-w-2xl text-xs text-neutral-400 shrink-0`}>
             <div className="flex items-center gap-2">
               <span className="font-cinzel text-amber-400 font-semibold uppercase text-[11px]">
                 Érase una vez
               </span>
               <span>·</span>
-              <span className="text-neutral-300">{invitation.hostNames}</span>
+              <span className="text-neutral-300 truncate max-w-[140px] sm:max-w-xs">{invitation.hostNames}</span>
             </div>
 
             <div className="flex items-center gap-1 font-mono text-[11px] text-amber-300">
@@ -420,12 +658,61 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
           </div>
 
           {/* Book Open Frame (3D Depth with paper texture & spine binding) */}
-          <div className="relative w-full max-w-2xl rounded-2xl sm:rounded-3xl border border-amber-500/20 bg-stone-900/90 shadow-2xl shadow-black overflow-hidden flex flex-col justify-between min-h-[580px] sm:min-h-[640px]">
+          <div
+            onMouseDown={(e) => handleStartBookDrag(e.clientX)}
+            onMouseMove={(e) => handleMoveBookDrag(e.clientX)}
+            onMouseUp={handleEndBookDrag}
+            onMouseLeave={handleEndBookDrag}
+            onTouchStart={(e) => handleStartBookDrag(e.touches[0].clientX)}
+            onTouchMove={(e) => handleMoveBookDrag(e.touches[0].clientX)}
+            onTouchEnd={handleEndBookDrag}
+            className={`relative w-full max-w-2xl rounded-2xl sm:rounded-3xl border border-amber-500/20 bg-stone-900/95 shadow-2xl shadow-black overflow-hidden flex flex-col justify-between ${
+              isEmbedded ? 'flex-1 min-h-0' : 'min-h-[580px] sm:min-h-[640px]'
+            } select-none transition-all duration-200 ${
+              isDraggingBook ? 'cursor-grabbing' : 'cursor-grab'
+            } ${isFlipping ? 'opacity-90 scale-[0.98]' : 'opacity-100 scale-100'}`}
+            style={{
+              transform: isDraggingBook
+                ? `translateX(${dragDistanceX * 0.35}px) rotateY(${dragDistanceX * -0.06}deg)`
+                : undefined,
+            }}
+          >
             {/* Center Book Spine Line (Crease effect) */}
             <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-4 bg-gradient-to-r from-black/25 via-black/40 to-black/25 pointer-events-none hidden sm:block z-20" />
 
+            {/* Quick Edge Flipper Handles for effortless page turns - ALWAYS VISIBLE ON MOBILE & DESKTOP */}
+            {currentPage > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToPrevPage();
+                }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-30 flex items-center gap-1 py-3.5 px-2 rounded-r-xl bg-neutral-950/90 hover:bg-amber-500 text-amber-300 hover:text-neutral-950 border border-l-0 border-amber-400/40 shadow-2xl backdrop-blur-md transition-all group cursor-pointer"
+                title="Deslizar a la hoja anterior del libro"
+              >
+                <ChevronLeft className="h-5 w-5 group-hover:-translate-x-0.5 transition-transform" />
+                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider font-mono">Ant.</span>
+              </button>
+            )}
+
+            {currentPage < totalPages && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToNextPage();
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-30 flex items-center gap-1 py-3.5 px-2 rounded-l-xl bg-neutral-950/90 hover:bg-amber-500 text-amber-300 hover:text-neutral-950 border border-r-0 border-amber-400/40 shadow-2xl backdrop-blur-md transition-all group cursor-pointer"
+                title="Deslizar a la siguiente hoja del libro"
+              >
+                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider font-mono">Sig.</span>
+                <ChevronRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+
             {/* Inner Page Content by Step */}
-            <div className="p-6 sm:p-10 flex-1 flex flex-col justify-between space-y-6">
+            <div className={`${isEmbedded ? 'p-3 sm:p-5' : 'p-6 sm:p-10'} flex-1 flex flex-col justify-between space-y-4 overflow-y-auto`}>
 
               {/* ----------------------------------------------------------- */}
               {/* PÁGINA 1: Frontispicio & Dedicatoria */}
@@ -478,9 +765,10 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
 
                   <div className="relative mx-auto aspect-[3/4] max-w-sm overflow-hidden rounded-2xl border-2 border-amber-400/40 bg-neutral-950 shadow-xl">
                     <img
+                      draggable={false}
                       src={invitation.coverImage}
                       alt={invitation.hostNames}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover select-none pointer-events-none"
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4 text-center justify-center">
@@ -497,115 +785,45 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
               )}
 
               {/* ----------------------------------------------------------- */}
-              {/* PÁGINA 3: Capítulo II: Álbum de Recuerdos (Múltiples Fotos) */}
+              {/* PÁGINA 3: Capítulo II: Álbum de Recuerdos (Presentación Deslizable) */}
               {/* ----------------------------------------------------------- */}
               {currentPage === 3 && (
-                <div className="my-auto space-y-6 animate-fade-in">
-                  <div className="text-center space-y-1">
+                <div className="my-auto space-y-3 sm:space-y-4 animate-fade-in">
+                  <div className="text-center space-y-0.5 sm:space-y-1">
                     <span className="font-cinzel text-xs font-semibold uppercase tracking-widest text-amber-400">
                       Capítulo II
                     </span>
-                    <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-white">
-                      Galería de Recuerdos
+                    <h2 className="font-playfair text-xl sm:text-2xl font-bold text-white">
+                      Álbum de Recuerdos
                     </h2>
-                    <p className="text-xs text-neutral-400">
-                      Toca cualquier imagen para ampliarla en detalle
+                    <p className="text-[11px] text-neutral-400">
+                      Hojas fotográficas encuadernadas · Desliza o usa las flechas
                     </p>
                   </div>
 
-                  {/* Layout Selector (1, 2, 3, 4 photos) */}
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span className="text-[11px] text-neutral-500 mr-2">Diseño:</span>
-                    {[
-                      { id: 'single', label: '1 Foto' },
-                      { id: 'duo', label: '2 Fotos' },
-                      { id: 'trio', label: '3 Fotos' },
-                      { id: 'quad', label: 'Mosaico 4' },
-                    ].map((lay) => (
+                  {/* True 3D Leaf-Turn Sliding Photo Carousel */}
+                  <div className="max-w-lg mx-auto w-full space-y-3">
+                    <BookLeafPhotoCarousel
+                      photos={allAlbumPhotos}
+                      title="Álbum de Recuerdos"
+                      subtitle="Desliza las fotos con tu dedo o ratón para pasar de hoja con giro 3D"
+                      onOpenPhotoModal={(imgUrl) => setActivePhotoModal(imgUrl)}
+                    />
+
+                    {/* Button to proceed to next book chapter */}
+                    <div className="pt-2 text-center">
                       <button
-                        key={lay.id}
-                        onClick={() => setGalleryLayout(lay.id as any)}
-                        className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
-                          galleryLayout === lay.id
-                            ? 'bg-amber-500 text-neutral-950 font-bold'
-                            : 'bg-neutral-800 text-neutral-400 hover:text-white'
-                        }`}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          goToNextPage();
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-500/15 px-4 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500 hover:text-neutral-950 transition-all shadow-sm"
                       >
-                        {lay.label}
+                        <span>Pasar a la siguiente página del libro (Capítulo III)</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
                       </button>
-                    ))}
-                  </div>
-
-                  {/* Dynamic Photo Spread */}
-                  <div className="max-w-lg mx-auto">
-                    {galleryLayout === 'single' && (
-                      <div
-                        onClick={() => setActivePhotoModal(invitation.galleryImages[0] || invitation.coverImage)}
-                        className="aspect-[4/3] rounded-xl overflow-hidden border border-amber-500/30 cursor-pointer shadow-lg group relative"
-                      >
-                        <img
-                          src={invitation.galleryImages[0] || invitation.coverImage}
-                          alt="Recuerdo"
-                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Sparkles className="h-5 w-5 text-amber-300" />
-                        </div>
-                      </div>
-                    )}
-
-                    {galleryLayout === 'duo' && (
-                      <div className="grid grid-cols-2 gap-3">
-                        {invitation.galleryImages.slice(0, 2).map((img, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => setActivePhotoModal(img)}
-                            className="aspect-[3/4] rounded-xl overflow-hidden border border-amber-500/30 cursor-pointer shadow-md group relative"
-                          >
-                            <img
-                              src={img}
-                              alt={`Recuerdo ${idx + 1}`}
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {galleryLayout === 'trio' && (
-                      <div className="grid grid-cols-3 gap-2">
-                        {invitation.galleryImages.slice(0, 3).map((img, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => setActivePhotoModal(img)}
-                            className="aspect-[3/4] rounded-xl overflow-hidden border border-amber-500/30 cursor-pointer shadow-md"
-                          >
-                            <img src={img} alt={`Recuerdo ${idx + 1}`} className="h-full w-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {galleryLayout === 'quad' && (
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {(invitation.galleryImages.length >= 4
-                          ? invitation.galleryImages.slice(0, 4)
-                          : [invitation.coverImage, ...invitation.galleryImages]
-                        ).slice(0, 4).map((img, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => setActivePhotoModal(img)}
-                            className="aspect-square rounded-xl overflow-hidden border border-amber-500/30 cursor-pointer shadow-md group relative"
-                          >
-                            <img
-                              src={img}
-                              alt={`Recuerdo ${idx + 1}`}
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -966,45 +1184,77 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
             </div>
 
             {/* Bottom Book Page Controls & Pagination */}
-            <div className="p-4 sm:p-6 border-t border-neutral-800/80 bg-neutral-950/80 flex items-center justify-between">
-              <button
-                onClick={goToPrevPage}
-                className="flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-900 px-4 py-2 text-xs font-semibold text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span>{currentPage === 1 ? 'Portada' : 'Anterior'}</span>
-              </button>
-
-              {/* Page Dots Indicator */}
-              <div className="hidden sm:flex items-center gap-1.5">
-                {[1, 2, 3, 4, 5, 6, 7].map((page) => (
+            <div className={`${isEmbedded ? 'p-2 space-y-1.5' : 'p-3 sm:p-4 space-y-2'} border-t border-neutral-800/80 bg-neutral-950/90 shrink-0`}>
+              {/* Quick Chapter Navigation Leaf Tabs */}
+              <div className="flex items-center justify-center gap-1 overflow-x-auto py-0.5 scrollbar-none w-full">
+                {BOOK_CHAPTERS.map((ch) => (
                   <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`h-2 rounded-full transition-all ${
-                      currentPage === page ? 'w-6 bg-amber-400' : 'w-2 bg-neutral-700 hover:bg-neutral-500'
+                    key={ch.page}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentPage(ch.page);
+                    }}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap transition-all ${
+                      currentPage === ch.page
+                        ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                        : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
                     }`}
-                    title={`Página ${page}`}
-                  />
+                  >
+                    <span className="mr-0.5">{ch.icon}</span>
+                    <span>{ch.label}</span>
+                  </button>
                 ))}
               </div>
 
-              {currentPage < totalPages ? (
+              <div className="flex items-center justify-between gap-2 pt-0.5">
                 <button
-                  onClick={goToNextPage}
-                  className="flex items-center gap-1.5 rounded-full bg-amber-500 px-5 py-2 text-xs font-bold uppercase tracking-wider text-neutral-950 hover:bg-amber-400 transition-colors shadow-md"
+                  type="button"
+                  onClick={goToPrevPage}
+                  className="flex items-center gap-1 rounded-full border border-neutral-800 bg-neutral-900 px-3.5 py-1.5 text-xs font-semibold text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
                 >
-                  <span>Siguiente</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  <span>{currentPage === 1 ? 'Portada' : 'Anterior'}</span>
                 </button>
-              ) : (
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  className="flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500 hover:text-neutral-950 transition-colors"
-                >
-                  <span>Releer Libro</span>
-                </button>
-              )}
+
+                {/* Page Dots Indicator */}
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5, 6, 7].map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        currentPage === page ? 'w-5 bg-amber-400' : 'w-1.5 bg-neutral-700 hover:bg-neutral-500'
+                      }`}
+                      title={`Página ${page}`}
+                    />
+                  ))}
+                </div>
+
+                {currentPage < totalPages ? (
+                  <button
+                    type="button"
+                    onClick={goToNextPage}
+                    className="flex items-center gap-1 rounded-full bg-amber-500 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-neutral-950 hover:bg-amber-400 transition-colors shadow-md"
+                  >
+                    <span>Siguiente</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    className="flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500 hover:text-neutral-950 transition-colors"
+                  >
+                    <span>Releer</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="text-center text-[9px] text-neutral-500 hidden sm:block">
+                <span>↔ Desliza hacia los lados con el dedo o arrastra con el ratón para hojear las páginas</span>
+              </div>
             </div>
           </div>
         </main>
@@ -1013,14 +1263,15 @@ export const InteractiveBookExperience: React.FC<InteractiveBookExperienceProps>
       {/* PHOTO LIGHTBOX MODAL */}
       {activePhotoModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md cursor-pointer"
+          className={`${isEmbedded ? 'absolute' : 'fixed'} inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md cursor-pointer`}
           onClick={() => setActivePhotoModal(null)}
         >
           <div className="relative max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl">
             <img
+              draggable={false}
               src={activePhotoModal}
               alt="Detalle"
-              className="max-h-[85vh] w-auto object-contain mx-auto"
+              className="max-h-[85vh] w-auto object-contain mx-auto select-none"
               referrerPolicy="no-referrer"
             />
           </div>

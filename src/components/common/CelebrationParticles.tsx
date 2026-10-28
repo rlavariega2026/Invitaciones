@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 interface CelebrationParticlesProps {
   type: 'petals' | 'sparkles' | 'confetti' | 'none';
   intensity?: 'gentle' | 'vibrant';
+  isEmbedded?: boolean;
 }
 
 interface Particle {
@@ -21,6 +22,7 @@ interface Particle {
 export const CelebrationParticles: React.FC<CelebrationParticlesProps> = ({
   type,
   intensity = 'gentle',
+  isEmbedded = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -38,13 +40,13 @@ export const CelebrationParticles: React.FC<CelebrationParticlesProps> = ({
     if (!ctx) return;
 
     let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let width = (canvas.width = isEmbedded && canvas.parentElement ? canvas.parentElement.clientWidth : window.innerWidth);
+    let height = (canvas.height = isEmbedded && canvas.parentElement ? canvas.parentElement.clientHeight : window.innerHeight);
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = canvas.width = isEmbedded && canvas.parentElement ? canvas.parentElement.clientWidth : window.innerWidth;
+      height = canvas.height = isEmbedded && canvas.parentElement ? canvas.parentElement.clientHeight : window.innerHeight;
     };
     window.addEventListener('resize', handleResize);
 
@@ -137,7 +139,7 @@ export const CelebrationParticles: React.FC<CelebrationParticlesProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-30 h-full w-full"
+      className={`pointer-events-none ${isEmbedded ? 'absolute inset-0 z-10' : 'fixed inset-0 z-30'} h-full w-full`}
       aria-hidden="true"
     />
   );

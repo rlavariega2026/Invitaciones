@@ -4,8 +4,16 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /invitaciones/
+
+  # Force the directory URL to serve the app entry point before the
+  # generic existing-directory rule can short-circuit rewriting.
+  RewriteRule ^$ index.html [L]
+
+  # Keep existing files and directories intact.
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
+
+  # Route app paths to the SPA entry point.
   RewriteRule ^ index.html [L]
 </IfModule>

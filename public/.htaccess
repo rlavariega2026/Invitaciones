@@ -3,18 +3,16 @@ DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-
-  # The app is hosted under /invitaciones/, not at the domain root.
   RewriteBase /invitaciones/
 
-  # Resolve the exact directory URL directly to the built entry point.
-  RewriteRule ^$ /invitaciones/index.html [END]
+  # In .htaccess, use a relative target so Apache resolves it inside this folder.
+  RewriteRule ^$ index.html [END]
 
-  # Serve real static files and directories without rewriting them.
+  # Keep existing assets and files untouched.
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [END]
 
-  # Let client-side routes load the single-page app.
-  RewriteRule ^ /invitaciones/index.html [END]
+  # Send application routes to the built entry point.
+  RewriteRule ^ index.html [END]
 </IfModule>

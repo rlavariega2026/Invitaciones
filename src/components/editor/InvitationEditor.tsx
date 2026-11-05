@@ -10,6 +10,7 @@ import {
   PhotoConfig,
   PhotoShape,
   MotifTheme,
+  InvitationMotif,
   TypographyConfig,
 } from '../../types/invitation';
 import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from '../../data/templates';
@@ -20,6 +21,7 @@ import { HostingerPublishModal } from '../hostinger/HostingerPublishModal';
 import { SaveTemplateModal } from '../templates/SaveTemplateModal';
 import { CustomButtonRenderer } from '../buttons/CustomButtonRenderer';
 import { ambientMusic } from '../../audio/ambientMusic';
+import { MOTIF_LIBRARY } from '../../data/motifLibrary';
 import { api } from '../../services/api';
 import {
   ArrowLeft,
@@ -88,6 +90,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const [editingPhoto, setEditingPhoto] = useState<PhotoConfig | null>(null);
   const [showHostingerModal, setShowHostingerModal] = useState(false);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [selectedMotifId, setSelectedMotifId] = useState<string | null>(null);
 
   // Sub-tab for independent text elements: Título, Subtítulo, Contenido
   const [selectedTextElement, setSelectedTextElement] = useState<'title' | 'subtitle' | 'content'>('title');
@@ -101,6 +104,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const bgImageInputRef = useRef<HTMLInputElement>(null);
   const sectionPhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryMultipleInputRef = useRef<HTMLInputElement>(null);
+  const motifUploadInputRef = useRef<HTMLInputElement>(null);
 
   // Autosave when invitation changes with a debounce
   useEffect(() => {
@@ -165,6 +169,45 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
       s.id === selectedSection.id ? { ...s, ...fields } : s
     );
     updateInvitationState({ ...invitation, sections: updatedSections });
+  };
+
+  const sectionMotifs = selectedSection?.background.customMotifs || [];
+  const selectedMotif = sectionMotifs.find((motif) => motif.id === selectedMotifId) || null;
+  const addMotif = (src: string, name: string) => {
+    const motif: InvitationMotif = {
+      id: `motif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name, src, x: 50, y: 50, width: 26, rotation: 0, opacity: 100, zIndex: sectionMotifs.length,
+    };
+    updateSelectedSection({ background: { ...selectedSection.background, customMotifs: [...sectionMotifs, motif] } });
+    setSelectedMotifId(motif.id);
+  };
+  const updateMotif = (fields: Partial<InvitationMotif>) => {
+    if (!selectedMotif) return;
+    updateSelectedSection({
+      background: {
+        ...selectedSection.background,
+        customMotifs: sectionMotifs.map((motif) => motif.id === selectedMotif.id ? { ...motif, ...fields } : motif),
+      },
+    });
+  };
+  const handleMotifUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || file.type !== 'image/png') return;
+    try {
+      const imageUrl = await api.uploadImage(file);
+      if (selectedMotif) updateMotif({ src: imageUrl, name: file.name });
+      else addMotif(imageUrl, file.name);
+    } catch (error) {
+      console.error('No se pudo cargar el PNG original', error);
+    }
+  };
+  const alignMotif = (horizontal: 'left' | 'center' | 'right', vertical: 'top' | 'center' | 'bottom') => {
+    if (!selectedMotif) return;
+    updateMotif({
+      x: horizontal === 'left' ? 15 : horizontal === 'right' ? 85 : 50,
+      y: vertical === 'top' ? 15 : vertical === 'bottom' ? 85 : 50,
+    });
   };
 
   // Helper to update independent typography for title, subtitle, or content
@@ -849,6 +892,58 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       </option>
                     ))}
                   </select>
+                  <div className="pt-2 border-t border-stone-200 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-stone-600">Biblioteca PNG del ZIP (19 originales)</span>
+                      <label className="cursor-pointer px-2 py-1 rounded-lg bg-stone-900 text-white text-[10px] font-semibold">
+                        {selectedMotif ? 'Reemplazar PNG' : 'Subir PNG'}
+                        <input ref={motifUploadInputRef} type="file" accept="image/png,.png" onChange={handleMotifUpload} className="hidden" />
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto">
+                      {MOTIF_LIBRARY.map((motif) => (
+                        <button key={motif.id} type="button" title={`Agregar ${motif.name}`} onClick={() => addMotif(motif.src, motif.name)} className="aspect-square p-1 rounded-lg border border-stone-200 bg-white hover:border-[#9C7A3C] hover:bg-[#FAF5EB]">
+                          <img src={motif.src} alt={motif.name} loading="lazy" className="w-full h-full object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                    {sectionMotifs.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-stone-200">
+                        <div className="flex gap-1 overflow-x-auto">
+                          {sectionMotifs.map((motif, index) => (
+                            <button key={motif.id} type="button" onClick={() => setSelectedMotifId(motif.id)} className={`relative w-10 h-10 shrink-0 rounded border p-1 ${selectedMotif?.id === motif.id ? 'border-[#9C7A3C] ring-1 ring-[#9C7A3C]' : 'border-stone-200'}`} title={`${index + 1}. ${motif.name}`}>
+                              <img src={motif.src} alt="" className="w-full h-full object-contain" />
+                              <span className="absolute -top-1 -right-1 rounded-full bg-stone-800 text-white text-[8px] px-1">{index + 1}</span>
+                            </button>
+                          ))}
+                        </div>
+                        {selectedMotif && <>
+                          <div className="text-[10px] text-stone-600 truncate">Seleccionado: {selectedMotif.name} · arrástralo directamente en la invitación</div>
+                          <label className="block text-[10px] text-stone-600">Tamaño {Math.round(selectedMotif.width)}%
+                            <input type="range" min="4" max="100" value={selectedMotif.width} onChange={(e) => updateMotif({ width: Number(e.target.value) })} className="w-full accent-[#9C7A3C]" />
+                          </label>
+                          <label className="block text-[10px] text-stone-600">Rotación {selectedMotif.rotation}°
+                            <input type="range" min="-180" max="180" value={selectedMotif.rotation} onChange={(e) => updateMotif({ rotation: Number(e.target.value) })} className="w-full accent-[#9C7A3C]" />
+                          </label>
+                          <label className="block text-[10px] text-stone-600">Opacidad {selectedMotif.opacity}%
+                            <input type="range" min="0" max="100" value={selectedMotif.opacity} onChange={(e) => updateMotif({ opacity: Number(e.target.value) })} className="w-full accent-[#9C7A3C]" />
+                          </label>
+                          <div className="grid grid-cols-3 gap-1">
+                            <button type="button" onClick={() => alignMotif('left', 'center')} className="rounded border px-1 py-1 text-[10px]">Izquierda</button>
+                            <button type="button" onClick={() => alignMotif('center', 'center')} className="rounded border px-1 py-1 text-[10px]">Centrar</button>
+                            <button type="button" onClick={() => alignMotif('right', 'center')} className="rounded border px-1 py-1 text-[10px]">Derecha</button>
+                            <button type="button" onClick={() => alignMotif('center', 'top')} className="rounded border px-1 py-1 text-[10px]">Arriba</button>
+                            <button type="button" onClick={() => alignMotif('center', 'bottom')} className="rounded border px-1 py-1 text-[10px]">Abajo</button>
+                            <div className="flex gap-1">
+                              <button type="button" title="Enviar hacia atrás" onClick={() => updateMotif({ zIndex: Math.max(0, selectedMotif.zIndex - 1) })} className="flex-1 rounded border px-1 py-1 text-[10px]">↓ Capa</button>
+                              <button type="button" title="Traer al frente" onClick={() => updateMotif({ zIndex: selectedMotif.zIndex + 1 })} className="flex-1 rounded border px-1 py-1 text-[10px]">↑</button>
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => { updateSelectedSection({ background: { ...selectedSection.background, customMotifs: sectionMotifs.filter((motif) => motif.id !== selectedMotif.id) } }); setSelectedMotifId(null); }} className="w-full rounded-lg border border-rose-200 px-2 py-1.5 text-[10px] text-rose-600 flex items-center justify-center gap-1"><Trash2 className="w-3 h-3" />Eliminar motivo</button>
+                        </>}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Font Size Slider & Number */}

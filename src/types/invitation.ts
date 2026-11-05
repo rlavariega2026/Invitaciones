@@ -185,7 +185,20 @@ export interface BackgroundConfig {
   blur: number; // 0 to 20
   opacity?: number;
   motifTheme?: MotifTheme; // Motivos y efectos visuales inspirados en el ZIP
+  customMotifs?: InvitationMotif[];
   cardStyle?: CardStyleConfig; // Control del recuadro de texto
+}
+
+export interface InvitationMotif {
+  id: string;
+  name: string;
+  src: string;
+  x: number;
+  y: number;
+  width: number;
+  rotation: number;
+  opacity: number;
+  zIndex: number;
 }
 
 export type FontFamilyType =

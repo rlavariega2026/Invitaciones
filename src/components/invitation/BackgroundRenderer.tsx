@@ -1,17 +1,40 @@
-import React from 'react';
-import { BackgroundConfig, BackgroundTexture, MotifTheme } from '../../types/invitation';
+import React, { useRef, useState } from 'react';
+import { BackgroundConfig, BackgroundTexture, InvitationMotif, MotifTheme } from '../../types/invitation';
+import { useMotifEditor } from './MotifEditorContext';
 
 interface BackgroundRendererProps {
   config: BackgroundConfig;
   className?: string;
   children: React.ReactNode;
+  sectionId?: string;
 }
 
 export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
   config,
   className = '',
   children,
+  sectionId = '',
 }) => {
+  const { isEditor, updateSectionBackground } = useMotifEditor();
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ id: string; pointerId: number; offsetX: number; offsetY: number; x: number; y: number } | null>(null);
+  const [dragPosition, setDragPosition] = useState<{ id: string; x: number; y: number } | null>(null);
+  const updateMotif = (id: string, fields: Partial<InvitationMotif>) => {
+    if (!updateSectionBackground) return;
+    const motifs = (config.customMotifs || []).map((motif) => motif.id === id ? { ...motif, ...fields } : motif);
+    updateSectionBackground(sectionId, { ...config, customMotifs: motifs });
+  };
+  const handleMotifPointerMove = (event: React.PointerEvent<HTMLImageElement>) => {
+    const drag = dragRef.current;
+    const surface = surfaceRef.current;
+    if (!drag || !surface || drag.pointerId !== event.pointerId) return;
+    const bounds = surface.getBoundingClientRect();
+    const motif = config.customMotifs?.find((item) => item.id === drag.id);
+    if (!motif) return;
+    drag.x = Math.max(0, Math.min(100, ((event.clientX - bounds.left - drag.offsetX) / bounds.width) * 100));
+    drag.y = Math.max(0, Math.min(100, ((event.clientY - bounds.top - drag.offsetY) / bounds.height) * 100));
+    setDragPosition({ id: drag.id, x: drag.x, y: drag.y });
+  };
   // 35+ Texture style definitions with SVG/CSS patterns
   const getTextureStyle = (texture?: BackgroundTexture): React.CSSProperties => {
     switch (texture) {
@@ -545,7 +568,7 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
   };
 
   return (
-    <div className={`relative w-full h-full min-h-screen overflow-hidden transition-all duration-300 ${className}`}>
+    <div ref={surfaceRef} className={`relative w-full h-full min-h-screen overflow-hidden transition-all duration-300 ${className}`}>
       {/* Background Surface Layer (Covers full screen 100vh) */}
       <div
         className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300"
@@ -568,6 +591,34 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
 
       {/* Decorative Motifs & Gold Sparkles Overlay (Renders ON TOP of image and background) */}
       {renderMotifDecorations(config.motifTheme)}
+
+      {(config.customMotifs || []).map((motif) => (
+        <img
+          key={motif.id}
+          src={motif.src}
+          alt={motif.name}
+          draggable={false}
+          onPointerDown={(event) => {
+            if (!isEditor) return;
+            event.stopPropagation();
+            const bounds = event.currentTarget.getBoundingClientRect();
+            dragRef.current = { id: motif.id, pointerId: event.pointerId, offsetX: event.clientX - bounds.left, offsetY: event.clientY - bounds.top, x: motif.x, y: motif.y };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={handleMotifPointerMove}
+          onPointerUp={(event) => {
+            const drag = dragRef.current;
+            if (drag?.pointerId === event.pointerId) {
+              updateMotif(drag.id, { x: drag.x, y: drag.y });
+              dragRef.current = null;
+              setDragPosition(null);
+            }
+          }}
+          onPointerCancel={() => { dragRef.current = null; setDragPosition(null); }}
+          className={`absolute object-contain ${isEditor ? 'cursor-grab active:cursor-grabbing pointer-events-auto touch-none' : 'pointer-events-none'}`}
+          style={{ left: `${dragPosition?.id === motif.id ? dragPosition.x : motif.x}%`, top: `${dragPosition?.id === motif.id ? dragPosition.y : motif.y}%`, width: `${motif.width}%`, opacity: motif.opacity / 100, transform: `translate(-50%, -50%) rotate(${motif.rotation}deg)`, zIndex: 10 + motif.zIndex }}
+        />
+      ))}
 
       {/* Children Content (Z-indexed above background and motifs) */}
       <div className="relative z-20 w-full h-full flex flex-col justify-center items-center">{children}</div>

@@ -646,6 +646,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
     >
       <BackgroundRenderer
         config={section.background}
+        sectionId={section.id}
         className={`w-full min-h-screen flex flex-col ${verticalJustifyClass} ${horizontalAlignClass} py-12 md:py-20 px-4 md:px-8`}
       >
         <div

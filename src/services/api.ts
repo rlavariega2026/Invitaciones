@@ -26,6 +26,27 @@ function getLocalInitialInvitations(): Invitation[] {
 }
 
 export const api = {
+  async uploadImage(file: File): Promise<string> {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error('No se pudo leer la imagen'));
+      reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Imagen inválida'));
+      reader.readAsDataURL(file);
+    });
+    try {
+      const response = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filedata: dataUrl, filename: file.name }),
+      });
+      const result = await response.json();
+      if (response.ok && result.success && typeof result.url === 'string') return result.url;
+    } catch (error) {
+      console.warn('Image upload endpoint unavailable; retaining the original image in the invitation data.');
+    }
+    return dataUrl;
+  },
+
   async getInvitations(): Promise<Invitation[]> {
     try {
       const res = await fetch(`${API_BASE}/invitations`);

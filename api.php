@@ -206,11 +206,12 @@ if ($segments === ['upload'] && $method === 'POST') {
     if ($fileData === '') json_response(['success' => false, 'error' => 'No se recibieron datos de archivo'], 400);
     $encoded = preg_replace('/^data:[^;]+;base64,/', '', $fileData);
     $decoded = base64_decode($encoded, true);
-    if ($decoded === false || strlen($decoded) > 25 * 1024 * 1024) json_response(['success' => false, 'error' => 'Archivo no válido o demasiado grande'], 400);
+    if ($decoded === false || !str_starts_with($decoded, "\x89PNG\r\n\x1a\n")) json_response(['success' => false, 'error' => 'Se requiere un PNG válido'], 400);
     $dir = __DIR__ . '/uploads';
     if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) json_response(['success' => false, 'error' => 'No se pudo guardar el archivo'], 500);
-    $name = preg_replace('/[^a-zA-Z0-9._-]/', '_', (string)($body['filename'] ?? 'archivo'));
-    $name = time() . '-' . ($name ?: 'archivo');
+    $originalName = preg_replace('/[^a-zA-Z0-9._-]/', '_', (string)($body['filename'] ?? 'archivo.png'));
+    $baseName = pathinfo($originalName ?: 'archivo.png', PATHINFO_FILENAME) ?: 'archivo';
+    $name = bin2hex(random_bytes(8)) . '-' . $baseName . '.png';
     if (file_put_contents($dir . '/' . $name, $decoded, LOCK_EX) === false) json_response(['success' => false, 'error' => 'No se pudo guardar el archivo'], 500);
     json_response(['success' => true, 'url' => '/Invitaciones/uploads/' . rawurlencode($name), 'filename' => $name]);
 }

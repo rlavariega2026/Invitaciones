@@ -12,6 +12,7 @@ import { FairytaleInvitation } from './FairytaleInvitation';
 import { SectionRSVPModal } from './SectionRSVPModal';
 import { SectionMusicPlayer } from './SectionMusicPlayer';
 import { PhotoEditorModal } from '../photo-editor/PhotoEditorModal';
+import { MotifEditorContext } from './MotifEditorContext';
 
 interface InvitationContainerProps {
   invitation: Invitation;
@@ -156,7 +157,17 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
 
   return (
     <div className="relative w-full min-h-screen">
-      {renderFormat()}
+      <MotifEditorContext.Provider value={{
+        isEditor,
+        updateSectionBackground: onUpdateInvitation ? (sectionId, background) => {
+          onUpdateInvitation({
+            ...invitation,
+            sections: invitation.sections.map((section) => section.id === sectionId ? { ...section, background } : section),
+          });
+        } : undefined,
+      }}>
+        {renderFormat()}
+      </MotifEditorContext.Provider>
 
       {/* Floating Music Controller */}
       {invitation.audioTrack?.enabled && (

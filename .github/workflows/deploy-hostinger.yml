@@ -1,0 +1,48 @@
+name: Build and deploy Invitaciones to Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Build Vite app
+        run: bun run build
+      - name: Check PHP backend syntax
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Lint PHP backend
+        run: php -l api.php
+      - name: Prepare only deployable application files
+        shell: bash
+        run: |
+          mkdir -p deployment/dist deployment/data
+          cp -a dist/. deployment/dist/
+          cp api.php .htaccess deployment/
+          cp data/invitations.json deployment/data/
+      - name: Install FTP client
+        run: npm install --no-save --ignore-scripts basic-ftp
+      - name: Verify FTP destination and upload without deleting remote files
+        run: node .github/scripts/deploy-ftp.mjs
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}

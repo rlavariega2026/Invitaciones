@@ -170,7 +170,7 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
   };
 
   return (
-    <div className={`relative w-full min-h-screen ${premiumStyle ? 'invitation-premium' : ''}`} style={premiumVariables} data-premium-template={premiumTemplate?.id}>
+    <div className={`relative w-full min-h-screen ${premiumStyle ? 'invitation-premium' : ''}`} style={premiumVariables} data-premium-template={premiumTemplate?.id} data-premium-style={premiumStyle?.openingStyle}>
       <MotifEditorContext.Provider value={{
         isEditor,
         selectMotif: onSelectMotif,

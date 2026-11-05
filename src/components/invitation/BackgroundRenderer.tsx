@@ -567,7 +567,7 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
     <div ref={surfaceRef} className={`relative w-full h-full min-h-screen overflow-hidden transition-all duration-300 ${className}`}>
       {/* Background Surface Layer (Covers full screen 100vh) */}
       <div
-        className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300"
+        className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300 premium-background-surface"
         style={{
           ...getBackgroundStyle(),
           minHeight: '100%',

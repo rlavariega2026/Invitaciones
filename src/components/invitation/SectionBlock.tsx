@@ -98,6 +98,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
   };
 
   const presentationMode = section.presentationMode || 'card';
+  const isPremiumInvitation = invitation.templateId.startsWith('premium-');
   const cardStyle = section.background.cardStyle || {};
   // isPlainMode: strictly NO white cards, NO borders, NO box enclosures
   const isPlainMode = presentationMode === 'plain' || cardStyle.transparentBg === true;
@@ -647,7 +648,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
       <BackgroundRenderer
         config={section.background}
         sectionId={section.id}
-        className={`w-full min-h-screen flex flex-col ${verticalJustifyClass} ${horizontalAlignClass} py-12 md:py-20 px-4 md:px-8`}
+        className={`w-full min-h-screen flex flex-col ${verticalJustifyClass} ${horizontalAlignClass} py-12 md:py-20 px-4 md:px-8 ${isPremiumInvitation ? 'premium-background-canvas' : ''}`}
       >
         <div
           className="max-w-xl mx-auto w-full transition-transform duration-150"
@@ -663,7 +664,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
           ) : presentationMode === 'card' ? (
             /* 2. Modalidad Recuadro: Con tarjeta contenedora estilizada */
             <div
-              className={`p-6 md:p-8 max-w-full transition-all ${
+              className={`p-6 md:p-8 max-w-full transition-all ${isPremiumInvitation ? 'premium-section-card' : ''} ${
                 cardStyle.hasShadow !== false ? 'shadow-sm' : ''
               }`}
               style={{
@@ -678,11 +679,11 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
             </div>
           ) : (
             /* 3. Modalidad Pestaña: Acordeón interactivo */
-            <div className="rounded-2xl bg-white/95 border border-[#E8DEC8] shadow-xs overflow-hidden">
+            <div className={`rounded-2xl bg-white/95 border border-[#E8DEC8] shadow-xs overflow-hidden ${isPremiumInvitation ? 'premium-section-tab' : ''}`}>
               <button
                 type="button"
                 onClick={() => setIsTabOpen(!isTabOpen)}
-                className="w-full flex items-center justify-between p-4 bg-[#FAF8F5] hover:bg-[#F5EFE4] transition-colors text-left cursor-pointer"
+                className={`w-full flex items-center justify-between p-4 bg-[#FAF8F5] hover:bg-[#F5EFE4] transition-colors text-left cursor-pointer ${isPremiumInvitation ? 'premium-section-tab-heading' : ''}`}
               >
                 <div>
                   <span className="text-[10px] uppercase tracking-wider text-[#9C7A3C] font-semibold block">
@@ -696,7 +697,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               </button>
 
               {isTabOpen && (
-                <div className="p-6 border-t border-[#E8DEC8] animate-in fade-in duration-200">
+                <div className={`p-6 border-t border-[#E8DEC8] animate-in fade-in duration-200 ${isPremiumInvitation ? 'premium-section-tab-content' : ''}`}>
                   {renderSectionInnerContent()}
                 </div>
               )}

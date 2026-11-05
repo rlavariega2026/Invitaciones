@@ -110,6 +110,7 @@ export const CustomButtonRenderer: React.FC<CustomButtonRendererProps> = ({
     <button
       type="button"
       onClick={onClick}
+      data-premium-button="true"
       style={customStyle}
       className={`inline-flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
         buttonDef.className

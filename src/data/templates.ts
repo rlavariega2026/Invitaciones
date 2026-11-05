@@ -2304,15 +2304,15 @@ export function buildInvitationFromTemplate(template: TemplateDefinition, custom
         color: alternatingSurface,
         texture: style.texture,
         motifTheme: style.motif,
-        overlayOpacity: section.type === 'portada' ? 12 : 5,
+        overlayOpacity: 0,
         cardStyle: {
           ...section.background.cardStyle,
-          bgColor: `${p.surface}EF`,
-          borderColor: `${p.accent}99`,
+          bgColor: `${p.surface}D9`,
+          borderColor: `${p.accent}CC`,
           borderRadius: style.cardRadius,
-          borderWidth: 1,
+          borderWidth: 1.5,
           hasShadow: true,
-          backdropBlur: 3,
+          backdropBlur: 9,
         },
       };
       if (section.type !== 'nombres') section.presentationMode = style.sectionMode;

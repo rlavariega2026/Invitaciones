@@ -22,6 +22,7 @@ import { SaveTemplateModal } from '../templates/SaveTemplateModal';
 import { CustomButtonRenderer } from '../buttons/CustomButtonRenderer';
 import { ambientMusic } from '../../audio/ambientMusic';
 import { MOTIF_LIBRARY } from '../../data/motifLibrary';
+import { getInvitationUrl } from '../../utils/invitationUrl';
 import { api } from '../../services/api';
 import {
   ArrowLeft,
@@ -173,27 +174,41 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
   const sectionMotifs = selectedSection?.background.customMotifs || [];
   const selectedMotif = sectionMotifs.find((motif) => motif.id === selectedMotifId) || null;
+  const motifGroupId = selectedMotif?.groupId || selectedMotif?.id;
+  const motifSectionCount = motifGroupId ? invitation.sections.filter((section) => section.background.customMotifs?.some((motif) => motif.groupId === motifGroupId || motif.id === motifGroupId)).length : 0;
   const addMotif = (src: string, name: string) => {
+    const groupId = `motif-group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const motif: InvitationMotif = {
       id: `motif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name, src, x: 50, y: 50, width: 26, rotation: 0, opacity: 100, zIndex: sectionMotifs.length,
+      groupId, name, src, x: 50, y: 50, width: 26, rotation: 0, opacity: 100, zIndex: sectionMotifs.length,
     };
-    updateSelectedSection({ background: { ...selectedSection.background, customMotifs: [...sectionMotifs, motif] } });
-    setSelectedMotifId(motif.id);
+    updateInvitationState({
+      ...invitation,
+      sections: invitation.sections.map((section) => ({
+        ...section,
+        background: {
+          ...section.background,
+          customMotifs: [...(section.background.customMotifs || []), { ...motif, id: `${motif.id}-${section.id}` }],
+        },
+      })),
+    });
+    setSelectedMotifId(`${motif.id}-${selectedSection.id}`);
   };
   const updateMotif = (fields: Partial<InvitationMotif>) => {
     if (!selectedMotif) return;
-    updateSelectedSection({
-      background: {
-        ...selectedSection.background,
-        customMotifs: sectionMotifs.map((motif) => motif.id === selectedMotif.id ? { ...motif, ...fields } : motif),
-      },
+    const matches = (motif: InvitationMotif) => selectedMotif.groupId ? motif.groupId === selectedMotif.groupId : motif.id === selectedMotif.id;
+    updateInvitationState({
+      ...invitation,
+      sections: invitation.sections.map((section) => ({
+        ...section,
+        background: { ...section.background, customMotifs: section.background.customMotifs?.map((motif) => matches(motif) ? { ...motif, ...fields } : motif) },
+      })),
     });
   };
   const handleMotifUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || file.type !== 'image/png') return;
+    if (!file || !file.name.toLowerCase().endsWith('.png') || (file.type && file.type !== 'image/png')) return;
     try {
       const imageUrl = await api.uploadImage(file);
       if (selectedMotif) updateMotif({ src: imageUrl, name: file.name });
@@ -208,6 +223,35 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
       x: horizontal === 'left' ? 15 : horizontal === 'right' ? 85 : 50,
       y: vertical === 'top' ? 15 : vertical === 'bottom' ? 85 : 50,
     });
+  };
+  const applyMotifToAllSections = () => {
+    if (!selectedMotif) return;
+    const groupId = selectedMotif.groupId || `motif-group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    updateInvitationState({
+      ...invitation,
+      sections: invitation.sections.map((section) => {
+        const motifs = section.background.customMotifs || [];
+        const existing = motifs.find((motif) => motif.groupId === groupId || motif.id === selectedMotif.id);
+        const shared = { ...selectedMotif, groupId };
+        const next = existing
+          ? motifs.map((motif) => motif === existing ? { ...motif, ...shared, id: motif.id } : motif)
+          : [...motifs, { ...shared, id: `${selectedMotif.id}-${section.id}` }];
+        return { ...section, background: { ...section.background, customMotifs: next } };
+      }),
+    });
+    if (!selectedMotif.groupId) setSelectedMotifId(`${selectedMotif.id}-${selectedSection.id}`);
+  };
+  const removeMotifFromAllSections = () => {
+    if (!selectedMotif) return;
+    const matches = (motif: InvitationMotif) => selectedMotif.groupId ? motif.groupId === selectedMotif.groupId : motif.id === selectedMotif.id;
+    updateInvitationState({
+      ...invitation,
+      sections: invitation.sections.map((section) => ({
+        ...section,
+        background: { ...section.background, customMotifs: section.background.customMotifs?.filter((motif) => !matches(motif)) },
+      })),
+    });
+    setSelectedMotifId(null);
   };
 
   // Helper to update independent typography for title, subtitle, or content
@@ -644,7 +688,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
           <button
             onClick={() => {
-              const url = `${window.location.origin}/?invitationId=${invitation.id}`;
+              const url = getInvitationUrl(invitation.id);
               navigator.clipboard.writeText(url);
               alert('¡Enlace de la invitación copiado al portapapeles!');
             }}
@@ -902,7 +946,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                     </div>
                     <div className="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto">
                       {MOTIF_LIBRARY.map((motif) => (
-                        <button key={motif.id} type="button" title={`Agregar ${motif.name}`} onClick={() => addMotif(motif.src, motif.name)} className="aspect-square p-1 rounded-lg border border-stone-200 bg-white hover:border-[#9C7A3C] hover:bg-[#FAF5EB]">
+                        <button key={motif.id} type="button" aria-label={`Agregar ${motif.name} a todas las secciones`} title={`Agregar ${motif.name} a todas las secciones`} onClick={() => addMotif(motif.src, motif.name)} className="aspect-square p-1 rounded-lg border border-stone-200 bg-white hover:border-[#9C7A3C] hover:bg-[#FAF5EB]">
                           <img src={motif.src} alt={motif.name} loading="lazy" className="w-full h-full object-contain" />
                         </button>
                       ))}
@@ -911,14 +955,21 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       <div className="space-y-2 pt-2 border-t border-stone-200">
                         <div className="flex gap-1 overflow-x-auto">
                           {sectionMotifs.map((motif, index) => (
-                            <button key={motif.id} type="button" onClick={() => setSelectedMotifId(motif.id)} className={`relative w-10 h-10 shrink-0 rounded border p-1 ${selectedMotif?.id === motif.id ? 'border-[#9C7A3C] ring-1 ring-[#9C7A3C]' : 'border-stone-200'}`} title={`${index + 1}. ${motif.name}`}>
-                              <img src={motif.src} alt="" className="w-full h-full object-contain" />
-                              <span className="absolute -top-1 -right-1 rounded-full bg-stone-800 text-white text-[8px] px-1">{index + 1}</span>
-                            </button>
+                            <div key={motif.id} className={`relative w-10 h-10 shrink-0 rounded border p-1 ${selectedMotif?.id === motif.id ? 'border-[#9C7A3C] ring-1 ring-[#9C7A3C]' : 'border-stone-200'}`}>
+                              <button type="button" onClick={() => setSelectedMotifId(motif.id)} className="w-full h-full" title={`Seleccionar ${index + 1}. ${motif.name}`} aria-label={`Seleccionar ${motif.name}`}>
+                                <img src={motif.src} alt="" className="w-full h-full object-contain" />
+                              </button>
+                              <span className="absolute -top-1 -left-1 rounded-full bg-stone-800 text-white text-[8px] px-1 pointer-events-none">{index + 1}</span>
+                              <button type="button" onClick={() => { updateSelectedSection({ background: { ...selectedSection.background, customMotifs: sectionMotifs.filter((item) => item.id !== motif.id) } }); if (selectedMotifId === motif.id) setSelectedMotifId(null); }} className="absolute -top-2 -right-2 w-5 h-5 rounded-full border border-rose-300 bg-white text-rose-600 shadow-sm flex items-center justify-center" title={`Eliminar ${motif.name} de esta sección`} aria-label={`Eliminar ${motif.name} de esta sección`}><X className="w-3 h-3" /></button>
+                            </div>
                           ))}
                         </div>
                         {selectedMotif && <>
-                          <div className="text-[10px] text-stone-600 truncate">Seleccionado: {selectedMotif.name} · arrástralo directamente en la invitación</div>
+                          <div className="text-[10px] text-stone-600 truncate">Seleccionado: {selectedMotif.name} · arrástralo directamente en cualquier sección</div>
+                          <div className="flex items-center justify-between text-[10px] text-stone-600">
+                            <span>Aplicado en {motifSectionCount} de {invitation.sections.length} secciones</span>
+                            <button type="button" onClick={applyMotifToAllSections} className="font-semibold text-[#765A2D] underline">Aplicar a todas</button>
+                          </div>
                           <label className="block text-[10px] text-stone-600">Tamaño {Math.round(selectedMotif.width)}%
                             <input type="range" min="4" max="100" value={selectedMotif.width} onChange={(e) => updateMotif({ width: Number(e.target.value) })} className="w-full accent-[#9C7A3C]" />
                           </label>
@@ -939,7 +990,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                               <button type="button" title="Traer al frente" onClick={() => updateMotif({ zIndex: selectedMotif.zIndex + 1 })} className="flex-1 rounded border px-1 py-1 text-[10px]">↑</button>
                             </div>
                           </div>
-                          <button type="button" onClick={() => { updateSelectedSection({ background: { ...selectedSection.background, customMotifs: sectionMotifs.filter((motif) => motif.id !== selectedMotif.id) } }); setSelectedMotifId(null); }} className="w-full rounded-lg border border-rose-200 px-2 py-1.5 text-[10px] text-rose-600 flex items-center justify-center gap-1"><Trash2 className="w-3 h-3" />Eliminar motivo</button>
+                          <div className="grid grid-cols-2 gap-1">
+                            <button type="button" onClick={() => { updateSelectedSection({ background: { ...selectedSection.background, customMotifs: sectionMotifs.filter((motif) => motif.id !== selectedMotif.id) } }); setSelectedMotifId(null); }} className="rounded-lg border border-rose-200 px-2 py-1.5 text-[10px] text-rose-600 flex items-center justify-center gap-1"><Trash2 className="w-3 h-3" />Quitar de esta sección</button>
+                            <button type="button" onClick={removeMotifFromAllSections} className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1.5 text-[10px] text-rose-700 flex items-center justify-center gap-1"><Trash2 className="w-3 h-3" />Eliminar de todas</button>
+                          </div>
                         </>}
                       </div>
                     )}
@@ -2550,6 +2604,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                   setActiveTab('sections');
                 }}
                 selectedSectionId={selectedSection.id}
+                onSelectMotif={(sectionId, motifId) => {
+                  if (sectionId !== selectedSectionId) setSelectedSectionId(sectionId);
+                  setSelectedMotifId(motifId);
+                }}
               />
             </div>
           </div>

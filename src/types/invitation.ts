@@ -191,6 +191,7 @@ export interface BackgroundConfig {
 
 export interface InvitationMotif {
   id: string;
+  groupId?: string;
   name: string;
   src: string;
   x: number;
@@ -393,6 +394,7 @@ export interface HostingerPublishConfig {
   ftpUser?: string;
   ftpPort?: number;
   remoteDir?: string;
+  remoteSlug?: string;
   customDomain?: string;
   publicUrl?: string;
   lastPublishedAt?: string;

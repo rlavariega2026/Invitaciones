@@ -8,6 +8,7 @@ import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 import { SaveTemplateModal } from './components/templates/SaveTemplateModal';
 import { HostingerPublishModal } from './components/hostinger/HostingerPublishModal';
 import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from './data/templates';
+import { getInvitationUrl } from './utils/invitationUrl';
 import { ArrowLeft, Bookmark, Globe, Share2 } from 'lucide-react';
 
 export default function App() {
@@ -121,7 +122,7 @@ export default function App() {
 
             <button
               onClick={() => {
-                const url = `${window.location.origin}/?invitationId=${currentInvitation.id}`;
+                const url = getInvitationUrl(currentInvitation.id);
                 navigator.clipboard.writeText(url);
                 alert('¡Enlace de la invitación copiado al portapapeles!');
               }}

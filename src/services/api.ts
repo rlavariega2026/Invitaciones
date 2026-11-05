@@ -25,6 +25,27 @@ function getLocalInitialInvitations(): Invitation[] {
   return seeds;
 }
 
+function cacheInvitation(invitation: Invitation): void {
+  const local = getLocalInitialInvitations();
+  const idx = local.findIndex((item) => item.id === invitation.id);
+  const updated = { ...invitation, updatedAt: new Date().toISOString() };
+  if (idx >= 0) local[idx] = updated;
+  else local.unshift(updated);
+  localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
+}
+
+async function saveInvitationToServer(invitation: Invitation): Promise<Invitation> {
+  const response = await fetch(`${API_BASE}/invitations/${invitation.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(invitation),
+  });
+  if (!response.ok) throw new Error(`El servidor rechazó el guardado (HTTP ${response.status}).`);
+  const data = await response.json();
+  if (!data?.success || !data?.invitation) throw new Error('El servidor no confirmó el guardado de la invitación.');
+  return data.invitation;
+}
+
 export const api = {
   async uploadImage(file: File): Promise<string> {
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -103,30 +124,20 @@ export const api = {
 
   async saveInvitation(invitation: Invitation): Promise<Invitation> {
     // Save to local storage first
-    const local = getLocalInitialInvitations();
-    const idx = local.findIndex((i) => i.id === invitation.id);
-    if (idx >= 0) {
-      local[idx] = { ...invitation, updatedAt: new Date().toISOString() };
-    } else {
-      local.unshift({ ...invitation, updatedAt: new Date().toISOString() });
-    }
-    localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
+    cacheInvitation(invitation);
 
     try {
-      const res = await fetch(`${API_BASE}/invitations/${invitation.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invitation),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.invitation;
-      }
+      return await saveInvitationToServer(invitation);
     } catch (err) {
       console.warn('Backend save failed, saved to local cache');
     }
 
     return invitation;
+  },
+
+  async saveInvitationChecked(invitation: Invitation): Promise<Invitation> {
+    cacheInvitation(invitation);
+    return saveInvitationToServer(invitation);
   },
 
   async duplicateInvitation(id: string): Promise<Invitation | null> {

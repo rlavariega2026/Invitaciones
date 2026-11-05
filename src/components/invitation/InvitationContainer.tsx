@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Invitation, PhotoConfig } from '../../types/invitation';
+import { Invitation, InvitationMotif, PhotoConfig } from '../../types/invitation';
 import { CinematicInvitation } from './CinematicInvitation';
 import { EnvelopeInvitation } from './EnvelopeInvitation';
 import { ScenesInvitation } from './ScenesInvitation';
@@ -20,6 +20,7 @@ interface InvitationContainerProps {
   onUpdateInvitation?: (updated: Invitation) => void;
   onSelectSection?: (sectionId: string) => void;
   selectedSectionId?: string;
+  onSelectMotif?: (sectionId: string, motifId: string) => void;
 }
 
 export const InvitationContainer: React.FC<InvitationContainerProps> = ({
@@ -28,6 +29,7 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
   onUpdateInvitation,
   onSelectSection,
   selectedSectionId,
+  onSelectMotif,
 }) => {
   const [showRSVPModal, setShowRSVPModal] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState<PhotoConfig | null>(null);
@@ -159,10 +161,20 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
     <div className="relative w-full min-h-screen">
       <MotifEditorContext.Provider value={{
         isEditor,
-        updateSectionBackground: onUpdateInvitation ? (sectionId, background) => {
+        selectMotif: onSelectMotif,
+        updateMotif: onUpdateInvitation ? (sectionId, motifId, fields) => {
+          const sourceMotif = invitation.sections.find((section) => section.id === sectionId)?.background.customMotifs?.find((motif) => motif.id === motifId);
+          if (!sourceMotif) return;
+          const matches = (motif: InvitationMotif) => sourceMotif.groupId ? motif.groupId === sourceMotif.groupId : motif.id === motifId;
           onUpdateInvitation({
             ...invitation,
-            sections: invitation.sections.map((section) => section.id === sectionId ? { ...section, background } : section),
+            sections: invitation.sections.map((section) => ({
+              ...section,
+              background: {
+                ...section.background,
+                customMotifs: section.background.customMotifs?.map((motif) => matches(motif) ? { ...motif, ...fields } : motif),
+              },
+            })),
           });
         } : undefined,
       }}>

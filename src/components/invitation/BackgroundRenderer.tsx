@@ -15,15 +15,11 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
   children,
   sectionId = '',
 }) => {
-  const { isEditor, updateSectionBackground } = useMotifEditor();
+  const { isEditor, updateMotif: updateMotifFromContext, selectMotif } = useMotifEditor();
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ id: string; pointerId: number; offsetX: number; offsetY: number; x: number; y: number } | null>(null);
+  const dragRef = useRef<{ id: string; pointerId: number; anchorX: number; anchorY: number; x: number; y: number } | null>(null);
   const [dragPosition, setDragPosition] = useState<{ id: string; x: number; y: number } | null>(null);
-  const updateMotif = (id: string, fields: Partial<InvitationMotif>) => {
-    if (!updateSectionBackground) return;
-    const motifs = (config.customMotifs || []).map((motif) => motif.id === id ? { ...motif, ...fields } : motif);
-    updateSectionBackground(sectionId, { ...config, customMotifs: motifs });
-  };
+  const updateMotif = (id: string, fields: Partial<InvitationMotif>) => updateMotifFromContext?.(sectionId, id, fields);
   const handleMotifPointerMove = (event: React.PointerEvent<HTMLImageElement>) => {
     const drag = dragRef.current;
     const surface = surfaceRef.current;
@@ -31,8 +27,8 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
     const bounds = surface.getBoundingClientRect();
     const motif = config.customMotifs?.find((item) => item.id === drag.id);
     if (!motif) return;
-    drag.x = Math.max(0, Math.min(100, ((event.clientX - bounds.left - drag.offsetX) / bounds.width) * 100));
-    drag.y = Math.max(0, Math.min(100, ((event.clientY - bounds.top - drag.offsetY) / bounds.height) * 100));
+    drag.x = Math.max(0, Math.min(100, ((event.clientX - bounds.left) / bounds.width) * 100 + drag.anchorX));
+    drag.y = Math.max(0, Math.min(100, ((event.clientY - bounds.top) / bounds.height) * 100 + drag.anchorY));
     setDragPosition({ id: drag.id, x: drag.x, y: drag.y });
   };
   // 35+ Texture style definitions with SVG/CSS patterns
@@ -601,8 +597,17 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
           onPointerDown={(event) => {
             if (!isEditor) return;
             event.stopPropagation();
-            const bounds = event.currentTarget.getBoundingClientRect();
-            dragRef.current = { id: motif.id, pointerId: event.pointerId, offsetX: event.clientX - bounds.left, offsetY: event.clientY - bounds.top, x: motif.x, y: motif.y };
+            const bounds = surfaceRef.current?.getBoundingClientRect();
+            if (!bounds) return;
+            selectMotif?.(sectionId, motif.id);
+            dragRef.current = {
+              id: motif.id,
+              pointerId: event.pointerId,
+              anchorX: motif.x - ((event.clientX - bounds.left) / bounds.width) * 100,
+              anchorY: motif.y - ((event.clientY - bounds.top) / bounds.height) * 100,
+              x: motif.x,
+              y: motif.y,
+            };
             event.currentTarget.setPointerCapture(event.pointerId);
           }}
           onPointerMove={handleMotifPointerMove}
@@ -616,7 +621,7 @@ export const BackgroundRenderer: React.FC<BackgroundRendererProps> = ({
           }}
           onPointerCancel={() => { dragRef.current = null; setDragPosition(null); }}
           className={`absolute object-contain ${isEditor ? 'cursor-grab active:cursor-grabbing pointer-events-auto touch-none' : 'pointer-events-none'}`}
-          style={{ left: `${dragPosition?.id === motif.id ? dragPosition.x : motif.x}%`, top: `${dragPosition?.id === motif.id ? dragPosition.y : motif.y}%`, width: `${motif.width}%`, opacity: motif.opacity / 100, transform: `translate(-50%, -50%) rotate(${motif.rotation}deg)`, zIndex: 10 + motif.zIndex }}
+          style={{ left: `${dragPosition?.id === motif.id ? dragPosition.x : motif.x}%`, top: `${dragPosition?.id === motif.id ? dragPosition.y : motif.y}%`, width: `${motif.width}%`, opacity: motif.opacity / 100, transform: `translate(-50%, -50%) rotate(${motif.rotation}deg)`, zIndex: 30 + motif.zIndex }}
         />
       ))}
 

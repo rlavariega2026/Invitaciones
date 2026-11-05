@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Invitation, RSVPRecord } from '../../types/invitation';
 import { api } from '../../services/api';
+import { getInvitationUrl } from '../../utils/invitationUrl';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { X, Check, Users, QrCode, Share2, Sparkles, AlertCircle, Heart } from 'lucide-react';
@@ -16,8 +17,6 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  if (!isOpen) return null;
-
   const [guestName, setGuestName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -28,6 +27,8 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedRsvp, setConfirmedRsvp] = useState<RSVPRecord | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  if (!isOpen) return null;
 
   const maxAllowed = invitation.rsvpSettings?.maxCompanionsPerPass || 4;
 
@@ -50,11 +51,7 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
       setConfirmedRsvp(result);
 
       // Generate QR Code containing a real clickable URL
-      const baseUrl = invitation.hostingerPublish?.customDomain
-        ? invitation.hostingerPublish.customDomain.replace(/\/$/, '')
-        : window.location.origin;
-
-      const passUrl = `${baseUrl}/?invitationId=${invitation.id}&passCode=${result.qrCode}&guest=${encodeURIComponent(result.guestName)}`;
+      const passUrl = getInvitationUrl(invitation.id, { passCode: result.qrCode, guest: result.guestName });
 
       const qrImage = await QRCode.toDataURL(passUrl, {
         width: 256,
@@ -82,10 +79,7 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
 
   const handleShareWhatsApp = () => {
     if (!confirmedRsvp) return;
-    const baseUrl = invitation.hostingerPublish?.customDomain
-      ? invitation.hostingerPublish.customDomain.replace(/\/$/, '')
-      : window.location.origin;
-    const passUrl = `${baseUrl}/?invitationId=${invitation.id}&passCode=${confirmedRsvp.qrCode}`;
+    const passUrl = getInvitationUrl(invitation.id, { passCode: confirmedRsvp.qrCode });
 
     const shareText = encodeURIComponent(
       `¡Hola! Confirmé mi asistencia para ${invitation.title} (${confirmedRsvp.companionsCount} personas). Puedes ver mi pase aquí: ${passUrl}`

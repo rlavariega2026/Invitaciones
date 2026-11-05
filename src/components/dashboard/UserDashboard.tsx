@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { QRScannerModal } from '../scanner/QRScannerModal';
 import { HostingerPublishModal } from '../hostinger/HostingerPublishModal';
+import { getInvitationUrl } from '../../utils/invitationUrl';
 import {
   Sparkles,
   Plus,
@@ -332,7 +333,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              const shareUrl = `${window.location.origin}/?invitationId=${inv.id}`;
+                              const shareUrl = getInvitationUrl(inv.id);
                               navigator.clipboard.writeText(shareUrl);
                               alert('¡Enlace de invitación copiado al portapapeles!');
                             }}
@@ -564,8 +565,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           isOpen={true}
           onClose={() => setPublishingInv(null)}
           onUpdateInvitation={(updated) => {
-            setInvitations(invitations.map((i) => (i.id === updated.id ? updated : i)));
-            setPublishingInv(null);
+            setInvitations((current) => current.map((i) => (i.id === updated.id ? updated : i)));
+            setPublishingInv(updated);
           }}
         />
       )}

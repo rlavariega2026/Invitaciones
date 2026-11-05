@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Invitation } from '../../types/invitation';
+import { api } from '../../services/api';
+import { getInvitationUrl } from '../../utils/invitationUrl';
 import {
   Globe,
   X,
@@ -27,8 +29,6 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   onClose,
   onUpdateInvitation,
 }) => {
-  if (!isOpen) return null;
-
   const [customDomain, setCustomDomain] = useState(
     invitation.hostingerPublish?.customDomain || ''
   );
@@ -36,34 +36,54 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
     invitation.title.toLowerCase().replace(/[^a-z0-9-]/g, '-') || invitation.id
   );
   const [remoteDirectory, setRemoteDirectory] = useState(
-    invitation.hostingerPublish?.remoteDir || '/public_html/'
+    invitation.hostingerPublish?.remoteDir || '/public_html/Invitaciones/'
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const handleSaveConfig = (e: React.FormEvent) => {
+  useEffect(() => {
+    setCustomDomain(invitation.hostingerPublish?.customDomain || '');
+    setRemoteSlug(invitation.hostingerPublish?.remoteSlug || invitation.title.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id);
+    setRemoteDirectory(invitation.hostingerPublish?.remoteDir || '/public_html/Invitaciones/');
+  }, [invitation.id, invitation.title, invitation.hostingerPublish?.customDomain, invitation.hostingerPublish?.remoteSlug, invitation.hostingerPublish?.remoteDir]);
+
+  if (!isOpen) return null;
+
+  const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSaveMessage(null);
+    setSaveError(null);
 
-    const domain = customDomain.trim().replace(/\/$/, '');
-    const safeSlug = remoteSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    const finalUrl = domain ? `${domain}/${safeSlug}` : undefined;
+    let domain = customDomain.trim().replace(/\/+$/, '');
+    if (domain && !/^https?:\/\//i.test(domain)) domain = `https://${domain}`;
+    const safeSlug = remoteSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id;
+    if (domain) {
+      try { new URL(domain); } catch { setSaveError('Escribe un dominio válido, por ejemplo https://mi-evento.com.'); setIsSaving(false); return; }
+    }
 
-    onUpdateInvitation({
+    const updatedInvitation: Invitation = {
       ...invitation,
       hostingerPublish: {
         isConfigured: !!domain,
         customDomain: domain,
         remoteDir: remoteDirectory,
-        publicUrl: finalUrl,
-        lastPublishedAt: new Date().toISOString(),
-        publishStatus: domain ? 'published' : 'idle',
+        remoteSlug: safeSlug,
+        publicUrl: getInvitationUrl(invitation.id),
+        publishStatus: 'idle',
       },
-    });
-
-    setIsSaving(false);
-    setSaveMessage('Configuración de Hostinger guardada con éxito.');
-    setTimeout(() => setSaveMessage(null), 3000);
+    };
+    try {
+      const savedInvitation = await api.saveInvitationChecked(updatedInvitation);
+      onUpdateInvitation(savedInvitation);
+      setSaveMessage(`Configuración guardada. Enlace público: ${getInvitationUrl(invitation.id)}`);
+      setTimeout(() => setSaveMessage(null), 5000);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la configuración en el servidor.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDownloadStandaloneHTML = () => {
@@ -71,7 +91,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   };
 
   const handlePreviewLive = () => {
-    const liveUrl = `${window.location.origin}/?invitationId=${invitation.id}`;
+    const liveUrl = getInvitationUrl(invitation.id);
     window.open(liveUrl, '_blank');
   };
 
@@ -126,7 +146,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  const url = `${window.location.origin}/?invitationId=${invitation.id}`;
+                  const url = getInvitationUrl(invitation.id);
                   navigator.clipboard.writeText(url);
                   alert('¡Enlace de la invitación copiado al portapapeles!');
                 }}
@@ -202,13 +222,18 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
                 <span>{saveMessage}</span>
               </div>
             )}
+            {saveError && (
+              <div role="alert" className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                {saveError}
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={isSaving}
               className="w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-800 font-semibold text-xs border border-stone-300 transition-colors cursor-pointer"
             >
-              Guardar Configuración de Dominio
+              {isSaving ? 'Guardando…' : 'Guardar Configuración de Dominio'}
             </button>
           </form>
         </div>

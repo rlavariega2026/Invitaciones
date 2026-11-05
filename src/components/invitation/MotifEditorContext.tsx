@@ -1,9 +1,10 @@
 import { createContext, useContext } from 'react';
-import { BackgroundConfig } from '../../types/invitation';
+import { InvitationMotif } from '../../types/invitation';
 
 export interface MotifEditorContextValue {
   isEditor: boolean;
-  updateSectionBackground?: (sectionId: string, background: BackgroundConfig) => void;
+  updateMotif?: (sectionId: string, motifId: string, fields: Partial<InvitationMotif>) => void;
+  selectMotif?: (sectionId: string, motifId: string) => void;
 }
 
 export const MotifEditorContext = createContext<MotifEditorContextValue>({ isEditor: false });

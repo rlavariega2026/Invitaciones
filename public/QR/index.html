@@ -18,6 +18,29 @@
   const categoryNames={bodas:'Bodas & Galas',xv_anos:'XV Años',graduaciones:'Graduación',cumpleanos:'Cumpleaños',infantiles:'Celebración infantil',especiales:'Evento especial'};
   const icons={bodas:'♢',xv_anos:'✿',graduaciones:'✦',cumpleanos:'✧',infantiles:'☼',especiales:'❖'};
   const safe=(value)=>String(value??'').replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function createTicketImage(pass,invitation,category,date,fallback){
+    const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=1600;
+    const ctx=canvas.getContext('2d');if(!ctx)return;
+    const palette={bodas:['#bd9452','#fffdf8','#20263a'],xv_anos:['#c477a4','#fff8fc','#39213f'],graduaciones:['#4e8791','#f6fbfc','#183a43'],cumpleanos:['#dd8063','#fff9f5','#572c38'],infantiles:['#6caa8b','#f8fff9','#31574c'],especiales:['#8271c4','#faf9ff','#30294f']}[category]||['#8271c4','#faf9ff','#30294f'];
+    ctx.fillStyle='#171b2d';ctx.fillRect(0,0,1200,1600);ctx.fillStyle=palette[1];ctx.beginPath();ctx.roundRect(80,70,1040,1460,46);ctx.fill();
+    const grad=ctx.createLinearGradient(80,70,1120,600);grad.addColorStop(0,palette[2]);grad.addColorStop(1,'#171b2d');ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(80,70,1040,540,[46,46,0,0]);ctx.fill();
+    ctx.textAlign='center';ctx.fillStyle=palette[0];ctx.font='bold 27px Arial';ctx.fillText((categoryNames[category]||'Evento especial').toUpperCase()+' · PASE DE ACCESO',600,170);
+    const fit=(text,max,font)=>{let size=font;do{ctx.font=`${size}px Georgia`;if(ctx.measureText(text).width<=max||size<=40)break;size-=4;}while(size>40);return size};
+    ctx.fillStyle='#fff';ctx.font=`${fit(String(invitation.title||'Invitación'),940,68)}px Georgia`;ctx.fillText(String(invitation.title||'Invitación'),600,310);
+    ctx.fillStyle='#ffffffcc';ctx.font='italic 38px Georgia';ctx.fillText(String(invitation.names||''),600,390);
+    ctx.fillStyle='#858585';ctx.font='bold 24px Arial';ctx.fillText('PASE A NOMBRE DE',600,730);
+    ctx.fillStyle='#25293b';ctx.font=`${fit(String(pass.guestName||''),900,72)}px Georgia`;ctx.fillText(String(pass.guestName||''),600,825);
+    const seats=Math.max(1,Number(pass.companionsCount)||1);ctx.fillStyle='#5b5d67';ctx.font='32px Arial';ctx.fillText(`${seats} ${seats===1?'asiento autorizado':'asientos autorizados'}`,600,890);
+    ctx.strokeStyle='#d8d4cb';ctx.setLineDash([12,12]);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(130,970);ctx.lineTo(1070,970);ctx.stroke();ctx.setLineDash([]);
+    const detail=(label,value,x,y)=>{ctx.textAlign='left';ctx.fillStyle='#999';ctx.font='bold 22px Arial';ctx.fillText(label.toUpperCase(),x,y);ctx.fillStyle='#303342';ctx.font='30px Arial';ctx.fillText(String(value||'Por confirmar'),x,y+48)};
+    detail('Fecha',date,150,1060);detail('Hora',invitation.eventTime,650,1060);detail('Lugar',invitation.eventLocation,150,1200);
+    ctx.fillStyle='#f0eee9';ctx.beginPath();ctx.roundRect(130,1330,940,110,24);ctx.fill();ctx.textAlign='left';ctx.fillStyle='#888';ctx.font='bold 20px Arial';ctx.fillText('CÓDIGO DE ACCESO',165,1375);ctx.fillStyle='#292c3a';ctx.font='bold 30px monospace';ctx.fillText(String(pass.qrCode||''),165,1420);
+    ctx.textAlign='center';ctx.fillStyle='#8b8990';ctx.font='20px Arial';ctx.fillText('Presenta este pase en la entrada · LAV Invitations',600,1490);
+    const filedata=canvas.toDataURL('image/png');
+    const saved=await fetch('../api/rsvps/pass-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passCode:pass.qrCode,filedata})});
+    const result=await saved.json();if(!saved.ok||!result.success)throw new Error(result.error||'No se pudo guardar el boleto PNG');
+    return result.imageUrl;
+  }
   async function loadPass(){
     const code=new URLSearchParams(location.search).get('passCode');
     const root=document.getElementById('app');
@@ -31,7 +54,7 @@
       const fallback=`<header class="top"><div class="kind">${safe(categoryNames[category])} · Pase de acceso</div><h1>${safe(invitation.title)}</h1><div class="hosts">${safe(invitation.names)}</div></header><main class="content"><div class="guest-label">Pase a nombre de</div><div class="guest">${safe(pass.guestName)}</div><div class="seats">${Number(pass.companionsCount)||1} ${(Number(pass.companionsCount)||1)===1?'asiento autorizado':'asientos autorizados'}</div><div class="dash"></div><div class="details"><div><div class="label">Fecha</div><div class="value">${safe(date)}</div></div><div><div class="label">Hora</div><div class="value">${safe(invitation.eventTime||'Por confirmar')}</div></div><div class="location"><div class="label">Lugar</div><div class="value">${safe(invitation.eventLocation||'Por confirmar')}</div></div></div><div class="codebox"><div><div class="code-label">Código de acceso</div><div class="code">${safe(pass.qrCode)}</div></div><div class="seal">${icons[category]}</div></div><div class="foot">Presenta este pase en la entrada · LAV Invitations</div></main>`;
       root.className='pass-page';
       if(pass.ticketImageUrl){root.innerHTML=`<a href="${safe(pass.ticketImageUrl)}" download="${safe(pass.qrCode)}.png"><img class="ticket-image" src="${safe(pass.ticketImageUrl)}" alt="Boleto de acceso de ${safe(pass.guestName)}"></a><a class="ticket-download" href="${safe(pass.ticketImageUrl)}" download="${safe(pass.qrCode)}.png">Descargar boleto PNG</a>`;root.querySelector('img').addEventListener('error',()=>{root.className='ticket '+category;root.innerHTML=fallback;});}
-      else {root.className='ticket '+category;root.innerHTML=fallback;}
+      else {root.className='status';root.textContent='Preparando tu boleto personalizado…';const imageUrl=await createTicketImage(pass,invitation,category,date,fallback);root.className='pass-page';root.innerHTML=`<a href="${safe(imageUrl)}" download="${safe(pass.qrCode)}.png"><img class="ticket-image" src="${safe(imageUrl)}" alt="Boleto de acceso de ${safe(pass.guestName)}"></a><a class="ticket-download" href="${safe(imageUrl)}" download="${safe(pass.qrCode)}.png">Descargar boleto PNG</a>`;}
     }catch(error){root.textContent=error instanceof Error?error.message:'No se pudo cargar el pase. Revisa tu conexión.';}
   }
   loadPass();

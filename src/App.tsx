@@ -8,7 +8,7 @@ import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 import { SaveTemplateModal } from './components/templates/SaveTemplateModal';
 import { HostingerPublishModal } from './components/hostinger/HostingerPublishModal';
 import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from './data/templates';
-import { getInvitationUrl } from './utils/invitationUrl';
+import { getDigitalPassUrl, getInvitationUrl } from './utils/invitationUrl';
 import { ArrowLeft, Bookmark, Globe, Share2 } from 'lucide-react';
 
 export default function App() {
@@ -22,6 +22,13 @@ export default function App() {
     // Check if the URL has a shared invitation query param or path
     // e.g. /?invitationId=inv-royal-champagne or /invitation/:id
     const params = new URLSearchParams(window.location.search);
+    // QR codes issued before the dedicated pass page linked to the invitation URL
+    // with passCode/guest parameters. Route those existing codes to their ticket.
+    const passCode = params.get('passCode');
+    if (passCode && !window.location.pathname.replace(/\\/+$/, '').endsWith('/QR')) {
+      window.location.replace(getDigitalPassUrl(passCode));
+      return;
+    }
     const invitationIdParam = params.get('invitationId') || params.get('id');
 
     if (invitationIdParam) {

@@ -62,6 +62,7 @@ import {
   Maximize,
   MapPin,
   Clock,
+  X,
 } from 'lucide-react';
 
 interface InvitationEditorProps {

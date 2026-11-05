@@ -1,0 +1,6 @@
+{
+  "name": "LAV Invitations",
+  "description": "Plataforma premium para crear, personalizar y compartir invitaciones digitales interactivas con estética pastel, RSVP y códigos QR.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

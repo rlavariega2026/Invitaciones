@@ -1,0 +1,966 @@
+# LAV INVITATIONS — ESPECIFICACIÓN MAESTRA DEL PRODUCTO FINAL
+
+## OBJETIVO GENERAL
+
+Desarrollar LAV Invitations, una plataforma profesional para crear invitaciones digitales premium, con una experiencia visual comparable a una aplicación de diseño profesional y con resultados de alta calidad.
+
+El producto debe permitir que una persona sin conocimientos de diseño o programación pueda crear una invitación extraordinaria, personalizarla completamente, publicarla y compartirla.
+
+La aplicación debe tener dos experiencias claramente diferenciadas:
+
+1. **El editor:** una herramienta sencilla, visual y completa para crear invitaciones.
+2. **La invitación publicada:** una experiencia interactiva, elegante, fluida y atractiva para quien recibe el enlace.
+
+El resultado no debe parecer una página web convencional, una plantilla básica o un documento digital. Debe sentirse como una invitación diseñada profesionalmente.
+
+No reducir las funciones descritas. No sustituir herramientas reales por botones decorativos o demostraciones.
+
+---
+
+# 1. EXPERIENCIA DE APLICACIÓN EN ANDROID Y iOS
+
+LAV Invitations debe ofrecer una experiencia de aplicación móvil, tanto en Android como en iPhone.
+
+Implementar una Progressive Web App (PWA) completa, con las características necesarias para que pueda instalarse y abrirse como aplicación independiente.
+
+### Comportamiento requerido
+
+- La aplicación debe poder instalarse en Android.
+- La aplicación debe poder instalarse en iPhone y iPad.
+- Debe contar con iconos propios de LAV Invitations.
+- Debe contar con pantalla de inicio o splash screen.
+- Debe utilizar el modo de visualización standalone cuando esté instalada.
+- Debe aprovechar el espacio disponible de la pantalla.
+- Debe respetar las áreas seguras de los dispositivos, incluyendo cámaras, barras de estado y zonas inferiores.
+- Debe evitar que la navegación de la aplicación parezca una página web convencional.
+- Debe conservar la sesión del usuario cuando sea seguro hacerlo.
+- Debe permitir abrir directamente las invitaciones compartidas.
+- Debe conservar la navegación y las rutas al abrir enlaces desde WhatsApp, mensajes, correo y redes sociales.
+
+### Instalación y apertura
+
+En Android, implementar los requisitos de instalación de PWA y ofrecer la opción de instalar cuando el navegador lo permita.
+
+En iOS, proporcionar una experiencia compatible con la instalación desde el menú de compartir y la opción de agregar a pantalla de inicio.
+
+No simular una instalación automática. Respetar las restricciones de cada sistema operativo.
+
+### Enlaces directos
+
+Un enlace compartido de una invitación debe abrir directamente esa invitación, no el inicio de LAV Invitations ni el catálogo.
+
+Cuando la aplicación esté instalada, implementar la asociación de enlaces y el comportamiento de apertura compatible con cada plataforma, sin romper la apertura web cuando no esté instalada.
+
+### Experiencia independiente
+
+Cuando se abra desde el icono instalado:
+
+- Mostrar la aplicación sin barras de navegación innecesarias del navegador.
+- Mantener navegación interna.
+- Permitir volver a la pantalla anterior.
+- Conservar el estado de trabajo.
+- Evitar recargas innecesarias.
+- Mantener una experiencia fluida.
+
+La aplicación debe funcionar correctamente en Android y iOS, tanto instalada como abierta desde el navegador.
+
+---
+
+# 2. LA EXPERIENCIA VISUAL DE LAS INVITACIONES PUBLICADAS
+
+Esta es una de las partes más importantes del producto.
+
+Una invitación publicada debe ser una experiencia visual continua e interactiva.
+
+No debe limitarse a mostrar una fotografía, una lista de datos y un botón de confirmación.
+
+Debe permitir construir una historia visual del evento mediante diferentes secciones, fondos, fotografías, textos, animaciones, música y transiciones.
+
+## 2.1 Desplazamiento vertical y fondos
+
+La invitación debe poder recorrerse deslizando el dedo hacia abajo.
+
+El usuario debe poder elegir cómo se comporta el fondo durante el desplazamiento.
+
+Incluir tres modos independientes:
+
+**Modo A: fondo que se desplaza con el contenido**
+- La fotografía o imagen de fondo se mueve junto con su sección.
+- Los textos, fotografías y adornos se desplazan en conjunto.
+- El fondo debe conservar su posición relativa respecto a los elementos de esa sección.
+
+**Modo B: fondo fijo**
+- La imagen permanece fija mientras los textos y elementos avanzan.
+- Permite crear efectos de profundidad y una composición cinematográfica.
+
+**Modo C: fondo parallax**
+- El fondo se desplaza a una velocidad diferente del contenido.
+- Los textos, fotografías y decoraciones pueden tener velocidades de movimiento distintas.
+- El efecto debe ser suave y no provocar saltos ni retrasos.
+
+El creador debe elegir el comportamiento de cada sección por separado.
+
+No imponer el mismo comportamiento a toda la invitación.
+
+## 2.2 Fondos independientes por sección
+
+Cada apartado de la invitación debe permitir tener su propio fondo.
+
+Por ejemplo:
+
+- Portada con fotografía de los novios.
+- Sección de bienvenida con fondo floral.
+- Sección de ceremonia con textura de mármol.
+- Sección de recepción con degradado dorado.
+- Galería con fondo oscuro.
+- Sección de regalos con fondo personalizado.
+- Confirmación RSVP con una composición independiente.
+
+Cada sección debe poder utilizar:
+
+- Fotografía.
+- Imagen personalizada.
+- Color sólido.
+- Degradado.
+- Textura.
+- Fondo transparente.
+- Patrones.
+- Elementos gráficos.
+- Combinación de imagen y color.
+
+El creador debe poder configurar cómo se presenta cada fondo y cómo se comporta al desplazarse.
+
+## 2.3 Transiciones entre secciones
+
+Incluir transiciones visuales configurables:
+
+- Desvanecimiento.
+- Aparición progresiva.
+- Desplazamiento vertical.
+- Zoom suave.
+- Revelado de fotografía.
+- Transición de cortina.
+- Efecto de apertura.
+- Transición entre fondos.
+- Movimiento de elementos decorativos.
+
+Las transiciones deben ser elegantes, no excesivas.
+
+Permitir activar o desactivar los efectos por sección.
+
+Respetar las preferencias de reducción de movimiento del dispositivo.
+
+---
+
+# 3. FORMAS DE PRESENTAR UNA INVITACIÓN
+
+No todas las invitaciones deben tener el mismo formato.
+
+El creador debe elegir cómo desea presentar el evento.
+
+Crear un selector de experiencias visuales:
+
+### A. Invitación vertical cinematográfica
+- Una sola página larga.
+- Desplazamiento continuo.
+- Fondos por sección.
+- Animaciones y parallax.
+- Ideal para bodas y eventos elegantes.
+
+### B. Invitación por escenas
+- Cada sección funciona como una escena visual.
+- Transiciones entre apartados.
+- Navegación mediante botones o deslizamiento.
+- Ideal para invitaciones modernas.
+
+### C. Invitación tipo libro
+- Portada.
+- Páginas interiores.
+- Efecto de pasar páginas.
+- Diseño editorial.
+- Animación de apertura y cierre.
+
+### D. Invitación tipo sobre
+- Un sobre digital como presentación inicial.
+- Animación para abrirlo.
+- Revelación de la invitación.
+- Contenido posterior con desplazamiento vertical.
+
+### E. Invitación tipo revista
+- Composiciones editoriales.
+- Fotografías grandes.
+- Textos en diferentes bloques.
+- Diseños asimétricos.
+- Tipografía de revista premium.
+
+### F. Invitación tipo galería
+- Fotografías protagonistas.
+- Secciones visuales.
+- Textos integrados en las imágenes.
+- Galería de recuerdos.
+
+### G. Invitación minimalista
+- Pocos elementos.
+- Mucho espacio visual.
+- Tipografía protagonista.
+- Transiciones discretas.
+
+### H. Invitación interactiva
+- Elementos que aparecen al tocar.
+- Botones animados.
+- Secciones desplegables.
+- Efectos de revelación.
+- Interacción con fotografías y elementos gráficos.
+
+Cada formato debe ser funcional y compatible con las secciones, RSVP, música y demás características.
+
+La selección del formato debe modificar la composición de la invitación, no solamente cambiar un nombre o un color.
+
+---
+
+# 4. SISTEMA DE FOTOGRAFÍA PROFESIONAL
+
+La fotografía debe ser uno de los elementos centrales de LAV Invitations.
+
+No limitar la carga de fotografías a un único recuadro rectangular.
+
+El creador debe poder subir imágenes de alta calidad desde teléfonos y computadoras.
+
+## 4.1 Calidad de imagen
+
+Permitir:
+- Fotografías de alta resolución.
+- Imágenes verticales.
+- Imágenes horizontales.
+- Imágenes cuadradas.
+- Fotografías panorámicas.
+- Imágenes PNG con transparencia.
+- Archivos JPG y WebP.
+- Otros formatos compatibles que puedan procesarse correctamente.
+
+No reducir innecesariamente la calidad de las fotografías.
+
+Implementar optimización de imágenes para que las invitaciones carguen rápidamente sin perder calidad visual.
+
+Conservar una versión de calidad adecuada para pantallas de alta resolución y generar versiones optimizadas para dispositivos móviles.
+
+No aplicar compresión destructiva excesiva.
+
+## 4.2 Editor de fotografías
+
+Cada imagen debe contar con un editor propio.
+
+Controles:
+
+- Recortar.
+- Acercar.
+- Alejar.
+- Girar.
+- Voltear horizontalmente.
+- Voltear verticalmente.
+- Desplazar.
+- Cambiar tamaño.
+- Ajustar posición.
+- Cambiar proporciones.
+- Modificar opacidad.
+- Desenfoque.
+- Brillo.
+- Contraste.
+- Saturación.
+- Temperatura.
+- Matiz.
+- Exposición.
+- Sombras.
+- Iluminaciones.
+- Nitidez.
+- Viñeta.
+- Escala de grises.
+- Filtros fotográficos.
+- Superposición de color.
+
+Agregar filtros visuales:
+- Cálido.
+- Frío.
+- Cinematográfico.
+- Vintage.
+- Blanco y negro.
+- Dorado.
+- Mate.
+- Suave.
+- Alto contraste.
+- Retrato.
+
+Los controles deben permitir restablecer la imagen original.
+
+## 4.3 Formas de presentar las fotografías
+
+El creador debe elegir cómo desea mostrar cada fotografía.
+
+Incluir:
+
+- Rectangular.
+- Cuadrada.
+- Circular.
+- Ovalada.
+- Vertical con esquinas redondeadas.
+- Horizontal panorámica.
+- Forma de arco.
+- Forma de corazón.
+- Forma de diamante.
+- Forma de óvalo ornamental.
+- Marcos clásicos.
+- Marcos florales.
+- Marcos geométricos.
+- Marcos dorados.
+- Marcos plateados.
+- Marcos irregulares.
+- Formas orgánicas.
+- Collage.
+- Polaroid.
+- Fotografía con borde de papel.
+- Fotografía sin marco.
+
+Cada forma debe aplicarse realmente mediante recorte, máscara o composición gráfica, no solamente mediante un borde decorativo.
+
+## 4.4 Efectos de presentación
+
+Permitir agregar:
+- Sombras.
+- Bordes.
+- Marcos.
+- Brillos.
+- Reflejos.
+- Destellos.
+- Texturas.
+- Máscaras.
+- Superposiciones.
+- Degradados.
+- Contornos.
+- Esquinas decorativas.
+
+El usuario debe poder ajustar intensidad, tamaño, color y opacidad.
+
+## 4.5 Galerías y collages
+
+Permitir incorporar varias fotografías en una misma sección.
+
+Diseños:
+- Galería vertical.
+- Galería horizontal.
+- Cuadrícula.
+- Collage editorial.
+- Fotografías superpuestas.
+- Carrusel.
+- Galería con deslizamiento.
+- Galería con ampliación al tocar.
+- Composición de fotografías de diferentes tamaños.
+
+Permitir cambiar el orden de las fotografías y seleccionar cuáles aparecen primero.
+
+---
+
+# 5. FONDOS Y AMBIENTACIÓN VISUAL
+
+Crear un editor de fondos de nivel profesional.
+
+Permitir elegir:
+- Colores sólidos.
+- Degradados lineales.
+- Degradados radiales.
+- Degradados múltiples.
+- Texturas.
+- Mármol.
+- Seda.
+- Terciopelo.
+- Papel artesanal.
+- Papel de lujo.
+- Metal.
+- Oro.
+- Plata.
+- Oro rosa.
+- Cristal.
+- Madera.
+- Acuarela.
+- Fondos florales.
+- Fondos geométricos.
+- Fondos con partículas.
+- Fotografías personalizadas.
+
+## Edición del fondo
+
+Cada fondo debe permitir:
+- Cambiar color.
+- Cambiar posición.
+- Cambiar escala.
+- Ajustar cobertura.
+- Ajustar brillo.
+- Ajustar contraste.
+- Ajustar saturación.
+- Modificar opacidad.
+- Aplicar desenfoque.
+- Aplicar filtros.
+- Aplicar superposición.
+- Elegir comportamiento al desplazarse.
+
+El usuario debe poder subir una fotografía y convertirla en el fondo de toda la invitación o solamente de una sección.
+
+La imagen debe conservarse al guardar, exportar, publicar y abrir la invitación desde otro dispositivo.
+
+---
+
+# 6. EDITOR VISUAL SENCILLO Y COMPLETO
+
+El editor debe ser muy fácil de utilizar.
+
+La prioridad es que una persona pueda crear una invitación de calidad sin conocimientos técnicos.
+
+No llenar la pantalla de controles complicados.
+
+Organizar las herramientas por categorías y mostrar las opciones avanzadas solamente cuando se necesiten.
+
+## 6.1 Flujo de creación
+
+Crear un asistente de creación sencillo:
+
+1. Elegir categoría del evento.
+2. Elegir una de las 30 plantillas.
+3. Elegir formato de presentación.
+4. Escribir nombres y datos del evento.
+5. Subir fotografías.
+6. Elegir fondos.
+7. Personalizar tipografías y colores.
+8. Configurar secciones.
+9. Agregar música si se desea.
+10. Configurar confirmación RSVP.
+11. Revisar la vista previa.
+12. Guardar o publicar.
+
+El usuario debe poder saltarse pasos opcionales y regresar a cualquier sección.
+
+## 6.2 Edición directa
+
+Permitir tocar o hacer clic directamente sobre un elemento en la vista previa para editarlo.
+
+Por ejemplo:
+- Tocar el nombre de los novios para modificarlo.
+- Tocar una fotografía para reemplazarla.
+- Tocar un fondo para editarlo.
+- Tocar un botón para cambiar su texto y apariencia.
+- Tocar un adorno para cambiar su tamaño o posición.
+
+Mostrar las herramientas correspondientes al elemento seleccionado.
+
+## 6.3 Edición de texto
+
+Cada elemento de texto debe tener:
+
+- Campo de contenido.
+- Familia tipográfica.
+- Tamaño numérico.
+- Control para aumentar y disminuir tamaño.
+- Control deslizante de tamaño.
+- Color.
+- Negritas.
+- Cursivas.
+- Subrayado.
+- Alineación.
+- Interlineado.
+- Espaciado entre letras.
+- Espaciado entre palabras.
+- Mayúsculas y minúsculas.
+- Sombra.
+- Contorno.
+- Opacidad.
+- Posición horizontal y vertical.
+- Rotación.
+- Ancho y alto.
+- Márgenes.
+- Visibilidad.
+
+Agregar una biblioteca amplia de tipografías serif, sans serif, manuscritas, caligráficas, infantiles y decorativas.
+
+Cada elemento debe conservar sus propios atributos.
+
+## 6.4 Tamaños y posiciones
+
+Todos los elementos deben poder redimensionarse.
+
+En dispositivos táctiles:
+- Arrastrar para mover.
+- Pellizcar para cambiar tamaño cuando corresponda.
+- Usar controles para ajustar con precisión.
+
+En computadora:
+- Arrastrar.
+- Redimensionar desde puntos de control.
+- Usar campos numéricos.
+
+Permitir bloquear elementos para evitar movimientos accidentales.
+
+## 6.5 Capas y organización
+
+Agregar administrador de capas.
+
+Permitir:
+- Seleccionar.
+- Ocultar.
+- Mostrar.
+- Bloquear.
+- Desbloquear.
+- Duplicar.
+- Eliminar.
+- Traer al frente.
+- Enviar al fondo.
+- Cambiar orden.
+
+Incluir deshacer y rehacer.
+
+Agregar guardado automático y un indicador visible del estado del guardado.
+
+---
+
+# 7. ELEMENTOS DECORATIVOS Y ESTILOS
+
+Crear una biblioteca amplia de elementos visuales.
+
+Categorías:
+
+- Flores.
+- Hojas.
+- Ramos.
+- Marcos.
+- Corazones.
+- Estrellas.
+- Diamantes.
+- Perlas.
+- Destellos.
+- Cintas.
+- Moños.
+- Líneas ornamentales.
+- Bordes.
+- Figuras geométricas.
+- Formas orgánicas.
+- Elementos clásicos.
+- Elementos infantiles.
+- Elementos de graduación.
+- Elementos religiosos.
+- Elementos tropicales.
+- Elementos de fiesta.
+
+Cada elemento debe poder:
+- Moverse.
+- Redimensionarse.
+- Girarse.
+- Cambiar de color.
+- Cambiar opacidad.
+- Aplicar sombras.
+- Duplicarse.
+- Eliminarse.
+- Animarse cuando sea compatible.
+
+Incluir decoraciones animadas y estáticas.
+
+No imponer adornos que no correspondan a la plantilla.
+
+---
+
+# 8. LAS 30 PLANTILLAS PREMIUM
+
+Crear exactamente estas 30 plantillas, cada una con identidad visual propia, composición completa, fondos, tipografía, marcos, decoración y tratamiento fotográfico.
+
+## BODAS Y EVENTOS ELEGANTES
+
+**1. Royal Champagne**
+Fondo champagne, degradados dorados, textura satinada, marcos ornamentales, fotografía central o editorial y tipografía caligráfica.
+
+**2. Black Diamond**
+Fondo negro profundo, oro metálico, líneas elegantes, fotografía enmarcada, composición simétrica y estética de gala.
+
+**3. Garden Editorial**
+Fondo marfil, flores naturales, tonos verdes y rosa empolvado, fotografía vertical y composición inspirada en revistas de bodas.
+
+**4. Royal Lavender**
+Degradados lavanda y violeta, ornamentos plateados, detalles florales, fotografía enmarcada y tipografía romántica.
+
+**5. Modern Ivory**
+Minimalismo de lujo, fondo marfil, tipografía negra, fotografía protagonista, espacios amplios y separadores finos.
+
+**6. Emerald Royal**
+Verde esmeralda, acabados dorados, textura aterciopelada, marcos clásicos y fotografía vertical.
+
+**7. Rose Gold Romance**
+Rosa empolvado, oro rosa, flores delicadas, líneas metálicas y fotografía enmarcada.
+
+**8. Midnight Celestial**
+Azul noche, negro, constelaciones, estrellas, partículas luminosas y fotografía integrada.
+
+**9. Terracotta Boho**
+Terracota, arena, beige, elementos botánicos, formas orgánicas y texturas artesanales.
+
+**10. Magazine Wedding**
+Portada editorial, fotografía a gran escala, nombres como titulares, bloques de información y composición de revista premium.
+
+**11. Princess Ice**
+Blanco, azul hielo y plata, cristales, escarcha, marcos luminosos y detalles de invierno.
+
+**12. Pink Diamond**
+Rosa pastel, rosa intenso, champagne, destellos, diamantes y fotografía protagonista.
+
+**13. Royal Purple**
+Morado profundo, violeta, oro, ornamentos reales y marcos centrales.
+
+**14. Golden Palace**
+Negro, champagne y oro, geometría metálica, marcos simétricos y apariencia de evento exclusivo.
+
+**15. Floral Princess**
+Flores grandes, rosa, marfil y lavanda, fotografía vertical, caligrafía y decoración floral.
+
+## CUMPLEAÑOS Y FIESTAS
+
+**16. Modern Glam**
+Degradados rosa, morado y dorado, elementos brillantes, fotografía enmarcada y composición juvenil.
+
+**17. Royal Blue**
+Azul rey, dorado y plata, formas geométricas, fotografía protagonista y tipografía moderna.
+
+**18. Birthday Editorial**
+Fotografía grande, edad destacada, bloques editoriales, tipografía contemporánea y composición de revista.
+
+**19. Neon Party**
+Fondo oscuro, luces neón rosa, azul y violeta, elementos luminosos, fotografía y tipografía de fiesta.
+
+**20. Tropical Paradise**
+Hojas, flores tropicales, colores coral, verde y amarillo, fotografía integrada y decoración dinámica.
+
+## INFANTILES Y TEMÁTICAS
+
+**21. Minimal Birthday**
+Pasteles, formas geométricas suaves, fotografía principal, edad destacada y diseño limpio.
+
+**22. Space Adventure**
+Planetas, galaxias, estrellas, azul, violeta y negro, fotografía temática y animaciones espaciales.
+
+**23. Magical Unicorn**
+Rosa, lila, azul pastel, arcoíris, estrellas, unicornios y fotografía protagonista.
+
+**24. Safari Adventure**
+Beige, verde, hojas, animales de safari, texturas naturales y fotografía temática.
+
+**25. Under the Sea**
+Azul, turquesa, burbujas, corales, peces, elementos submarinos y animaciones acuáticas.
+
+## EVENTOS ESPECIALES
+
+**26. Graduation Prestige**
+Negro, azul marino o vino, oro, birrete, fotografía y nombre del graduado destacado.
+
+**27. Baby Shower Cloud**
+Pasteles, nubes, estrellas, elementos infantiles y fotografía opcional.
+
+**28. Bautizo Angelical**
+Blanco, champagne, alas, ángeles, luz, oro y fotografía protagonista.
+
+**29. Anniversary Eternal**
+Vino, negro, champagne, dorado, fotografía de pareja y número de aniversario destacado.
+
+**30. Grand Opening Luxury**
+Diseño empresarial premium, logotipo, fotografía del establecimiento, información del evento, mapa y horarios.
+
+### Reglas de las plantillas
+
+Cada plantilla debe incluir una invitación completa de demostración, con portada, secciones, fotografía, textos, fondos, adornos y transiciones.
+
+No crear diseños que sean únicamente una imagen de portada.
+
+Las 30 deben tener estructuras diferentes, aunque compartan las herramientas del editor.
+
+Cada plantilla debe permitir cambiar el formato de presentación, fotografías, fondos, tipografías, colores, ornamentos y secciones.
+
+---
+
+# 9. MÚSICA Y ARCHIVOS DE AUDIO
+
+La invitación publicada debe poder incluir sonido y música.
+
+Permitir subir archivos de audio desde el teléfono o computadora.
+
+Formatos admitidos: MP3, M4A, AAC, OGG y WAV cuando sean compatibles con el navegador.
+
+Funciones:
+
+- Subir audio.
+- Seleccionar pista.
+- Reproducir vista previa.
+- Pausar.
+- Detener.
+- Reemplazar.
+- Eliminar.
+- Ajustar volumen.
+- Configurar reproducción.
+- Mostrar u ocultar controles.
+- Seleccionar un fragmento cuando sea posible.
+- Configurar el comportamiento de reproducción.
+
+Opciones visuales:
+- Botón musical.
+- Icono animado.
+- Reproductor discreto.
+- Control personalizado.
+- Indicador de música activa.
+
+Permitir elegir si la música se presenta desde la portada o después de abrir la invitación.
+
+Respetar las políticas de reproducción automática de Android, iOS y los navegadores. Cuando sea necesaria una interacción del visitante, iniciar la reproducción después de tocar el botón de apertura o reproducción.
+
+Los archivos deben almacenarse de manera persistente y reproducirse correctamente en la invitación publicada.
+
+---
+
+# 10. SECCIONES DE LA INVITACIÓN
+
+Permitir activar, desactivar, editar y ordenar:
+
+1. Portada.
+2. Nombres.
+3. Fotografía principal.
+4. Bienvenida.
+5. Dedicatoria.
+6. Fecha.
+7. Hora.
+8. Cuenta regresiva.
+9. Ubicación.
+10. Google Maps.
+11. Itinerario.
+12. Ceremonia.
+13. Recepción.
+14. Vestimenta.
+15. Galería.
+16. Música.
+17. RSVP.
+18. Regalos.
+19. Mesa de regalos.
+20. Datos bancarios.
+21. Contacto.
+22. Información adicional.
+
+Cada sección debe permitir su propio fondo, fotografía, tipografía, colores, composición, decoración, animación y comportamiento de desplazamiento.
+
+---
+
+# 11. CONFIRMACIÓN RSVP Y CÓDIGOS QR
+
+Implementar un sistema real de confirmación de asistencia.
+
+El anfitrión podrá configurar:
+- Confirmación activada o desactivada.
+- Fecha límite.
+- Cantidad máxima de personas por confirmación.
+- Mensaje personalizado.
+- Datos solicitados.
+
+Permitir confirmaciones de una, dos, tres, cuatro y cinco personas, respetando la capacidad autorizada.
+
+Al confirmar:
+1. Guardar los datos en el servidor.
+2. Crear un registro único.
+3. Generar un QR único.
+4. Asociarlo al evento y a la cantidad de personas.
+5. Mostrar confirmación al invitado.
+6. Permitir compartirla por WhatsApp.
+
+El sistema de acceso debe leer el QR, mostrar la información y permitir registrar entradas totales o parciales sin superar la cantidad autorizada.
+
+Evitar duplicaciones y registrar el historial de accesos.
+
+---
+
+# 12. PANEL DE CONTROL DEL USUARIO
+
+Cada usuario debe tener su espacio privado.
+
+Mostrar:
+- Mis invitaciones.
+- Crear invitación.
+- Plantillas favoritas.
+- Invitaciones publicadas.
+- Borradores.
+- Invitados confirmados.
+- Estadísticas.
+- Códigos QR.
+- Configuración de cuenta.
+
+Permitir editar, duplicar, publicar, despublicar y archivar invitaciones.
+
+---
+
+# 13. PANEL ADMINISTRATIVO GENERAL
+
+Crear un panel protegido para administrar:
+
+- Usuarios.
+- Invitaciones.
+- Plantillas.
+- Categorías.
+- Confirmaciones.
+- Códigos QR.
+- Estadísticas.
+- Estados de las cuentas.
+
+No exponer información privada en las invitaciones públicas.
+
+---
+
+# 14. ALMACENAMIENTO Y PERSISTENCIA
+
+Utilizar un backend y almacenamiento persistente.
+
+No depender de localStorage como almacenamiento definitivo de:
+- Invitaciones.
+- Usuarios.
+- Confirmaciones.
+- Fotografías.
+- Fondos.
+- Audio.
+- Códigos QR.
+
+Los datos deben mantenerse al cerrar sesión, actualizar el navegador o cambiar de dispositivo.
+
+Implementar:
+- Guardado automático.
+- Recuperación de borradores.
+- Manejo de errores de guardado.
+- Validación de archivos.
+- Control de permisos.
+- Seguridad de usuarios.
+- Respaldo de información cuando corresponda.
+
+La carga de imágenes y audio debe mostrar progreso y errores comprensibles.
+
+---
+
+# 15. CALIDAD VISUAL Y RENDIMIENTO
+
+La calidad final debe ser de nivel comercial.
+
+Requisitos:
+- Fotografías nítidas.
+- Tipografía bien renderizada.
+- Animaciones fluidas.
+- Transiciones sin saltos.
+- Fondos correctamente posicionados.
+- Diseños equilibrados.
+- Excelente presentación en pantallas de alta resolución.
+- Carga rápida.
+- Navegación sencilla.
+- Ausencia de elementos cortados o superpuestos.
+
+Optimizar recursos sin destruir la calidad de las imágenes.
+
+Implementar carga diferida de fotografías cuando sea conveniente.
+
+Evitar animaciones pesadas y efectos que consuman excesiva batería.
+
+En dispositivos con recursos limitados, ofrecer una presentación optimizada sin eliminar contenido.
+
+---
+
+# 16. FACILIDAD DE USO
+
+La aplicación debe ser sencilla para quien la crea y extraordinaria para quien la recibe.
+
+No obligar al usuario a configurar decenas de parámetros para obtener una invitación bonita.
+
+Incluir:
+- Plantillas con diseños predeterminados de calidad.
+- Textos de ejemplo fáciles de sustituir.
+- Paletas coordinadas.
+- Composiciones fotográficas prediseñadas.
+- Fondos listos para utilizar.
+- Decoraciones organizadas por categorías.
+- Opciones de personalización rápida.
+- Vista previa inmediata.
+- Guardado automático.
+
+Incluir una opción para restablecer el diseño original de la plantilla sin borrar los datos del evento.
+
+La personalización avanzada debe estar disponible, pero no estorbar al usuario principiante.
+
+---
+
+# 17. PRUEBAS Y CRITERIOS DE ACEPTACIÓN
+
+No considerar terminada la aplicación solamente porque se vea bien en una captura.
+
+Comprobar funcionalmente:
+
+### Editor
+- Las 30 plantillas aparecen.
+- Cada diseño es diferente.
+- Todas permiten crear invitaciones.
+- Los textos se editan individualmente.
+- Los tamaños funcionan.
+- Las tipografías se aplican correctamente.
+- Las imágenes se pueden recortar y editar.
+- Los fondos se pueden personalizar.
+- Cada sección admite su propio fondo.
+- Los modos de desplazamiento funcionan.
+- Los elementos decorativos se pueden mover.
+- Las capas funcionan.
+- Deshacer y rehacer funcionan.
+- Los archivos de audio se conservan.
+- El guardado automático funciona.
+
+### Invitación publicada
+- La URL abre la invitación correcta.
+- Las fotografías mantienen calidad.
+- Los fondos se muestran correctamente.
+- El desplazamiento es fluido.
+- Los efectos parallax funcionan.
+- Las secciones mantienen sus fondos y composiciones.
+- Las animaciones funcionan.
+- El audio funciona respetando las restricciones del dispositivo.
+- RSVP registra información real.
+- Los códigos QR son únicos.
+- El escáner registra entradas correctamente.
+
+### Aplicación móvil
+- Funciona en Android.
+- Funciona en iPhone.
+- Se puede instalar como PWA cuando el dispositivo y navegador lo permiten.
+- Se abre en modo independiente cuando está instalada.
+- Los enlaces compartidos abren directamente la invitación.
+- La navegación no se rompe al recargar.
+- Se adapta a diferentes tamaños de pantalla.
+- Respeta las áreas seguras del teléfono.
+
+### Persistencia
+- Los cambios permanecen después de actualizar.
+- Las imágenes no desaparecen.
+- El audio no se pierde.
+- Las invitaciones se recuperan desde otros dispositivos.
+- Los RSVP permanecen registrados.
+- Los QR continúan siendo válidos según el estado del evento.
+
+No marcar una prueba como aprobada si solamente se verificó visualmente. Diferenciar pruebas automatizadas de pruebas reales en dispositivos.
+
+---
+
+# INSTRUCCIÓN FINAL DE DESARROLLO
+
+Construir LAV Invitations como una plataforma premium completa.
+
+La prioridad no es solamente que existan 30 plantillas. La prioridad es que cada plantilla se convierta en una invitación extraordinaria, personalizable y funcional.
+
+El editor debe ser fácil de entender, permitir cambios visuales precisos y conservar todas las personalizaciones.
+
+La invitación publicada debe ofrecer una experiencia visual de alta calidad: desplazamiento fluido, fondos independientes, fotografías editables, composiciones diferentes, efectos, animaciones, audio y confirmación de asistencia.
+
+Debe poder presentarse como una experiencia cinematográfica, editorial, tipo libro, sobre, galería o invitación vertical, según la elección del creador.
+
+La aplicación debe sentirse como una app en Android y iOS cuando se instale, y los enlaces compartidos deben abrir directamente la invitación correspondiente.
+
+No entregar una maqueta, un prototipo visual o una demostración con funciones simuladas.
+
+Construir y probar cada función real, mantener una arquitectura coherente y evitar errores de navegación, almacenamiento, publicación y visualización.
+
+**El resultado esperado es un producto comercial de LAV Digital que permita crear invitaciones digitales de calidad premium, con libertad creativa, facilidad de edición y una experiencia memorable para los invitados.**

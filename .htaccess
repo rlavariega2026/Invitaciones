@@ -3,6 +3,15 @@ RewriteEngine On
 RewriteBase /Invitaciones/
 DirectoryIndex index.html index.php
 
+# Always check the app shell and service worker for updates after deployment.
+<IfModule mod_headers.c>
+  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
 # Keep stored JSON data private.
 RewriteRule ^(?:storage|data)(?:/|$) - [F,L,NC]
 

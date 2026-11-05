@@ -48,3 +48,14 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+      - name: Verify public page, template asset, and API
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://lavdigitalagency.com/Invitaciones"
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 3 "$base/" -o "$RUNNER_TEMP/invitaciones.html"
+          grep -q '/Invitaciones/assets/' "$RUNNER_TEMP/invitaciones.html"
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 3 "$base/assets/templates/i1.jpg" -o "$RUNNER_TEMP/template.jpg"
+          test -s "$RUNNER_TEMP/template.jpg"
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 3 "$base/api/invitations" -o "$RUNNER_TEMP/api.json"
+          node -e 'const fs=require("node:fs"); const d=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(!d.success || !Array.isArray(d.invitations)) process.exit(1); console.log("Public page, template asset, and API verified; invitations:", d.invitations.length);' "$RUNNER_TEMP/api.json"

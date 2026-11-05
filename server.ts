@@ -11,6 +11,14 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '25mb' }));
 
+// Hostinger serves this app from /Invitaciones while Express handles paths internally.
+app.use((req, _res, next) => {
+  if (req.url === '/Invitaciones' || req.url.startsWith('/Invitaciones/')) {
+    req.url = req.url.slice('/Invitaciones'.length) || '/';
+  }
+  next();
+});
+
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -253,7 +261,7 @@ app.post('/api/upload', (req: Request, res: Response) => {
     const base64Data = filedata.includes(';base64,') ? filedata.split(';base64,').pop() : filedata;
     fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
 
-    const publicUrl = `/uploads/${safeName}`;
+    const publicUrl = `/Invitaciones/uploads/${safeName}`;
     res.json({ success: true, url: publicUrl, filename: safeName });
   } catch (err: any) {
     console.error('Upload error:', err);
@@ -363,6 +371,7 @@ async function startServer() {
   } else {
     // Production static serving
     const distPath = path.join(__dirname, 'dist');
+    app.use(express.static(path.join(__dirname, 'public')));
     app.use(express.static(distPath));
     app.get('*', (req: Request, res: Response) => {
       res.sendFile(path.join(distPath, 'index.html'));

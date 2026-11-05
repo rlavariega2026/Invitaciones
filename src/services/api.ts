@@ -47,6 +47,17 @@ async function saveInvitationToServer(invitation: Invitation): Promise<Invitatio
 }
 
 export const api = {
+  async getDigitalPass(passCode: string): Promise<{ pass: Partial<RSVPRecord> & { ticketImageUrl?: string | null }; invitation: Partial<Invitation> }> {
+    const response = await fetch(`${API_BASE}/rsvps/pass/${encodeURIComponent(passCode)}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await response.json();
+    if (!response.ok || !data?.success || !data?.pass || !data?.invitation) {
+      throw new Error(data?.error || 'No se encontró el boleto digital.');
+    }
+    return { pass: data.pass, invitation: data.invitation };
+  },
+
   async uploadImage(file: File): Promise<string> {
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();

@@ -74,6 +74,17 @@ try {
     throw new Error('Could not verify the existing FTP directory for lavdigitalagency.com/public_html/Invitaciones; no files were uploaded.');
   }
 
+  // Compare FTP metadata to identify whether the account's generic /public_html path aliases this domain.
+  for (const candidatePath of ['/public_html/Invitaciones', '/domains/lavdigitalagency.com/public_html/Invitaciones']) {
+    try {
+      await client.cd(candidatePath);
+      const metadata = await client.send('MLST index.html');
+      console.log('FTP directory identity check:', candidatePath, JSON.stringify(metadata));
+    } catch (error) {
+      console.log('FTP directory identity unavailable:', candidatePath, String(error?.message || error));
+    }
+  }
+
   const root = path.resolve('deployment');
   const entries = [];
   async function walk(dir, relative = '') {

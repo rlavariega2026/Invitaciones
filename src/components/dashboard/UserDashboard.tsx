@@ -425,7 +425,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                   { id: 'graduaciones', label: `Graduaciones (${FEATURED_TEMPLATES.filter((template) => template.category === 'graduaciones').length})` },
                   { id: 'cumpleanos', label: `Cumpleaños (${FEATURED_TEMPLATES.filter((template) => template.category === 'cumpleanos').length})` },
                   { id: 'infantiles', label: `Infantiles (${FEATURED_TEMPLATES.filter((template) => template.category === 'infantiles').length})` },
-                  { id: 'especiales', label: `Especiales (${FEATURED_TEMPLATES.filter((template) => template.category === 'especiales').length})`,
+                  { id: 'especiales', label: `Especiales (${FEATURED_TEMPLATES.filter((template) => template.category === 'especiales').length})` },
                 ].map((c) => (
                   <button
                     key={c.id}

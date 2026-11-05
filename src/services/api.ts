@@ -214,6 +214,19 @@ export const api = {
     return newRsvp;
   },
 
+  async saveDigitalPassImage(passCode: string, filedata: string): Promise<string> {
+    const response = await fetch(`${API_BASE}/rsvps/pass-image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passCode, filedata }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success || !data.imageUrl) {
+      throw new Error(data.error || 'No se pudo guardar el boleto PNG en la carpeta QR.');
+    }
+    return data.imageUrl;
+  },
+
   async getRSVPs(invitationId: string): Promise<RSVPRecord[]> {
     try {
       const res = await fetch(`${API_BASE}/invitations/${invitationId}/rsvps`);

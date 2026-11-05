@@ -688,7 +688,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
           <button
             onClick={() => {
-              const url = getInvitationUrl(invitation.id);
+              const url = getInvitationUrl(invitation.id, {}, invitation.hostingerPublish?.remoteSlug);
               navigator.clipboard.writeText(url);
               alert('¡Enlace de la invitación copiado al portapapeles!');
             }}
@@ -946,9 +946,9 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       </label>
                     </div>
                     <div className="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto">
-                      {MOTIF_LIBRARY.map((motif) => (
-                        <button key={motif.id} type="button" aria-label={`Agregar ${motif.name} a todas las secciones`} title={`Agregar ${motif.name} a todas las secciones`} onClick={() => addMotif(motif.src, motif.name)} className="aspect-square p-1 rounded-lg border border-stone-200 bg-white hover:border-[#9C7A3C] hover:bg-[#FAF5EB]">
-                          <img src={motif.src} alt={motif.name} loading="lazy" className="w-full h-full object-contain" />
+                        {MOTIF_LIBRARY.map((motif) => (
+                        <button key={motif.id} type="button" aria-label={`Agregar ${motif.name} a todas las secciones`} title={`Agregar ${motif.name} a todas las secciones`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); addMotif(motif.src, motif.name); }} className="aspect-square p-1 border border-stone-200 bg-white hover:border-[#9C7A3C] hover:bg-[#FAF5EB]">
+                          <img src={motif.src} alt={motif.name} loading="lazy" draggable={false} className="w-full h-full object-contain pointer-events-none" />
                         </button>
                       ))}
                     </div>
@@ -2255,7 +2255,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 <input type="file" accept="image/png,.png" onChange={handleMotifUpload} className="hidden" />
               </label>
               <div className="grid grid-cols-4 gap-2 max-h-56 overflow-y-auto">
-                {MOTIF_LIBRARY.map((motif) => <button key={motif.id} type="button" onClick={() => addMotif(motif.src, motif.name)} title={`Agregar ${motif.name} a todas las secciones`} className="aspect-square rounded-xl border bg-white p-1 hover:border-amber-600"><img src={motif.src} alt={motif.name} loading="lazy" className="h-full w-full object-contain" /></button>)}
+                {MOTIF_LIBRARY.map((motif) => <button key={motif.id} type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); addMotif(motif.src, motif.name); }} title={`Agregar ${motif.name} a todas las secciones`} className="aspect-square rounded-xl border bg-white p-1 hover:border-amber-600"><img src={motif.src} alt={motif.name} loading="lazy" draggable={false} className="h-full w-full object-contain pointer-events-none" /></button>)}
               </div>
               <div className="rounded-xl border bg-white p-3 space-y-3">
                 <label className="block text-[11px] font-semibold">Sección seleccionada

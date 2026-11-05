@@ -122,7 +122,7 @@ export default function App() {
 
             <button
               onClick={() => {
-                const url = getInvitationUrl(currentInvitation.id);
+                const url = getInvitationUrl(currentInvitation.id, {}, currentInvitation.hostingerPublish?.remoteSlug);
                 navigator.clipboard.writeText(url);
                 alert('¡Enlace de la invitación copiado al portapapeles!');
               }}

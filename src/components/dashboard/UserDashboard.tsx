@@ -34,6 +34,15 @@ interface UserDashboardProps {
   onOpenAdmin: () => void;
 }
 
+const EVENT_CATEGORY_CARDS = [
+  { id: 'bodas', title: 'Bodas & Galas', description: 'Celebraciones elegantes y noches de gala', accent: '#A67C1E' },
+  { id: 'xv_anos', title: 'XV Años', description: 'Una celebración única para sus quince', accent: '#9B5A91' },
+  { id: 'graduaciones', title: 'Graduaciones', description: 'Celebra cada logro y nuevo comienzo', accent: '#315D83' },
+  { id: 'cumpleanos', title: 'Cumpleaños', description: 'Fiestas con personalidad y color', accent: '#D06B51' },
+  { id: 'infantiles', title: 'Infantiles', description: 'Aventuras mágicas para los más pequeños', accent: '#4C947B' },
+  { id: 'especiales', title: 'Especiales', description: 'Baby shower, bautizo y otras ocasiones', accent: '#7665AE' },
+];
+
 export const UserDashboard: React.FC<UserDashboardProps> = ({
   onOpenEditor,
   onPreviewInvitation,
@@ -41,7 +50,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 }) => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'invitations' | 'templates' | 'rsvps' | 'stats'>('invitations');
+  const [activeTab, setActiveTab] = useState<'invitations' | 'saved' | 'templates' | 'rsvps' | 'stats'>('invitations');
   const [selectedCategory, setSelectedCategory] = useState<string>('todas');
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [publishingInv, setPublishingInv] = useState<Invitation | null>(null);
@@ -134,7 +143,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               activeTab === 'templates' ? 'text-[#9C7A3C] font-semibold border-b-2 border-[#DFC48B] pb-1' : ''
             }`}
           >
-            12 Plantillas
+            Plantillas
+          </button>
+          <button
+            onClick={() => setActiveTab('saved')}
+            className={`hover:text-slate-900 transition-colors cursor-pointer ${
+              activeTab === 'saved' ? 'text-[#9C7A3C] font-semibold border-b-2 border-[#DFC48B] pb-1' : ''
+            }`}
+          >
+            Guardadas ({invitations.length})
           </button>
           <button
             onClick={() => setActiveTab('rsvps')}
@@ -168,7 +185,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('templates')}
+            onClick={() => { setSelectedCategory('todas'); setActiveTab('templates'); }}
             className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#DFC48B] hover:bg-[#D5B676] text-slate-900 text-xs font-semibold shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -213,7 +230,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-1 text-xs">
           {[
             { id: 'invitations', label: 'Mis Invitaciones' },
-            { id: 'templates', label: '12 Plantillas' },
+            { id: 'saved', label: 'Guardadas' },
+            { id: 'templates', label: 'Plantillas' },
             { id: 'rsvps', label: 'RSVP' },
             { id: 'stats', label: 'Métricas' },
           ].map((tab) => (
@@ -231,8 +249,28 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           ))}
         </div>
 
-        {/* VIEW: MIS INVITACIONES */}
+        {/* VIEW: EVENT CATEGORIES */}
         {activeTab === 'invitations' && (
+          <section className="space-y-5">
+            <div>
+              <h3 className="text-xl font-serif font-bold text-slate-800">Mis Invitaciones</h3>
+              <p className="text-xs text-stone-500 mt-1">Elige el tipo de evento para ver sus plantillas.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {EVENT_CATEGORY_CARDS.map((category) => (
+                <button key={category.id} type="button" onClick={() => { setSelectedCategory(category.id); setActiveTab('templates'); }} className="group rounded-3xl border border-[#E8DEC8] bg-white p-5 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-[#DFC48B] hover:shadow-md">
+                  <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${category.accent}18`, color: category.accent }}><Sparkles className="h-5 w-5" /></span>
+                  <span className="block font-serif text-lg font-bold text-slate-800">{category.title}</span>
+                  <span className="mt-1 block text-xs text-stone-500">{category.description}</span>
+                  <span className="mt-4 block text-[11px] font-semibold" style={{ color: category.accent }}>Ver 2 plantillas →</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* VIEW: SAVED INVITATIONS */}
+        {activeTab === 'saved' && (
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -333,7 +371,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              const shareUrl = getInvitationUrl(inv.id);
+                              const shareUrl = getInvitationUrl(inv.id, {}, inv.hostingerPublish?.remoteSlug);
                               navigator.clipboard.writeText(shareUrl);
                               alert('¡Enlace de invitación copiado al portapapeles!');
                             }}

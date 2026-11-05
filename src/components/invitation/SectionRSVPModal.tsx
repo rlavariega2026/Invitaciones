@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Invitation, RSVPRecord } from '../../types/invitation';
 import { api } from '../../services/api';
 import { getDigitalPassUrl } from '../../utils/invitationUrl';
+import { createDigitalPassImage } from '../../utils/digitalPassImage';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { X, Check, Users, QrCode, Share2, Sparkles, AlertCircle, Heart } from 'lucide-react';
@@ -27,6 +28,16 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedRsvp, setConfirmedRsvp] = useState<RSVPRecord | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [ticketImageUrl, setTicketImageUrl] = useState<string>('');
+  const [ticketSaveError, setTicketSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setConfirmedRsvp(null);
+    setQrDataUrl('');
+    setTicketImageUrl('');
+    setTicketSaveError(null);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,6 +73,14 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
         },
       });
       setQrDataUrl(qrImage);
+
+      try {
+        const ticketPng = createDigitalPassImage(invitation, result);
+        const imageUrl = await api.saveDigitalPassImage(result.qrCode, ticketPng);
+        setTicketImageUrl(imageUrl.startsWith('http') ? imageUrl : `${window.location.origin}${imageUrl}`);
+      } catch (imageError) {
+        setTicketSaveError(imageError instanceof Error ? imageError.message : 'No se pudo guardar el boleto PNG.');
+      }
 
       // Trigger celebratory pastel confetti!
       confetti({
@@ -262,6 +281,8 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
                 <div className="font-mono text-xs font-semibold text-slate-600 bg-stone-100 px-3 py-1 rounded-lg">
                   {confirmedRsvp.qrCode}
                 </div>
+                {ticketImageUrl && <div className="mt-3 w-full"><img src={ticketImageUrl} alt={`Boleto digital de ${confirmedRsvp.guestName}`} className="mx-auto w-full max-w-xs rounded-xl border border-stone-200 shadow-sm" /><a href={ticketImageUrl} download={`${confirmedRsvp.qrCode}.png`} className="mt-2 inline-flex rounded-lg bg-stone-900 px-4 py-2 text-[11px] font-semibold text-white">Descargar boleto PNG</a></div>}
+                {ticketSaveError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 p-2 text-[10px] text-rose-700">{ticketSaveError}</p>}
                 <p className="text-[11px] text-stone-500 mt-2">
                   Presenta este código en la entrada del evento para validar tu ingreso.
                 </p>

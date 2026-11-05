@@ -172,6 +172,36 @@ if (($segments[0] ?? '') === 'invitations') {
     }
 }
 
+if ($segments === ['rsvps', 'pass-image'] && $method === 'POST') {
+    $passCode = trim((string)($body['passCode'] ?? ''));
+    if ($passCode === '' || !preg_match('/^[A-Za-z0-9_-]{1,80}$/', $passCode)) {
+        json_response(['success' => false, 'error' => 'Código de pase inválido'], 400);
+    }
+    $found = false;
+    foreach (read_data('rsvps.json') as $rsvp) {
+        if (hash_equals((string)($rsvp['qrCode'] ?? ''), $passCode)) { $found = true; break; }
+    }
+    if (!$found) json_response(['success' => false, 'error' => 'El pase no existe'], 404);
+    $fileData = (string)($body['filedata'] ?? '');
+    $encoded = preg_replace('/^data:image\/png;base64,/', '', $fileData);
+    $decoded = base64_decode($encoded, true);
+    if ($decoded === false || !str_starts_with($decoded, "\x89PNG\r\n\x1a\n")) {
+        json_response(['success' => false, 'error' => 'La imagen del boleto no es un PNG válido'], 400);
+    }
+    $qrDirectory = __DIR__ . '/QR';
+    if (!is_dir($qrDirectory) && !mkdir($qrDirectory, 0755, true) && !is_dir($qrDirectory)) {
+        json_response(['success' => false, 'error' => 'No se pudo acceder a la carpeta pública QR'], 500);
+    }
+    $filename = $passCode . '.png';
+    $target = $qrDirectory . '/' . $filename;
+    $temporary = $target . '.tmp';
+    if (file_put_contents($temporary, $decoded, LOCK_EX) === false || !rename($temporary, $target)) {
+        @unlink($temporary);
+        json_response(['success' => false, 'error' => 'No se pudo publicar el boleto en la carpeta QR'], 500);
+    }
+    json_response(['success' => true, 'imageUrl' => '/Invitaciones/QR/' . rawurlencode($filename)]);
+}
+
 if (count($segments) === 3 && $segments[0] === 'rsvps' && $segments[1] === 'pass' && $method === 'GET') {
     $passCode = (string)$segments[2];
     foreach (read_data('rsvps.json') as $rsvp) {
@@ -181,7 +211,13 @@ if (count($segments) === 3 && $segments[0] === 'rsvps' && $segments[1] === 'pass
             if (($item['id'] ?? '') === ($rsvp['invitationId'] ?? '')) { $invitation = $item; break; }
         }
         if (!$invitation) json_response(['success' => false, 'error' => 'Invitación asociada no encontrada'], 404);
-        json_response(['success' => true, 'pass' => $rsvp, 'invitation' => [
+        $ticketImagePath = __DIR__ . '/QR/' . preg_replace('/[^A-Za-z0-9_-]/', '', $passCode) . '.png';
+        json_response(['success' => true, 'pass' => [
+            'id' => $rsvp['id'] ?? '', 'guestName' => $rsvp['guestName'] ?? '',
+            'companionsCount' => $rsvp['companionsCount'] ?? 1, 'qrCode' => $rsvp['qrCode'] ?? '',
+            'checkedIn' => $rsvp['checkedIn'] ?? false,
+            'ticketImageUrl' => is_file($ticketImagePath) ? '/Invitaciones/QR/' . rawurlencode($passCode . '.png') : null,
+        ], 'invitation' => [
             'id' => $invitation['id'] ?? '', 'category' => $invitation['category'] ?? 'especiales',
             'title' => $invitation['title'] ?? 'Invitación', 'names' => $invitation['names'] ?? '',
             'eventDate' => $invitation['eventDate'] ?? '', 'eventTime' => $invitation['eventTime'] ?? '',
@@ -242,9 +278,9 @@ if ($segments === ['hostinger', 'publish'] && $method === 'POST') {
     foreach ($items as &$inv) {
         if (($inv['id'] ?? '') !== $id) continue;
         $slug = strtolower((string)preg_replace('/[^a-z0-9-]/', '-', (string)($body['slug'] ?? $inv['title'] ?? $id)));
-        $domain = rtrim((string)($body['customDomain'] ?? 'https://lav-invitaciones.hostinger.site'), '/');
-        $url = $domain . '/' . $slug;
-        $inv['hostingerPublish'] = ['isConfigured' => true, 'remoteDir' => $body['remoteDirectory'] ?? '/public_html/invitaciones/', 'customDomain' => $domain, 'publicUrl' => $url, 'lastPublishedAt' => now_iso(), 'publishStatus' => 'published'];
+        $domain = 'https://lavdigitalagency.com';
+        $url = $domain . '/Invitaciones/Invitacionespost/' . rawurlencode($slug) . '/?invitationId=' . rawurlencode($id);
+        $inv['hostingerPublish'] = ['isConfigured' => true, 'remoteDir' => '/public_html/Invitaciones/Invitacionespost/', 'remoteSlug' => $slug, 'customDomain' => $domain, 'publicUrl' => $url, 'lastPublishedAt' => now_iso(), 'publishStatus' => 'published'];
         write_data('invitations.json', $items);
         json_response(['success' => true, 'message' => 'Invitación empaquetada y lista para Hostinger', 'publicUrl' => $url, 'slug' => $slug]);
     }
@@ -261,7 +297,7 @@ if (($segments[0] ?? '') === 'hostinger' && ($segments[1] ?? '') === 'export-htm
         $time = htmlspecialchars((string)($inv['eventTime'] ?? ''), ENT_QUOTES, 'UTF-8');
         $location = htmlspecialchars((string)($inv['eventLocation'] ?? ''), ENT_QUOTES, 'UTF-8');
         $color = htmlspecialchars((string)($inv['backgroundColor'] ?? '#FDFBF7'), ENT_QUOTES, 'UTF-8');
-        $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $title . ' — Invitación de Gala</title><meta name="description" content="Invitación digital exclusiva para ' . $names . '."><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet"><style>body{font-family:"Plus Jakarta Sans",sans-serif;background:' . $color . ';color:#2D3748}.card{max-width:640px;margin:2rem auto;padding:2rem;background:#ffffffdd;text-align:center;border-radius:1rem}.script{font-family:"Great Vibes",cursive;font-size:3rem}</style></head><body><main class="card"><small>' . $title . '</small><h1 class="script">' . $names . '</h1><p>' . $date . ' · ' . $time . ' hrs</p><h2>Lugar de Celebración</h2><p>' . $location . '</p><a href="/Invitaciones/?invitationId=' . rawurlencode((string)$inv['id']) . '">Confirmar Asistencia (RSVP)</a></main></body></html>';
+        $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $title . ' — Invitación de Gala</title><meta name="description" content="Invitación digital exclusiva para ' . $names . '."><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet"><style>body{font-family:"Plus Jakarta Sans",sans-serif;background:' . $color . ';color:#2D3748}.card{max-width:640px;margin:2rem auto;padding:2rem;background:#ffffffdd;text-align:center;border-radius:1rem}.script{font-family:"Great Vibes",cursive;font-size:3rem}</style></head><body><main class="card"><small>' . $title . '</small><h1 class="script">' . $names . '</h1><p>' . $date . ' · ' . $time . ' hrs</p><h2>Lugar de Celebración</h2><p>' . $location . '</p><a href="https://lavdigitalagency.com/Invitaciones/Invitacionespost/' . rawurlencode((string)($inv['hostingerPublish']['remoteSlug'] ?? $inv['id'])) . '/?invitationId=' . rawurlencode((string)$inv['id']) . '">Confirmar Asistencia (RSVP)</a></main></body></html>';
         header('Content-Type: text/html; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$inv['id']) . '-hostinger.html"');
         echo $html;

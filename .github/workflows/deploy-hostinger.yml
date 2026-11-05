@@ -35,6 +35,8 @@ jobs:
         run: |
           mkdir -p deployment/data
           cp -a dist/. deployment/
+          mkdir -p deployment/Invitacionespost
+          cp dist/index.html deployment/Invitacionespost/index.html
           cp api.php .htaccess deployment/
           cp data/invitations.json deployment/data/
       - name: Install FTP client
@@ -69,5 +71,10 @@ jobs:
           test -s "$RUNNER_TEMP/template.jpg"
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/QR/" -o "$RUNNER_TEMP/digital-pass.html"
           grep -q 'Pase digital' "$RUNNER_TEMP/digital-pass.html"
+          curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/Invitacionespost/prueba-de-ruta/?invitationId=prueba" -o "$RUNNER_TEMP/published-invitation.html"
+          grep -q '/Invitaciones/assets/' "$RUNNER_TEMP/published-invitation.html"
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/api/invitations" -o "$RUNNER_TEMP/api.json"
+          pass_status=$(curl --silent --show-error --output "$RUNNER_TEMP/pass-image-api.json" --write-out "%{http_code}" -H "Content-Type: application/json" -d '{"passCode":"ci-route-check","filedata":"invalid"}' "$base/api/rsvps/pass-image")
+          test "$pass_status" = "404"
+          node -e 'const fs=require("node:fs"); const d=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(d.error !== "El pase no existe") process.exit(1); console.log("Digital pass image endpoint verified without creating production data.");' "$RUNNER_TEMP/pass-image-api.json"
           node -e 'const fs=require("node:fs"); const d=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(!d.success || !Array.isArray(d.invitations)) process.exit(1); console.log("Public page, template asset, and API verified; invitations:", d.invitations.length);' "$RUNNER_TEMP/api.json"

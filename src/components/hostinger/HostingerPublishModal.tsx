@@ -29,24 +29,16 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   onClose,
   onUpdateInvitation,
 }) => {
-  const [customDomain, setCustomDomain] = useState(
-    invitation.hostingerPublish?.customDomain || ''
-  );
   const [remoteSlug, setRemoteSlug] = useState(
     invitation.title.toLowerCase().replace(/[^a-z0-9-]/g, '-') || invitation.id
-  );
-  const [remoteDirectory, setRemoteDirectory] = useState(
-    invitation.hostingerPublish?.remoteDir || '/public_html/Invitaciones/'
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    setCustomDomain(invitation.hostingerPublish?.customDomain || '');
     setRemoteSlug(invitation.hostingerPublish?.remoteSlug || invitation.title.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id);
-    setRemoteDirectory(invitation.hostingerPublish?.remoteDir || '/public_html/Invitaciones/');
-  }, [invitation.id, invitation.title, invitation.hostingerPublish?.customDomain, invitation.hostingerPublish?.remoteSlug, invitation.hostingerPublish?.remoteDir]);
+  }, [invitation.id, invitation.title, invitation.hostingerPublish?.remoteSlug]);
 
   if (!isOpen) return null;
 
@@ -56,28 +48,24 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
     setSaveMessage(null);
     setSaveError(null);
 
-    let domain = customDomain.trim().replace(/\/+$/, '');
-    if (domain && !/^https?:\/\//i.test(domain)) domain = `https://${domain}`;
     const safeSlug = remoteSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id;
-    if (domain) {
-      try { new URL(domain); } catch { setSaveError('Escribe un dominio válido, por ejemplo https://mi-evento.com.'); setIsSaving(false); return; }
-    }
+    const publicUrl = getInvitationUrl(invitation.id, {}, safeSlug);
 
     const updatedInvitation: Invitation = {
       ...invitation,
       hostingerPublish: {
-        isConfigured: !!domain,
-        customDomain: domain,
-        remoteDir: remoteDirectory,
+        isConfigured: true,
+        customDomain: 'https://lavdigitalagency.com',
+        remoteDir: '/public_html/Invitaciones/Invitacionespost/',
         remoteSlug: safeSlug,
-        publicUrl: getInvitationUrl(invitation.id),
-        publishStatus: 'idle',
+        publicUrl,
+        publishStatus: 'published',
       },
     };
     try {
       const savedInvitation = await api.saveInvitationChecked(updatedInvitation);
       onUpdateInvitation(savedInvitation);
-      setSaveMessage(`Configuración guardada. Enlace público: ${getInvitationUrl(invitation.id)}`);
+      setSaveMessage(`Invitación publicada en la ruta fija. Enlace: ${publicUrl}`);
       setTimeout(() => setSaveMessage(null), 5000);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la configuración en el servidor.');
@@ -91,7 +79,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   };
 
   const handlePreviewLive = () => {
-    const liveUrl = getInvitationUrl(invitation.id);
+    const liveUrl = getInvitationUrl(invitation.id, {}, remoteSlug);
     window.open(liveUrl, '_blank');
   };
 
@@ -146,7 +134,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  const url = getInvitationUrl(invitation.id);
+                  const url = getInvitationUrl(invitation.id, {}, remoteSlug);
                   navigator.clipboard.writeText(url);
                   alert('¡Enlace de la invitación copiado al portapapeles!');
                 }}
@@ -178,29 +166,21 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
             </button>
           </div>
 
-          {/* Opción 3: Configurar Dominio Hostinger (Opcional para después) */}
+          {/* Opción 3: Ruta fija de publicación */}
           <form onSubmit={handleSaveConfig} className="p-4 rounded-2xl bg-white border border-[#E8DEC8] space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-serif font-bold text-slate-900 text-xs">
-                3. Conectar tu Dominio de Hostinger (Opcional)
+                3. Ruta fija de publicación
               </span>
               <Server className="w-4 h-4 text-stone-400" />
             </div>
             <p className="text-[11px] text-stone-500">
-              Si ya tienes un dominio propio en Hostinger (ej. <em>https://mi-evento.com</em>), ingrésalo aquí para vincular los enlaces y códigos QR.
+              Todas las invitaciones se publican en el dominio y carpeta de Hostinger ya configurados.
             </p>
 
             <div>
-              <label className="block font-medium text-slate-700 mb-1 text-[11px]">
-                Tu Dominio Web en Hostinger (Opcional)
-              </label>
-              <input
-                type="text"
-                value={customDomain}
-                onChange={(e) => setCustomDomain(e.target.value)}
-                placeholder="https://tudominio.com (o déjalo vacío por ahora)"
-                className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#DFC48B]"
-              />
+              <label className="block font-medium text-slate-700 mb-1 text-[11px]">Dominio y carpeta de publicación</label>
+              <div className="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-mono text-[10px] text-slate-700">https://lavdigitalagency.com/Invitaciones/Invitacionespost/</div>
             </div>
 
             <div>
@@ -211,7 +191,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
                 type="text"
                 value={remoteSlug}
                 onChange={(e) => setRemoteSlug(e.target.value)}
-                placeholder="boda-sofia-mateo"
+                placeholder="nombre-de-la-invitacion"
                 className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#DFC48B]"
               />
             </div>

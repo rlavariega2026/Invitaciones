@@ -1,6 +1,7 @@
 Options -Indexes
 RewriteEngine On
 RewriteBase /Invitaciones/
+DirectoryIndex index.html index.php
 
 # Keep stored JSON data private.
 RewriteRule ^(?:storage|data)(?:/|$) - [F,L,NC]

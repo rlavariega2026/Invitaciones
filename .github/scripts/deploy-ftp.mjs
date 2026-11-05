@@ -1,7 +1,9 @@
-import { Client } from 'basic-ftp';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+const require = createRequire(path.join(process.env.RUNNER_TEMP, 'ftp-client', 'package.json'));
+const { Client } = require('basic-ftp');
 const required = ['FTP_SERVER', 'FTP_USERNAME', 'FTP_PASSWORD'];
 for (const key of required) {
   if (!process.env[key]) throw new Error('Missing required GitHub secret: ' + key);
@@ -10,7 +12,6 @@ const port = Number(process.env.FTP_PORT || 21);
 const client = new Client(15000);
 client.ftp.verbose = true;
 const candidates = [];
-const base = '/home/u596885302';
 const initialCandidates = [];
 client.ftp.log = (message) => {
   if (!String(message).toLowerCase().includes('pass')) console.log('[FTP]', message);
@@ -30,6 +31,7 @@ try {
   const domainRoot = '/domains/lavdigitalagency.com/public_html';
   if (normalizedInitial.toLowerCase().endsWith(domainRoot)) initialCandidates.push('Invitaciones');
   if (normalizedInitial.toLowerCase().endsWith('/public_html')) initialCandidates.push('Invitaciones');
+  if (normalizedInitial.toLowerCase().endsWith('/domains')) initialCandidates.push('lavdigitalagency.com/public_html/Invitaciones');
   if (normalizedInitial === '/') {
     initialCandidates.push('public_html/Invitaciones');
     initialCandidates.push('domains/lavdigitalagency.com/public_html/Invitaciones');

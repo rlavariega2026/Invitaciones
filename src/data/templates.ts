@@ -1614,6 +1614,11 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
   },
 ];
 
+// Keep the complete catalog for existing invitations and stored template IDs,
+// while presenting a focused choice of two designs for each event category.
+export const FEATURED_TEMPLATES: TemplateDefinition[] = (['bodas', 'xv_anos', 'graduaciones', 'cumpleanos', 'infantiles', 'especiales'] as const)
+  .flatMap((category) => TEMPLATES_CATALOG.filter((template) => template.category === category).slice(0, 2));
+
 // Helper to construct a complete rich 22-section invitation from any of the 60 templates
 export function buildInvitationFromTemplate(template: TemplateDefinition, customId?: string): Invitation {
   const p = template.palette;

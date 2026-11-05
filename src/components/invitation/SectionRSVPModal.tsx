@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Invitation, RSVPRecord } from '../../types/invitation';
 import { api } from '../../services/api';
-import { getInvitationUrl } from '../../utils/invitationUrl';
+import { getDigitalPassUrl } from '../../utils/invitationUrl';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { X, Check, Users, QrCode, Share2, Sparkles, AlertCircle, Heart } from 'lucide-react';
@@ -51,7 +51,7 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
       setConfirmedRsvp(result);
 
       // Generate QR Code containing a real clickable URL
-      const passUrl = getInvitationUrl(invitation.id, { passCode: result.qrCode, guest: result.guestName });
+      const passUrl = getDigitalPassUrl(result.qrCode);
 
       const qrImage = await QRCode.toDataURL(passUrl, {
         width: 256,
@@ -79,7 +79,7 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
 
   const handleShareWhatsApp = () => {
     if (!confirmedRsvp) return;
-    const passUrl = getInvitationUrl(invitation.id, { passCode: confirmedRsvp.qrCode });
+    const passUrl = getDigitalPassUrl(confirmedRsvp.qrCode);
 
     const shareText = encodeURIComponent(
       `¡Hola! Confirmé mi asistencia para ${invitation.title} (${confirmedRsvp.companionsCount} personas). Puedes ver mi pase aquí: ${passUrl}`

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#171b2d"><title>Pase digital | LAV Invitations</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at top,#39415a,#171b2d 65%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#222}
+    .ticket{--accent:#bd9452;--paper:#fffaf0;position:relative;width:min(100%,470px);overflow:hidden;border-radius:26px;background:var(--paper);box-shadow:0 28px 90px #0007;border:1px solid #ffffff70}
+    .ticket:before,.ticket:after{content:"";position:absolute;z-index:2;top:64%;width:26px;height:26px;border-radius:50%;background:#20263a}.ticket:before{left:-13px}.ticket:after{right:-13px}
+    .top{padding:36px 32px 30px;text-align:center;color:#fff;background:linear-gradient(145deg,#262d45,#161b2d);position:relative;overflow:hidden}.top:after{content:"✦  ·  ✧  ·  ✦";position:absolute;inset:17px 0 auto;color:var(--accent);font-size:13px;letter-spacing:8px;opacity:.8}.kind{padding-top:16px;color:var(--accent);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:3px}.top h1{font-family:Georgia,serif;font-weight:500;font-size:30px;line-height:1.12;margin:14px 0 8px}.hosts{color:#fff9;font-family:Georgia,serif;font-style:italic;font-size:18px}.content{padding:27px 32px 30px}.guest-label{text-transform:uppercase;letter-spacing:2px;color:#888;font-size:9px;font-weight:800}.guest{font-family:Georgia,serif;font-size:28px;color:#25293b;margin:5px 0 4px;overflow-wrap:anywhere}.seats{color:#5b5d67;font-size:13px}.dash{margin:24px -32px 20px;border-top:2px dashed #d8d4cb}.details{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px}.label{color:#999;font-size:9px;text-transform:uppercase;letter-spacing:1.4px;font-weight:800}.value{margin-top:5px;font-size:12px;font-weight:650;color:#303342;overflow-wrap:anywhere}.location{grid-column:1/-1}.codebox{margin-top:24px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:15px;background:#f0eee9;padding:14px 16px}.code-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#888}.code{font:700 13px ui-monospace,monospace;letter-spacing:1px;color:#292c3a;margin-top:5px}.seal{width:48px;height:48px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:white;font-size:23px;box-shadow:0 4px 12px #0002}.foot{text-align:center;font-size:10px;color:#8b8990;margin-top:18px}.status{margin:24px auto;max-width:420px;text-align:center;color:white;font-size:14px}.ticket.bodas{--accent:#bd9452;--paper:#fffdf8}.ticket.xv_anos{--accent:#c477a4;--paper:#fff8fc}.ticket.graduaciones{--accent:#4e8791;--paper:#f6fbfc}.ticket.cumpleanos{--accent:#dd8063;--paper:#fff9f5}.ticket.infantiles{--accent:#6caa8b;--paper:#f8fff9}.ticket.especiales{--accent:#8271c4;--paper:#faf9ff}
+    .ticket.xv_anos .top{background:radial-gradient(circle at 50% 0,#663d72,#271b3d 72%)}.ticket.graduaciones .top{background:linear-gradient(145deg,#164653,#182b40)}.ticket.cumpleanos .top{background:linear-gradient(145deg,#923f43,#321f36)}.ticket.infantiles .top{background:radial-gradient(circle at 20% 10%,#789c7e,#294d4c 75%)}.ticket.especiales .top{background:linear-gradient(145deg,#43366f,#201d3c)}
+    @media(max-width:420px){body{padding:12px}.ticket{border-radius:20px}.top{padding:34px 22px 25px}.content{padding:24px 24px}.dash{margin-left:-24px;margin-right:-24px}.guest{font-size:25px}}
+  </style>
+</head>
+<body><div id="app" class="status">Cargando tu pase digital…</div>
+<script>
+  const categoryNames={bodas:'Bodas & Galas',xv_anos:'XV Años',graduaciones:'Graduación',cumpleanos:'Cumpleaños',infantiles:'Celebración infantil',especiales:'Evento especial'};
+  const icons={bodas:'♢',xv_anos:'✿',graduaciones:'✦',cumpleanos:'✧',infantiles:'☼',especiales:'❖'};
+  const safe=(value)=>String(value??'').replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function loadPass(){
+    const code=new URLSearchParams(location.search).get('passCode');
+    const root=document.getElementById('app');
+    if(!code){root.textContent='Este enlace no contiene un código de pase válido.';return;}
+    try{
+      const response=await fetch('../api/rsvps/pass/'+encodeURIComponent(code),{headers:{Accept:'application/json'}});
+      const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||'No se encontró el pase');
+      const {pass,invitation}=data;const category=categoryNames[invitation.category]?invitation.category:'especiales';
+      const date=invitation.eventDate?new Date(invitation.eventDate+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}):'Por confirmar';
+      root.className='ticket '+category;
+      root.innerHTML=`<header class="top"><div class="kind">${safe(categoryNames[category])} · Pase de acceso</div><h1>${safe(invitation.title)}</h1><div class="hosts">${safe(invitation.names)}</div></header><main class="content"><div class="guest-label">Pase a nombre de</div><div class="guest">${safe(pass.guestName)}</div><div class="seats">${Number(pass.companionsCount)||1} ${(Number(pass.companionsCount)||1)===1?'asiento autorizado':'asientos autorizados'}</div><div class="dash"></div><div class="details"><div><div class="label">Fecha</div><div class="value">${safe(date)}</div></div><div><div class="label">Hora</div><div class="value">${safe(invitation.eventTime||'Por confirmar')}</div></div><div class="location"><div class="label">Lugar</div><div class="value">${safe(invitation.eventLocation||'Por confirmar')}</div></div></div><div class="codebox"><div><div class="code-label">Código de acceso</div><div class="code">${safe(pass.qrCode)}</div></div><div class="seal">${icons[category]}</div></div><div class="foot">Presenta este pase en la entrada · LAV Invitations</div></main>`;
+    }catch(error){root.textContent=error instanceof Error?error.message:'No se pudo cargar el pase. Revisa tu conexión.';}
+  }
+  loadPass();
+</script></body></html>

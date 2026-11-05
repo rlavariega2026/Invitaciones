@@ -172,6 +172,26 @@ if (($segments[0] ?? '') === 'invitations') {
     }
 }
 
+if (count($segments) === 3 && $segments[0] === 'rsvps' && $segments[1] === 'pass' && $method === 'GET') {
+    $passCode = (string)$segments[2];
+    foreach (read_data('rsvps.json') as $rsvp) {
+        if (!hash_equals((string)($rsvp['qrCode'] ?? ''), $passCode)) continue;
+        $invitation = null;
+        foreach (read_data('invitations.json') as $item) {
+            if (($item['id'] ?? '') === ($rsvp['invitationId'] ?? '')) { $invitation = $item; break; }
+        }
+        if (!$invitation) json_response(['success' => false, 'error' => 'Invitación asociada no encontrada'], 404);
+        json_response(['success' => true, 'pass' => $rsvp, 'invitation' => [
+            'id' => $invitation['id'] ?? '', 'category' => $invitation['category'] ?? 'especiales',
+            'title' => $invitation['title'] ?? 'Invitación', 'names' => $invitation['names'] ?? '',
+            'eventDate' => $invitation['eventDate'] ?? '', 'eventTime' => $invitation['eventTime'] ?? '',
+            'eventLocation' => $invitation['eventLocation'] ?? '', 'primaryColor' => $invitation['primaryColor'] ?? '#8C6D34',
+            'accentColor' => $invitation['accentColor'] ?? '#DFC48B',
+        ]]);
+    }
+    json_response(['success' => false, 'error' => 'Pase o código QR no encontrado'], 404);
+}
+
 if ($segments === ['rsvps', 'checkin'] && $method === 'POST') {
     $rsvps = read_data('rsvps.json');
     foreach ($rsvps as &$rsvp) {

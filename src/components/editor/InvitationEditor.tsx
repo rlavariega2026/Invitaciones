@@ -13,7 +13,7 @@ import {
   InvitationMotif,
   TypographyConfig,
 } from '../../types/invitation';
-import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from '../../data/templates';
+import { TEMPLATES_CATALOG, FEATURED_TEMPLATES, buildInvitationFromTemplate } from '../../data/templates';
 import { BUTTON_CATALOG } from '../../data/buttonCatalog';
 import { InvitationContainer } from '../invitation/InvitationContainer';
 import { PhotoEditorModal } from '../photo-editor/PhotoEditorModal';
@@ -81,7 +81,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
   // Default to 'sections' so all 22 sections are immediately accessible and editable!
   const [activeTab, setActiveTab] = useState<
-    'sections' | 'templates' | 'format' | 'buttons' | 'music' | 'info'
+    'sections' | 'motifs' | 'templates' | 'format' | 'buttons' | 'music' | 'info'
   >('sections');
 
   const [devicePreview, setDevicePreview] = useState<'mobile' | 'desktop'>('mobile');
@@ -560,8 +560,8 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
   const filteredTemplates =
     templateCategoryFilter === 'todas'
-      ? TEMPLATES_CATALOG
-      : TEMPLATES_CATALOG.filter((t) => t.category === templateCategoryFilter);
+      ? FEATURED_TEMPLATES
+      : FEATURED_TEMPLATES.filter((t) => t.category === templateCategoryFilter);
 
   const filteredButtons =
     buttonCategoryFilter === 'todas'
@@ -706,7 +706,8 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
         <aside className="w-16 bg-white border-r border-[#E8DEC8] flex flex-col items-center py-3 space-y-2.5 shrink-0 overflow-y-auto">
           {[
             { id: 'sections', icon: CheckSquare, label: 'Secciones' },
-            { id: 'templates', icon: Sparkles, label: '60 Modelos' },
+            { id: 'motifs', icon: ImageIcon, label: 'Motivos PNG' },
+            { id: 'templates', icon: Sparkles, label: '12 Modelos' },
             { id: 'format', icon: Layout, label: 'Formato' },
             { id: 'buttons', icon: MousePointerClick, label: '50 Botones' },
             { id: 'music', icon: Music, label: 'Música' },
@@ -739,7 +740,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             <div className="space-y-5">
               <div>
                 <h3 className="text-sm font-serif font-bold text-slate-800">
-                  Estudio Individual por Sección (22)
+                  Estudio Individual por Sección ({invitation.sections.length})
                 </h3>
                 <p className="text-stone-500 text-[11px] mt-0.5">
                   Selecciona la sección para editar sus textos, tipografía, fondo y foto de forma individual:
@@ -2243,11 +2244,48 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             </div>
           )}
 
-          {/* TAB: 60 PLANTILLAS */}
+          {activeTab === 'motifs' && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-serif font-bold text-slate-800">Motivos PNG de la invitación</h3>
+                <p className="text-[11px] text-stone-500 mt-1">Se agregan a las {invitation.sections.length} secciones. Selecciona uno y arrástralo sobre la vista previa.</p>
+              </div>
+              <label className="block cursor-pointer rounded-xl bg-stone-900 px-3 py-2 text-center text-xs font-semibold text-white">
+                {selectedMotif ? 'Reemplazar PNG seleccionado' : 'Subir PNG propio'}
+                <input type="file" accept="image/png,.png" onChange={handleMotifUpload} className="hidden" />
+              </label>
+              <div className="grid grid-cols-4 gap-2 max-h-56 overflow-y-auto">
+                {MOTIF_LIBRARY.map((motif) => <button key={motif.id} type="button" onClick={() => addMotif(motif.src, motif.name)} title={`Agregar ${motif.name} a todas las secciones`} className="aspect-square rounded-xl border bg-white p-1 hover:border-amber-600"><img src={motif.src} alt={motif.name} loading="lazy" className="h-full w-full object-contain" /></button>)}
+              </div>
+              <div className="rounded-xl border bg-white p-3 space-y-3">
+                <label className="block text-[11px] font-semibold">Sección seleccionada
+                  <select value={selectedSection.id} onChange={(e) => setSelectedSectionId(e.target.value)} className="mt-1 w-full rounded-lg border p-2 font-normal">
+                    {invitation.sections.map((section, index) => <option key={section.id} value={section.id}>{index + 1}. {section.title}</option>)}
+                  </select>
+                </label>
+                {sectionMotifs.length === 0 ? <p className="text-[11px] text-stone-500">Aún no hay motivos en esta sección.</p> : sectionMotifs.map((motif) => <div key={motif.id} className="flex items-center gap-2 rounded-lg border p-2">
+                  <button type="button" onClick={() => setSelectedMotifId(motif.id)} className={`h-10 w-10 rounded border p-1 ${selectedMotifId === motif.id ? 'border-amber-600' : 'border-stone-200'}`}><img src={motif.src} alt="" className="h-full w-full object-contain" /></button>
+                  <span className="min-w-0 flex-1 truncate text-[10px]">{motif.name}</span>
+                  <button type="button" onClick={() => { const groupId = motif.groupId || motif.id; updateInvitationState({ ...invitation, sections: invitation.sections.map((section) => ({ ...section, background: { ...section.background, customMotifs: section.background.customMotifs?.filter((item) => (item.groupId || item.id) !== groupId) } })) }); if ((selectedMotif?.groupId || selectedMotif?.id) === groupId) setSelectedMotifId(null); }} title="Eliminar de todas las secciones" className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><Trash2 className="h-4 w-4" /></button>
+                </div>)}
+              </div>
+              {selectedMotif && <div className="rounded-xl border bg-white p-3 space-y-3">
+                <p className="text-[11px] font-semibold">Editar: {selectedMotif.name}</p>
+                <p className="text-[10px] text-stone-500">Aplicado en {motifSectionCount} / {invitation.sections.length} secciones. Arrastra el PNG directamente sobre cualquiera de ellas.</p>
+                <label className="block text-[11px]">Tamaño: {Math.round(selectedMotif.width)}%<input type="range" min="4" max="100" value={selectedMotif.width} onChange={(e) => updateMotif({ width: Number(e.target.value) })} className="w-full accent-amber-700" /></label>
+                <label className="block text-[11px]">Rotación: {selectedMotif.rotation}°<input type="range" min="-180" max="180" value={selectedMotif.rotation} onChange={(e) => updateMotif({ rotation: Number(e.target.value) })} className="w-full accent-amber-700" /></label>
+                <label className="block text-[11px]">Opacidad: {selectedMotif.opacity}%<input type="range" min="0" max="100" value={selectedMotif.opacity} onChange={(e) => updateMotif({ opacity: Number(e.target.value) })} className="w-full accent-amber-700" /></label>
+                <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => updateMotif({ zIndex: Math.max(0, selectedMotif.zIndex - 1) })} className="rounded-lg border p-2 text-[10px]">Enviar atrás</button><button type="button" onClick={() => updateMotif({ zIndex: selectedMotif.zIndex + 1 })} className="rounded-lg border p-2 text-[10px]">Traer al frente</button></div>
+                <button type="button" onClick={removeMotifFromAllSections} className="w-full rounded-lg border border-rose-200 bg-rose-50 p-2 text-[11px] font-semibold text-rose-700">Eliminar motivo de todas las secciones</button>
+              </div>}
+            </div>
+          )}
+
+          {/* TAB: PLANTILLAS */}
           {activeTab === 'templates' && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-serif font-bold text-slate-800">Catálogo de 60 Plantillas</h3>
+                <h3 className="text-sm font-serif font-bold text-slate-800">Catálogo de 12 Plantillas</h3>
                 <p className="text-stone-500 text-[11px] mt-0.5">
                   Modelos de gala, bodas, XV años, graduaciones y cuentos mágicos.
                 </p>
@@ -2255,7 +2293,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
               <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px]">
                 {[
-                  { id: 'todas', label: 'Todas (60)' },
+                  { id: 'todas', label: 'Todas (12)' },
                   { id: 'bodas', label: 'Bodas' },
                   { id: 'xv_anos', label: 'XV Años' },
                   { id: 'graduaciones', label: 'Graduaciones' },
@@ -2607,6 +2645,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 onSelectMotif={(sectionId, motifId) => {
                   if (sectionId !== selectedSectionId) setSelectedSectionId(sectionId);
                   setSelectedMotifId(motifId);
+                  setActiveTab('motifs');
                 }}
               />
             </div>

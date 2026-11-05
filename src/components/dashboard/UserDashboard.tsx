@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Invitation, RSVPRecord } from '../../types/invitation';
-import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from '../../data/templates';
+import { TEMPLATES_CATALOG, FEATURED_TEMPLATES, buildInvitationFromTemplate } from '../../data/templates';
 import { api } from '../../services/api';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { QRScannerModal } from '../scanner/QRScannerModal';
@@ -98,8 +98,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const filteredTemplates =
     selectedCategory === 'todas'
-      ? TEMPLATES_CATALOG
-      : TEMPLATES_CATALOG.filter((t) => t.category === selectedCategory);
+      ? FEATURED_TEMPLATES
+      : FEATURED_TEMPLATES.filter((t) => t.category === selectedCategory);
 
   const totalViews = invitations.reduce((acc, i) => acc + (i.stats?.views || 0), 0);
   const totalRsvps = invitations.reduce((acc, i) => acc + (i.stats?.rsvps || 0), 0);
@@ -134,7 +134,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               activeTab === 'templates' ? 'text-[#9C7A3C] font-semibold border-b-2 border-[#DFC48B] pb-1' : ''
             }`}
           >
-            60 Plantillas
+            12 Plantillas
           </button>
           <button
             onClick={() => setActiveTab('rsvps')}
@@ -213,7 +213,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-1 text-xs">
           {[
             { id: 'invitations', label: 'Mis Invitaciones' },
-            { id: 'templates', label: '30 Plantillas' },
+            { id: 'templates', label: '12 Plantillas' },
             { id: 'rsvps', label: 'RSVP' },
             { id: 'stats', label: 'Métricas' },
           ].map((tab) => (
@@ -243,7 +243,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 onClick={() => setActiveTab('templates')}
                 className="text-xs text-[#9C7A3C] hover:underline font-semibold"
               >
-                + Explorar 30 Plantillas
+                + Explorar 12 Plantillas
               </button>
             </div>
 
@@ -252,7 +252,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <Sparkles className="w-8 h-8 text-[#DFC48B] mx-auto mb-3" />
                 <h4 className="text-base font-serif font-bold text-slate-800">Aún no has creado una invitación</h4>
                 <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
-                  Elige una de nuestras 30 plantillas exclusivas y personalízala a tu gusto.
+                  Elige una de nuestras 12 plantillas exclusivas y personalízala a tu gusto.
                 </p>
                 <button
                   onClick={() => setActiveTab('templates')}
@@ -367,12 +367,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           </section>
         )}
 
-        {/* VIEW: 30 PLANTILLAS */}
+        {/* VIEW: 12 PLANTILLAS */}
         {activeTab === 'templates' && (
           <section className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-serif font-bold text-slate-800">Catálogo de las 30 Plantillas Premium</h3>
+                <h3 className="text-xl font-serif font-bold text-slate-800">Catálogo de 12 Plantillas Premium</h3>
                 <p className="text-xs text-stone-500">
                   Cada plantilla cuenta con identidad visual única, tratamiento fotográfico y fondos exclusivos.
                 </p>
@@ -381,13 +381,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               {/* Category Filter Tabs */}
               <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-2xl overflow-x-auto text-xs">
                 {[
-                  { id: 'todas', label: 'Todas (60)' },
-                  { id: 'bodas', label: 'Bodas & Galas (22)' },
-                  { id: 'xv_anos', label: 'XV Años (6)' },
-                  { id: 'graduaciones', label: 'Graduaciones (5)' },
-                  { id: 'cumpleanos', label: 'Cumpleaños (10)' },
-                  { id: 'infantiles', label: 'Infantiles (11)' },
-                  { id: 'especiales', label: 'Especiales (6)' },
+                  { id: 'todas', label: 'Todas (12)' },
+                  { id: 'bodas', label: 'Bodas & Galas (2)' },
+                  { id: 'xv_anos', label: 'XV Años (2)' },
+                  { id: 'graduaciones', label: 'Graduaciones (2)' },
+                  { id: 'cumpleanos', label: 'Cumpleaños (2)' },
+                  { id: 'infantiles', label: 'Infantiles (2)' },
+                  { id: 'especiales', label: 'Especiales (2)' },
                 ].map((c) => (
                   <button
                     key={c.id}

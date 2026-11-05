@@ -1,6 +1,8 @@
 import { Invitation, RSVPRecord } from '../types/invitation';
 import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from '../data/templates';
 
+const API_BASE = `${import.meta.env.BASE_URL}api`;
+
 const STORAGE_KEY_INVITATIONS = 'lav_invitations_cache';
 const STORAGE_KEY_RSVPS = 'lav_rsvps_cache';
 
@@ -26,7 +28,7 @@ function getLocalInitialInvitations(): Invitation[] {
 export const api = {
   async getInvitations(): Promise<Invitation[]> {
     try {
-      const res = await fetch('/api/invitations');
+      const res = await fetch(`${API_BASE}/invitations`);
       if (res.ok) {
         const data = await res.json();
         if (data.invitations && data.invitations.length > 0) {
@@ -43,7 +45,7 @@ export const api = {
     // Try sending initial seeds to backend if empty
     try {
       for (const item of local.slice(0, 3)) {
-        fetch('/api/invitations', {
+        fetch(`${API_BASE}/invitations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item),
@@ -55,7 +57,7 @@ export const api = {
 
   async getInvitationById(id: string): Promise<Invitation | null> {
     try {
-      const res = await fetch(`/api/invitations/${id}`);
+      const res = await fetch(`${API_BASE}/invitations/${id}`);
       if (res.ok) {
         const data = await res.json();
         return data.invitation;
@@ -90,7 +92,7 @@ export const api = {
     localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
 
     try {
-      const res = await fetch(`/api/invitations/${invitation.id}`, {
+      const res = await fetch(`${API_BASE}/invitations/${invitation.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invitation),
@@ -108,7 +110,7 @@ export const api = {
 
   async duplicateInvitation(id: string): Promise<Invitation | null> {
     try {
-      const res = await fetch(`/api/invitations/${id}/duplicate`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/invitations/${id}/duplicate`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         return data.invitation;
@@ -136,14 +138,14 @@ export const api = {
     localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
 
     try {
-      await fetch(`/api/invitations/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/invitations/${id}`, { method: 'DELETE' });
     } catch (e) {}
     return true;
   },
 
   async submitRSVP(invitationId: string, payload: any): Promise<RSVPRecord> {
     try {
-      const res = await fetch(`/api/invitations/${invitationId}/rsvp`, {
+      const res = await fetch(`${API_BASE}/invitations/${invitationId}/rsvp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -182,7 +184,7 @@ export const api = {
 
   async getRSVPs(invitationId: string): Promise<RSVPRecord[]> {
     try {
-      const res = await fetch(`/api/invitations/${invitationId}/rsvps`);
+      const res = await fetch(`${API_BASE}/invitations/${invitationId}/rsvps`);
       if (res.ok) {
         const data = await res.json();
         return data.rsvps;
@@ -195,7 +197,7 @@ export const api = {
 
   async checkInGuest(qrCode: string, peopleCount?: number): Promise<{ success: boolean; message: string; rsvp?: RSVPRecord }> {
     try {
-      const res = await fetch('/api/rsvps/checkin', {
+      const res = await fetch(`${API_BASE}/rsvps/checkin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ qrCode, peopleCheckingIn: peopleCount }),

@@ -25,7 +25,7 @@ export default function App() {
     // QR codes issued before the dedicated pass page linked to the invitation URL
     // with passCode/guest parameters. Route those existing codes to their ticket.
     const passCode = params.get('passCode');
-    if (passCode && !window.location.pathname.replace(/\\/+$/, '').endsWith('/QR')) {
+    if (passCode && !window.location.pathname.replace(/\/+$/, '').endsWith('/QR')) {
       window.location.replace(getDigitalPassUrl(passCode));
       return;
     }

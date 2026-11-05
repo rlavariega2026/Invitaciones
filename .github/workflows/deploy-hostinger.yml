@@ -58,7 +58,6 @@ jobs:
             head -c 1200 "$RUNNER_TEMP/invitaciones.html"
             exit 1
           fi
-          grep -q '/Invitaciones/assets/' "$RUNNER_TEMP/invitaciones.html"
           page_status=$(awk 'toupper($1) ~ /^HTTP\// {code=$2} END {print code}' "$RUNNER_TEMP/page-headers.txt")
           echo "Public page HTTP status: ${page_status:-unknown}"
           if ! grep -q '/Invitaciones/assets/' "$RUNNER_TEMP/invitaciones.html"; then

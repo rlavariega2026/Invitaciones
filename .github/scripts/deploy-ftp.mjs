@@ -41,7 +41,18 @@ try {
   }
 
   let targetPwd = null;
-  for (const candidate of [...new Set(initialCandidates)]) {
+  // Prefer the domain-specific document root when the FTP account exposes Hostinger's domains tree.
+  try {
+    await client.cd('/');
+    await client.cd('/domains/lavdigitalagency.com/public_html');
+    await client.cd('Invitaciones');
+    targetPwd = await client.pwd();
+    console.log('Verified domain-specific FTP destination: /domains/lavdigitalagency.com/public_html/Invitaciones (resolved as ' + targetPwd + ')');
+  } catch {
+    console.log('Domain-specific FTP path is not exposed from this account root; checking the configured FTP document root.');
+  }
+
+  for (const candidate of targetPwd ? [] : [...new Set(initialCandidates)]) {
     try {
       await client.cd(initial);
       await client.cd(candidate);

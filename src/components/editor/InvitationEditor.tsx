@@ -2294,13 +2294,13 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
               <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px]">
                 {[
-                  { id: 'todas', label: 'Todas (12)' },
-                  { id: 'bodas', label: 'Bodas' },
-                  { id: 'xv_anos', label: 'XV Años' },
-                  { id: 'graduaciones', label: 'Graduaciones' },
-                  { id: 'infantiles', label: 'Infantiles' },
-                  { id: 'cumpleanos', label: 'Cumpleaños' },
-                  { id: 'especiales', label: 'Especiales' },
+                  { id: 'todas', label: `Todas (${FEATURED_TEMPLATES.length})` },
+                  { id: 'bodas', label: `Bodas (${FEATURED_TEMPLATES.filter((template) => template.category === 'bodas').length})` },
+                  { id: 'xv_anos', label: `XV Años (${FEATURED_TEMPLATES.filter((template) => template.category === 'xv_anos').length})` },
+                  { id: 'graduaciones', label: `Graduaciones (${FEATURED_TEMPLATES.filter((template) => template.category === 'graduaciones').length})` },
+                  { id: 'infantiles', label: `Infantiles (${FEATURED_TEMPLATES.filter((template) => template.category === 'infantiles').length})` },
+                  { id: 'cumpleanos', label: `Cumpleaños (${FEATURED_TEMPLATES.filter((template) => template.category === 'cumpleanos').length})` },
+                  { id: 'especiales', label: `Especiales (${FEATURED_TEMPLATES.filter((template) => template.category === 'especiales').length})` },
                 ].map((c) => (
                   <button
                     key={c.id}

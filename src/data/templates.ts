@@ -1,4 +1,5 @@
-import { Invitation, SectionConfig, PhotoConfig, ButtonCustomConfig, MotifTheme, BackgroundTexture, PhotoShape, ContentPresentationMode } from '../types/invitation';
+import { Invitation, SectionConfig, PhotoConfig, ButtonCustomConfig, MotifTheme, BackgroundTexture, PhotoShape, ContentPresentationMode, FontFamilyType } from '../types/invitation';
+import { PREMIUM_TEMPLATE_CATALOG, type PremiumTemplateStyle } from './premiumTemplates';
 
 export interface TemplateDefinition {
   id: string;
@@ -15,6 +16,7 @@ export interface TemplateDefinition {
   defaultFormat: Invitation['presentationFormat'];
   previewImage: string;
   defaultButtonId?: string;
+  premiumStyle?: PremiumTemplateStyle;
   sampleData: Partial<Invitation>;
 }
 
@@ -1614,12 +1616,16 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
   },
 ];
 
+// Additive catalog extension: the original template definitions remain intact.
+TEMPLATES_CATALOG.push(...PREMIUM_TEMPLATE_CATALOG);
+
 // Keep the complete catalog for existing invitations and stored template IDs,
 // while presenting a focused choice of two designs for each event category.
 export const FEATURED_TEMPLATES: TemplateDefinition[] = (['bodas', 'xv_anos', 'graduaciones', 'cumpleanos', 'infantiles', 'especiales'] as const)
-  .flatMap((category) => TEMPLATES_CATALOG.filter((template) => template.category === category).slice(0, 2));
+  .flatMap((category) => TEMPLATES_CATALOG.filter((template) => template.category === category && !template.premiumStyle).slice(0, 2)
+    .concat(TEMPLATES_CATALOG.filter((template) => template.category === category && template.premiumStyle).slice(0, 3)));
 
-// Helper to construct a complete rich 22-section invitation from any of the 60 templates
+// Helper to construct a complete rich 22-section invitation from any template.
 export function buildInvitationFromTemplate(template: TemplateDefinition, customId?: string): Invitation {
   const p = template.palette;
   const sample = template.sampleData;
@@ -2287,6 +2293,66 @@ export function buildInvitationFromTemplate(template: TemplateDefinition, custom
     },
   ];
 
+  // Premium presets style every section while preserving all of its editable data.
+  if (template.premiumStyle) {
+    const style = template.premiumStyle;
+    defaultSections.forEach((section, index) => {
+      const alternatingSurface = index % 2 === 0 ? p.surface : p.background;
+      section.background = {
+        ...section.background,
+        type: 'texture',
+        color: alternatingSurface,
+        texture: style.texture,
+        motifTheme: style.motif,
+        overlayOpacity: section.type === 'portada' ? 12 : 5,
+        cardStyle: {
+          ...section.background.cardStyle,
+          bgColor: `${p.surface}EF`,
+          borderColor: `${p.accent}99`,
+          borderRadius: style.cardRadius,
+          borderWidth: 1,
+          hasShadow: true,
+          backdropBlur: 3,
+        },
+      };
+      if (section.type !== 'nombres') section.presentationMode = style.sectionMode;
+      section.typography = {
+        ...section.typography,
+        fontFamily: style.font as FontFamilyType,
+        color: p.text,
+      };
+      section.titleTypography = {
+        ...(section.titleTypography || section.typography),
+        fontFamily: style.font,
+        color: p.primary,
+        letterSpacing: 1.4,
+      };
+      if (section.photo) {
+        section.photo = { ...section.photo, shape: style.photoShape };
+      }
+      if (section.galleryConfig) {
+        section.galleryConfig = {
+          ...section.galleryConfig,
+          photos: section.galleryConfig.photos.map((photo) => ({ ...photo, shape: style.photoShape })),
+        };
+      }
+      if (section.customButton) {
+        section.customButton = {
+          ...section.customButton,
+          buttonStyleId: style.buttonId,
+          customColor: p.surface,
+          customBgColor: p.primary,
+          customBorderColor: p.accent,
+          borderRadius: Math.max(8, Math.min(style.cardRadius, 24)),
+          borderWidth: 1,
+          fontFamily: style.font,
+          hasShadow: true,
+          animation: 'shimmer',
+        };
+      }
+    });
+  }
+
   const galleryPhotos: PhotoConfig[] = [
     defaultPhoto('gal-1', import.meta.env.BASE_URL + 'assets/templates/i1.jpg', 'Sesión de Compromiso', 'arch'),
     defaultPhoto('gal-2', import.meta.env.BASE_URL + 'assets/templates/i3.jpg', 'Jardín y Flores', 'polaroid'),
@@ -2295,6 +2361,9 @@ export function buildInvitationFromTemplate(template: TemplateDefinition, custom
     defaultPhoto('gal-5', import.meta.env.BASE_URL + 'assets/templates/i24.jpg', 'Risas Inolvidables', 'diamond'),
     defaultPhoto('gal-6', import.meta.env.BASE_URL + 'assets/templates/i36.jpg', 'Celebración', 'polaroid'),
   ];
+  if (template.premiumStyle) {
+    galleryPhotos.forEach((photo) => { photo.shape = template.premiumStyle!.photoShape; });
+  }
 
   return {
     id: customId || `inv-${template.id}`,

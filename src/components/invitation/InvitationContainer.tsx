@@ -13,6 +13,8 @@ import { SectionRSVPModal } from './SectionRSVPModal';
 import { SectionMusicPlayer } from './SectionMusicPlayer';
 import { PhotoEditorModal } from '../photo-editor/PhotoEditorModal';
 import { MotifEditorContext } from './MotifEditorContext';
+import { TEMPLATES_CATALOG } from '../../data/templates';
+import './premiumTemplates.css';
 
 interface InvitationContainerProps {
   invitation: Invitation;
@@ -33,6 +35,16 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
 }) => {
   const [showRSVPModal, setShowRSVPModal] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState<PhotoConfig | null>(null);
+  const premiumTemplate = TEMPLATES_CATALOG.find((template) => template.id === invitation.templateId && template.premiumStyle);
+  const premiumStyle = premiumTemplate?.premiumStyle;
+  const premiumVariables = premiumTemplate && premiumStyle ? {
+    '--premium-primary': invitation.primaryColor,
+    '--premium-accent': invitation.accentColor,
+    '--premium-background': invitation.backgroundColor,
+    '--premium-surface': premiumTemplate.palette.surface,
+    '--premium-text': premiumTemplate.palette.text,
+    '--premium-radius': `${premiumStyle.cardRadius}px`,
+  } as React.CSSProperties : undefined;
 
   const handleOpenRSVP = () => {
     setShowRSVPModal(true);
@@ -158,7 +170,7 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
   };
 
   return (
-    <div className="relative w-full min-h-screen">
+    <div className={`relative w-full min-h-screen ${premiumStyle ? 'invitation-premium' : ''}`} style={premiumVariables} data-premium-template={premiumTemplate?.id}>
       <MotifEditorContext.Provider value={{
         isEditor,
         selectMotif: onSelectMotif,
@@ -208,3 +220,4 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
     </div>
   );
 };
+

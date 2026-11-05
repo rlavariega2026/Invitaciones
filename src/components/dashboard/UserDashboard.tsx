@@ -262,7 +262,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                   <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${category.accent}18`, color: category.accent }}><Sparkles className="h-5 w-5" /></span>
                   <span className="block font-serif text-lg font-bold text-slate-800">{category.title}</span>
                   <span className="mt-1 block text-xs text-stone-500">{category.description}</span>
-                  <span className="mt-4 block text-[11px] font-semibold" style={{ color: category.accent }}>Ver 2 plantillas →</span>
+                  <span className="mt-4 block text-[11px] font-semibold" style={{ color: category.accent }}>Ver {FEATURED_TEMPLATES.filter((template) => template.category === category.id).length} plantillas →</span>
                 </button>
               ))}
             </div>
@@ -281,7 +281,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 onClick={() => setActiveTab('templates')}
                 className="text-xs text-[#9C7A3C] hover:underline font-semibold"
               >
-                + Explorar 12 Plantillas
+                + Explorar {FEATURED_TEMPLATES.length} Plantillas
               </button>
             </div>
 
@@ -290,7 +290,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <Sparkles className="w-8 h-8 text-[#DFC48B] mx-auto mb-3" />
                 <h4 className="text-base font-serif font-bold text-slate-800">Aún no has creado una invitación</h4>
                 <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
-                  Elige una de nuestras 12 plantillas exclusivas y personalízala a tu gusto.
+                  Elige una de nuestras {FEATURED_TEMPLATES.length} plantillas exclusivas y personalízala a tu gusto.
                 </p>
                 <button
                   onClick={() => setActiveTab('templates')}
@@ -410,7 +410,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           <section className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-serif font-bold text-slate-800">Catálogo de 12 Plantillas Premium</h3>
+                <h3 className="text-xl font-serif font-bold text-slate-800">Catálogo de {filteredTemplates.length} Plantillas Premium</h3>
                 <p className="text-xs text-stone-500">
                   Cada plantilla cuenta con identidad visual única, tratamiento fotográfico y fondos exclusivos.
                 </p>

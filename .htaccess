@@ -1,0 +1,14 @@
+Options -Indexes
+RewriteEngine On
+RewriteBase /Invitaciones/
+
+# Keep stored JSON data private.
+RewriteRule ^(?:storage|data)(?:/|$) - [F,L,NC]
+
+# Route API requests to the PHP backend.
+RewriteRule ^api/?(.*)$ api.php?path=$1 [QSA,L,NC]
+
+# Vite single-page app routes.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]

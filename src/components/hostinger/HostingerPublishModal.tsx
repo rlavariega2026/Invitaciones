@@ -67,7 +67,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   };
 
   const handleDownloadStandaloneHTML = () => {
-    window.open(`/api/hostinger/export-html/${invitation.id}`, '_blank');
+    window.open(`${import.meta.env.BASE_URL}api/hostinger/export-html/${invitation.id}`, '_blank');
   };
 
   const handlePreviewLive = () => {

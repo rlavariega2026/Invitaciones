@@ -7,7 +7,6 @@ export function getInvitationUrl(invitationId: string, parameters: Record<string
 }
 
 export function getDigitalPassUrl(passCode: string): string {
-  const url = new URL('https://lavdigitalagency.com/Invitaciones/QR/');
-  url.searchParams.set('passCode', passCode);
-  return url.toString();
+  const safeCode = encodeURIComponent(passCode);
+  return `https://lavdigitalagency.com/Invitaciones/QR/${safeCode}/`;
 }

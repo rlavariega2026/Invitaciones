@@ -42,14 +42,18 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSaveConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isPublished = invitation.hostingerPublish?.isConfigured === true
+    && invitation.hostingerPublish?.publishStatus === 'published';
+  const publicUrl = getInvitationUrl(invitation.id, {}, remoteSlug);
+
+  const handleSaveConfig = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setIsSaving(true);
     setSaveMessage(null);
     setSaveError(null);
 
     const safeSlug = remoteSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id;
-    const publicUrl = getInvitationUrl(invitation.id, {}, safeSlug);
+    const nextPublicUrl = getInvitationUrl(invitation.id, {}, safeSlug);
 
     const updatedInvitation: Invitation = {
       ...invitation,
@@ -58,15 +62,15 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
         customDomain: 'https://lavdigitalagency.com',
         remoteDir: '/public_html/Invitaciones/Invitacionespost/',
         remoteSlug: safeSlug,
-        publicUrl,
+        publicUrl: nextPublicUrl,
         publishStatus: 'published',
       },
     };
     try {
       const savedInvitation = await api.saveInvitationChecked(updatedInvitation);
+      setRemoteSlug(safeSlug);
       onUpdateInvitation(savedInvitation);
-      setSaveMessage(`Invitación publicada en la ruta fija. Enlace: ${publicUrl}`);
-      setTimeout(() => setSaveMessage(null), 5000);
+      setSaveMessage(`Invitación publicada correctamente: ${nextPublicUrl}`);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la configuración en el servidor.');
     } finally {
@@ -79,8 +83,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   };
 
   const handlePreviewLive = () => {
-    const liveUrl = getInvitationUrl(invitation.id, {}, remoteSlug);
-    window.open(liveUrl, '_blank');
+    window.open(publicUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -115,34 +118,36 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
               <span className="font-serif font-bold text-slate-900 text-sm">
                 1. Ver Invitación Publicada (Online Inmediato)
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
-                Activa
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'}`}>
+                {isPublished ? 'Publicada' : 'Pendiente de publicar'}
               </span>
             </div>
             <p className="text-[11px] text-stone-600 leading-relaxed">
-              Tu invitación ya está publicada y accesible inmediatamente mediante enlace web o código QR.
+              Publícala en la ruta fija de Hostinger. El enlace permanecerá visible aquí para abrirlo o copiarlo.
             </p>
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handlePreviewLive}
-                className="flex-1 py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                onClick={() => void handleSaveConfig()}
+                disabled={isSaving}
+                className="flex-1 py-2 px-3 rounded-xl bg-[#DFC48B] hover:bg-[#D5B676] disabled:opacity-60 text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Eye className="w-3.5 h-3.5" />
-                <span>Abrir Invitación Publicada</span>
+                <Globe className="w-3.5 h-3.5" />
+                <span>{isSaving ? 'Publicando…' : isPublished ? 'Publicar cambios' : 'Publicar invitación'}</span>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const url = getInvitationUrl(invitation.id, {}, remoteSlug);
-                  navigator.clipboard.writeText(url);
-                  alert('¡Enlace de la invitación copiado al portapapeles!');
-                }}
-                className="py-2 px-4 rounded-xl bg-[#FAF5EB] hover:bg-[#F3EADB] border border-[#DFC48B] text-slate-900 font-semibold text-xs transition-colors cursor-pointer"
-              >
-                Copiar Enlace
-              </button>
+              {isPublished && <>
+                <button type="button" onClick={handlePreviewLive} className="py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs transition-colors cursor-pointer">
+                  <Eye className="inline w-3.5 h-3.5 mr-1" />Abrir
+                </button>
+                <button type="button" onClick={() => { void navigator.clipboard.writeText(publicUrl); }} className="py-2 px-3 rounded-xl bg-[#FAF5EB] hover:bg-[#F3EADB] border border-[#DFC48B] text-slate-900 font-semibold text-xs transition-colors cursor-pointer">
+                  Copiar enlace
+                </button>
+              </>}
             </div>
+            {isPublished && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5">
+              <label htmlFor="published-invitation-url" className="block text-[10px] font-semibold text-emerald-900 mb-1">Enlace público de la invitación</label>
+              <input id="published-invitation-url" readOnly value={publicUrl} onFocus={(event) => event.currentTarget.select()} className="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1.5 font-mono text-[10px] text-slate-800" />
+            </div>}
           </div>
 
           {/* Opción 2: Descargar Paquete HTML para Hostinger */}
@@ -213,7 +218,7 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
               disabled={isSaving}
               className="w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-800 font-semibold text-xs border border-stone-300 transition-colors cursor-pointer"
             >
-              {isSaving ? 'Guardando…' : 'Guardar Configuración de Dominio'}
+              {isSaving ? 'Publicando…' : 'Guardar Configuración de Dominio'}
             </button>
           </form>
         </div>

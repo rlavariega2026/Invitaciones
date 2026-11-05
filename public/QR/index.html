@@ -37,16 +37,17 @@
     ctx.fillStyle='#f0eee9';ctx.beginPath();ctx.roundRect(130,1330,940,110,24);ctx.fill();ctx.textAlign='left';ctx.fillStyle='#888';ctx.font='bold 20px Arial';ctx.fillText('CÓDIGO DE ACCESO',165,1375);ctx.fillStyle='#292c3a';ctx.font='bold 30px monospace';ctx.fillText(String(pass.qrCode||''),165,1420);
     ctx.textAlign='center';ctx.fillStyle='#8b8990';ctx.font='20px Arial';ctx.fillText('Presenta este pase en la entrada · LAV Invitations',600,1490);
     const filedata=canvas.toDataURL('image/png');
-    const saved=await fetch('../api/rsvps/pass-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passCode:pass.qrCode,filedata})});
+    const saved=await fetch('/Invitaciones/api/rsvps/pass-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passCode:pass.qrCode,filedata})});
     const result=await saved.json();if(!saved.ok||!result.success)throw new Error(result.error||'No se pudo guardar el boleto PNG');
     return result.imageUrl;
   }
   async function loadPass(){
-    const code=new URLSearchParams(location.search).get('passCode');
+    const pathCode=location.pathname.match(/\/Invitaciones\/QR\/([^/]+)\/?$/i)?.[1];
+    const code=new URLSearchParams(location.search).get('passCode')||(pathCode?decodeURIComponent(pathCode):null);
     const root=document.getElementById('app');
     if(!code){root.textContent='Este enlace no contiene un código de pase válido.';return;}
     try{
-      const response=await fetch('../api/rsvps/pass/'+encodeURIComponent(code),{headers:{Accept:'application/json'}});
+      const response=await fetch('/Invitaciones/api/rsvps/pass/'+encodeURIComponent(code),{headers:{Accept:'application/json'}});
       const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||'No se encontró el pase');
       const {pass,invitation}=data;const category=categoryNames[invitation.category]?invitation.category:'especiales';
       const date=invitation.eventDate?new Date(invitation.eventDate+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}):'Por confirmar';

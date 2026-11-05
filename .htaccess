@@ -18,6 +18,9 @@ RewriteRule ^(?:storage|data)(?:/|$) - [F,L,NC]
 # Route API requests to the PHP backend.
 RewriteRule ^api/?(.*)$ api.php?path=$1 [QSA,L,NC]
 
+# Give each digital pass its own permanent, shareable URL.
+RewriteRule ^QR/([A-Za-z0-9_-]+)/?$ QR/index.html?passCode=$1 [QSA,L,NC]
+
 # Vite single-page app routes.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

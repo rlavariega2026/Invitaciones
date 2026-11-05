@@ -71,6 +71,8 @@ jobs:
           test -s "$RUNNER_TEMP/template.jpg"
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/QR/" -o "$RUNNER_TEMP/digital-pass.html"
           grep -q 'Pase digital' "$RUNNER_TEMP/digital-pass.html"
+          curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/QR/LAV-CI-ROUTE-CHECK/" -o "$RUNNER_TEMP/unique-digital-pass.html"
+          grep -q 'Pase digital' "$RUNNER_TEMP/unique-digital-pass.html"
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/Invitacionespost/prueba-de-ruta/?invitationId=prueba" -o "$RUNNER_TEMP/published-invitation.html"
           grep -q '/Invitaciones/assets/' "$RUNNER_TEMP/published-invitation.html"
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/api/invitations" -o "$RUNNER_TEMP/api.json"

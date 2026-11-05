@@ -419,13 +419,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               {/* Category Filter Tabs */}
               <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-2xl overflow-x-auto text-xs">
                 {[
-                  { id: 'todas', label: 'Todas (12)' },
-                  { id: 'bodas', label: 'Bodas & Galas (2)' },
-                  { id: 'xv_anos', label: 'XV Años (2)' },
-                  { id: 'graduaciones', label: 'Graduaciones (2)' },
-                  { id: 'cumpleanos', label: 'Cumpleaños (2)' },
-                  { id: 'infantiles', label: 'Infantiles (2)' },
-                  { id: 'especiales', label: 'Especiales (2)' },
+                  { id: 'todas', label: `Todas (${FEATURED_TEMPLATES.length})` },
+                  { id: 'bodas', label: `Bodas & Galas (${FEATURED_TEMPLATES.filter((template) => template.category === 'bodas').length})` },
+                  { id: 'xv_anos', label: `XV Años (${FEATURED_TEMPLATES.filter((template) => template.category === 'xv_anos').length})` },
+                  { id: 'graduaciones', label: `Graduaciones (${FEATURED_TEMPLATES.filter((template) => template.category === 'graduaciones').length})` },
+                  { id: 'cumpleanos', label: `Cumpleaños (${FEATURED_TEMPLATES.filter((template) => template.category === 'cumpleanos').length})` },
+                  { id: 'infantiles', label: `Infantiles (${FEATURED_TEMPLATES.filter((template) => template.category === 'infantiles').length})` },
+                  { id: 'especiales', label: `Especiales (${FEATURED_TEMPLATES.filter((template) => template.category === 'especiales').length})`,
                 ].map((c) => (
                   <button
                     key={c.id}

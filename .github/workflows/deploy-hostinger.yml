@@ -33,8 +33,8 @@ jobs:
       - name: Prepare only deployable application files
         shell: bash
         run: |
-          mkdir -p deployment/dist deployment/data
-          cp -a dist/. deployment/dist/
+          mkdir -p deployment/data
+          cp -a dist/. deployment/
           cp api.php .htaccess deployment/
           cp data/invitations.json deployment/data/
       - name: Install FTP client

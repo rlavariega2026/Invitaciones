@@ -82,7 +82,15 @@ try {
     const directory = path.posix.dirname(entry.rel);
     await client.cd(targetPwd);
     if (directory !== '.') await client.ensureDir(directory);
-    await client.uploadFrom(entry.full, path.posix.basename(entry.rel));
+    const filename = path.posix.basename(entry.rel);
+    const temporaryName = '.in.' + filename;
+    try {
+      await client.remove(temporaryName);
+      console.log('Removed stale temporary upload:', temporaryName);
+    } catch (error) {
+      if (!String(error?.message || error).includes('550')) throw error;
+    }
+    await client.uploadFrom(entry.full, filename);
   }
   console.log('Uploaded', entries.length, 'files. No remote files were deleted.');
 } finally {

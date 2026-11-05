@@ -58,7 +58,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#1A365D',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i1.jpg',
     defaultButtonId: 'btn-1',
     sampleData: {
       title: 'Acompáñanos a celebrar los 15 años de',
@@ -81,7 +81,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D382B',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-6',
     sampleData: {
       title: 'Nuestra Boda',
@@ -104,7 +104,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#0F2942',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i2.png',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.png',
     defaultButtonId: 'btn-2',
     sampleData: {
       title: 'Mis XV Años',
@@ -127,7 +127,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4A0E2E',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i3.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i3.jpg',
     defaultButtonId: 'btn-21',
     sampleData: {
       title: 'Mi Primer Añito',
@@ -150,7 +150,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#004D40',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i4.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i4.jpg',
     defaultButtonId: 'btn-25',
     sampleData: {
       title: '¡El Fondo del Mar está de fiesta!',
@@ -173,7 +173,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#2D3748',
     },
     defaultFormat: 'minimal',
-    previewImage: '/assets/templates/i40.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i40.jpg',
     defaultButtonId: 'btn-6',
     sampleData: {
       title: 'Our Wedding Day',
@@ -196,7 +196,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#2B2B2B',
     },
     defaultFormat: 'minimal',
-    previewImage: '/assets/templates/i50.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i50.jpg',
     defaultButtonId: 'btn-31',
     sampleData: {
       title: 'Nos Casamos',
@@ -219,7 +219,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3A080E',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i23.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i23.jpg',
     defaultButtonId: 'btn-20',
     sampleData: {
       title: 'Invitación de Gala Mis XV Años',
@@ -242,7 +242,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#F7FAFC',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i33.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i33.jpg',
     defaultButtonId: 'btn-1',
     sampleData: {
       title: '¡Nos casamos!',
@@ -265,7 +265,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#171923',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i35.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i35.jpg',
     defaultButtonId: 'btn-30',
     sampleData: {
       title: 'Save The Date',
@@ -288,7 +288,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#223830',
     },
     defaultFormat: 'fairytale_book',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-23',
     sampleData: {
       title: 'Había una vez... El Cumpleaños Real',
@@ -311,7 +311,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#2B2B2B',
     },
     defaultFormat: 'minimal',
-    previewImage: '/assets/templates/i5.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i5.jpg',
     defaultButtonId: 'btn-31',
     sampleData: {
       title: 'Unión Elena & Carlos',
@@ -334,7 +334,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#1C332A',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i6.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i6.jpg',
     defaultButtonId: 'btn-10',
     sampleData: {
       title: 'Matrimonio Victoria & Sebastián',
@@ -357,7 +357,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#543D41',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i8.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i8.jpg',
     defaultButtonId: 'btn-7',
     sampleData: {
       title: 'Boda Mariana & Rodrigo',
@@ -380,7 +380,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#F8FAFC',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i11.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i11.jpg',
     defaultButtonId: 'btn-50',
     sampleData: {
       title: 'Noche de Estrellas Daniela & Gabriel',
@@ -403,7 +403,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4F352B',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i12.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i12.jpg',
     defaultButtonId: 'btn-15',
     sampleData: {
       title: 'Boda Bohemia Regina & Emilio',
@@ -426,7 +426,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#222222',
     },
     defaultFormat: 'magazine',
-    previewImage: '/assets/templates/i22.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i22.jpg',
     defaultButtonId: 'btn-3',
     sampleData: {
       title: 'Vogue Edition: Andrea & Fernando',
@@ -449,7 +449,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#2B4254',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i23.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i23.jpg',
     defaultButtonId: 'btn-47',
     sampleData: {
       title: 'Boda de Invierno Paulina & Adrián',
@@ -472,7 +472,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4A2A33',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i24.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i24.jpg',
     defaultButtonId: 'btn-17',
     sampleData: {
       title: 'Nuestra Boda Lucía & Javier',
@@ -495,7 +495,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#392245',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i26.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i26.jpg',
     defaultButtonId: 'btn-5',
     sampleData: {
       title: 'Enlace Imperial Valeria & Bruno',
@@ -518,7 +518,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#42361B',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i27.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i27.jpg',
     defaultButtonId: 'btn-36',
     sampleData: {
       title: 'Boda de Gala Natalia & Enrique',
@@ -541,7 +541,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#452D36',
     },
     defaultFormat: 'gallery',
-    previewImage: '/assets/templates/i30.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i30.jpg',
     defaultButtonId: 'btn-12',
     sampleData: {
       title: 'El Gran Día Ximena & Andrés',
@@ -566,7 +566,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D1C2A',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i33.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i33.jpg',
     defaultButtonId: 'btn-28',
     sampleData: {
       title: 'Mis XV Años Romina',
@@ -589,7 +589,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#172745',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i35.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i35.jpg',
     defaultButtonId: 'btn-1',
     sampleData: {
       title: '30th Birthday Celebration David',
@@ -612,7 +612,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#222222',
     },
     defaultFormat: 'magazine',
-    previewImage: '/assets/templates/i36.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i36.jpg',
     defaultButtonId: 'btn-30',
     sampleData: {
       title: 'Capítulo 25: Miranda',
@@ -635,7 +635,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#FFFFFF',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i40.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i40.jpg',
     defaultButtonId: 'btn-28',
     sampleData: {
       title: 'Glow Night Party: Samuel 18',
@@ -658,7 +658,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D382E',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i43.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i43.jpg',
     defaultButtonId: 'btn-11',
     sampleData: {
       title: 'Pool Party Cumpleaños Ivanna',
@@ -683,7 +683,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#2F4542',
     },
     defaultFormat: 'minimal',
-    previewImage: '/assets/templates/i50.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i50.jpg',
     defaultButtonId: 'btn-21',
     sampleData: {
       title: 'Mi Primer Añito Lucas',
@@ -706,7 +706,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#F3F5FA',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i54.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i54.jpg',
     defaultButtonId: 'btn-24',
     sampleData: {
       title: 'Misión Espacial: Mateo Cumple 5',
@@ -729,7 +729,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4A235A',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-22',
     sampleData: {
       title: 'El Mágico Cumpleaños de Sofi',
@@ -752,7 +752,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D382B',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i2.png',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.png',
     defaultButtonId: 'btn-15',
     sampleData: {
       title: 'Safari Party: Nicolás Cumple 3',
@@ -775,7 +775,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#17252A',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i1.png',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i1.png',
     defaultButtonId: 'btn-25',
     sampleData: {
       title: 'Aventura Submarina Marina (6 Años)',
@@ -800,7 +800,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#0F172A',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i40.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i40.jpg',
     defaultButtonId: 'btn-1',
     sampleData: {
       title: 'Graduación Licenciatura en Derecho',
@@ -823,7 +823,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#364B62',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-21',
     sampleData: {
       title: 'Esperando con Amor a Liam',
@@ -846,7 +846,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#453825',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i1.jpg',
     defaultButtonId: 'btn-4',
     sampleData: {
       title: 'Bautizo de Sebastián',
@@ -869,7 +869,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D171C',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i8.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i8.jpg',
     defaultButtonId: 'btn-20',
     sampleData: {
       title: '25 Años Juntos: Bodas de Plata',
@@ -892,7 +892,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#111827',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i2.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.jpg',
     defaultButtonId: 'btn-45',
     sampleData: {
       title: 'Inauguración VIP: Casa Maison Aurelia',
@@ -921,7 +921,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#223830',
     },
     defaultFormat: 'fairytale_book',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-23',
     sampleData: {
       title: 'Había una vez... El Cumpleaños Real',
@@ -946,7 +946,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D2031',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i33.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i33.jpg',
     defaultButtonId: 'btn-39',
     sampleData: {
       title: 'Mis Dulces Quince: Victoria',
@@ -969,7 +969,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#1E3248',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i23.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i23.jpg',
     defaultButtonId: 'btn-47',
     sampleData: {
       title: 'Noche de Princesa: Daniela XV',
@@ -992,7 +992,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#34463A',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i30.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i30.jpg',
     defaultButtonId: 'btn-12',
     sampleData: {
       title: 'Mis Quince en el Jardín: Renata',
@@ -1015,7 +1015,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#45262C',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i24.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i24.jpg',
     defaultButtonId: 'btn-7',
     sampleData: {
       title: 'XV Gala Glamour: Mia',
@@ -1038,7 +1038,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3A0B14',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i27.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i27.jpg',
     defaultButtonId: 'btn-20',
     sampleData: {
       title: 'XV Años de Gala: Montserrat',
@@ -1063,7 +1063,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#0D172A',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i40.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i40.jpg',
     defaultButtonId: 'btn-1',
     sampleData: {
       title: 'Ceremonia de Graduación Médico Cirujano',
@@ -1086,7 +1086,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#1C1C1C',
     },
     defaultFormat: 'magazine',
-    previewImage: '/assets/templates/i22.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i22.jpg',
     defaultButtonId: 'btn-3',
     sampleData: {
       title: 'Class of 2027: Arquitectura',
@@ -1109,7 +1109,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#340D14',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i26.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i26.jpg',
     defaultButtonId: 'btn-10',
     sampleData: {
       title: 'Gala de Graduación Finanzas & Economía',
@@ -1132,7 +1132,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#1A2E4C',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i35.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i35.jpg',
     defaultButtonId: 'btn-26',
     sampleData: {
       title: 'Graduación Generación Ingeniería Civil',
@@ -1157,7 +1157,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#222222',
     },
     defaultFormat: 'gallery',
-    previewImage: '/assets/templates/i36.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i36.jpg',
     defaultButtonId: 'btn-4',
     sampleData: {
       title: 'Memoria Visual: Nuestra Boda',
@@ -1182,7 +1182,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3B4821',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i3.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i3.jpg',
     defaultButtonId: 'btn-15',
     sampleData: {
       title: 'Enlace Rústico Julia & Matteo',
@@ -1205,7 +1205,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#203426',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i5.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i5.jpg',
     defaultButtonId: 'btn-14',
     sampleData: {
       title: 'Nuestra Promesa: Ana & Gabriel',
@@ -1228,7 +1228,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#383321',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i1.jpg',
     defaultButtonId: 'btn-9',
     sampleData: {
       title: 'Boda de Gala Regina & Patricio',
@@ -1251,7 +1251,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#111111',
     },
     defaultFormat: 'minimal',
-    previewImage: '/assets/templates/i5.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i5.jpg',
     defaultButtonId: 'btn-31',
     sampleData: {
       title: 'Unión Nupcial: Clara & Jonas',
@@ -1274,7 +1274,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#451020',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i8.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i8.jpg',
     defaultButtonId: 'btn-17',
     sampleData: {
       title: 'Gran Boda Mexicana: Mariana & Diego',
@@ -1297,7 +1297,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3D2812',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i43.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i43.jpg',
     defaultButtonId: 'btn-28',
     sampleData: {
       title: 'Boda Frente al Mar: Andrea & Lucas',
@@ -1322,7 +1322,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#442306',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i2.png',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.png',
     defaultButtonId: 'btn-24',
     sampleData: {
       title: 'Cumpleaños en el Bosque: Oliver 2 Años',
@@ -1345,7 +1345,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#1B4F72',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i54.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i54.jpg',
     defaultButtonId: 'btn-21',
     sampleData: {
       title: 'Dino-Fiesta Jurásica: Thiago Cumple 4',
@@ -1368,7 +1368,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#641E16',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-21',
     sampleData: {
       title: '¡El Gran Circo de Emma! (3 Años)',
@@ -1391,7 +1391,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4A235A',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i1.png',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i1.png',
     defaultButtonId: 'btn-22',
     sampleData: {
       title: 'Fiesta de Hadas: Renata Cumple 6',
@@ -1414,7 +1414,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#2C3E50',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i2.png',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.png',
     defaultButtonId: 'btn-15',
     sampleData: {
       title: 'Mi Primer Cumpleaños: Liam Safari',
@@ -1439,7 +1439,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4D3E05',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i27.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i27.jpg',
     defaultButtonId: 'btn-6',
     sampleData: {
       title: 'Celebrando 50 Años de Vida: Don Alberto',
@@ -1462,7 +1462,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#F5F5F7',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i2.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.jpg',
     defaultButtonId: 'btn-50',
     sampleData: {
       title: 'Fabulous 40: Claudia’s Night',
@@ -1485,7 +1485,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#4A0822',
     },
     defaultFormat: 'interactive',
-    previewImage: '/assets/templates/i40.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i40.jpg',
     defaultButtonId: 'btn-28',
     sampleData: {
       title: 'Studio 30: Disco Fever Marcela',
@@ -1508,7 +1508,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#511E18',
     },
     defaultFormat: 'scenes',
-    previewImage: '/assets/templates/i3.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i3.jpg',
     defaultButtonId: 'btn-16',
     sampleData: {
       title: 'Cumpleaños al Atardecer: Sofía 28',
@@ -1531,7 +1531,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3A0521',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/i33.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i33.jpg',
     defaultButtonId: 'btn-42',
     sampleData: {
       title: 'Sweet 16: Camila',
@@ -1556,7 +1556,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#453825',
     },
     defaultFormat: 'book',
-    previewImage: '/assets/templates/i1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i1.jpg',
     defaultButtonId: 'btn-4',
     sampleData: {
       title: 'Primera Comunión de María José',
@@ -1579,7 +1579,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#3E3304',
     },
     defaultFormat: 'envelope',
-    previewImage: '/assets/templates/b1.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/b1.jpg',
     defaultButtonId: 'btn-1',
     sampleData: {
       title: 'Presentación al Templo de Matías',
@@ -1602,7 +1602,7 @@ export const TEMPLATES_CATALOG: TemplateDefinition[] = [
       text: '#060B15',
     },
     defaultFormat: 'cinematic',
-    previewImage: '/assets/templates/i2.jpg',
+    previewImage: import.meta.env.BASE_URL + 'assets/templates/i2.jpg',
     defaultButtonId: 'btn-50',
     sampleData: {
       title: 'Gala Anual Fundación Niños con Esperanza',
@@ -2107,12 +2107,12 @@ export function buildInvitationFromTemplate(template: TemplateDefinition, custom
         enableLightbox: true,
         showCaptions: true,
         photos: [
-          defaultPhoto('gal-1', '/assets/templates/i1.jpg', 'Sesión de Gala', 'arch'),
-          defaultPhoto('gal-2', '/assets/templates/i3.jpg', 'Jardín y Flores', 'polaroid'),
-          defaultPhoto('gal-3', '/assets/templates/i6.jpg', 'Nuestra Historia', 'oval'),
-          defaultPhoto('gal-4', '/assets/templates/i8.jpg', 'Al Atardecer', 'heart'),
-          defaultPhoto('gal-5', '/assets/templates/i24.jpg', 'Festejo con Familia', 'diamond'),
-          defaultPhoto('gal-6', '/assets/templates/i36.jpg', 'Sonrisas Inolvidables', 'polaroid'),
+          defaultPhoto('gal-1', import.meta.env.BASE_URL + 'assets/templates/i1.jpg', 'Sesión de Gala', 'arch'),
+          defaultPhoto('gal-2', import.meta.env.BASE_URL + 'assets/templates/i3.jpg', 'Jardín y Flores', 'polaroid'),
+          defaultPhoto('gal-3', import.meta.env.BASE_URL + 'assets/templates/i6.jpg', 'Nuestra Historia', 'oval'),
+          defaultPhoto('gal-4', import.meta.env.BASE_URL + 'assets/templates/i8.jpg', 'Al Atardecer', 'heart'),
+          defaultPhoto('gal-5', import.meta.env.BASE_URL + 'assets/templates/i24.jpg', 'Festejo con Familia', 'diamond'),
+          defaultPhoto('gal-6', import.meta.env.BASE_URL + 'assets/templates/i36.jpg', 'Sonrisas Inolvidables', 'polaroid'),
         ],
       },
     },
@@ -2283,12 +2283,12 @@ export function buildInvitationFromTemplate(template: TemplateDefinition, custom
   ];
 
   const galleryPhotos: PhotoConfig[] = [
-    defaultPhoto('gal-1', '/assets/templates/i1.jpg', 'Sesión de Compromiso', 'arch'),
-    defaultPhoto('gal-2', '/assets/templates/i3.jpg', 'Jardín y Flores', 'polaroid'),
-    defaultPhoto('gal-3', '/assets/templates/i6.jpg', 'Paseo al Atardecer', 'oval'),
-    defaultPhoto('gal-4', '/assets/templates/i8.jpg', 'Nuestra Promesa', 'heart'),
-    defaultPhoto('gal-5', '/assets/templates/i24.jpg', 'Risas Inolvidables', 'diamond'),
-    defaultPhoto('gal-6', '/assets/templates/i36.jpg', 'Celebración', 'polaroid'),
+    defaultPhoto('gal-1', import.meta.env.BASE_URL + 'assets/templates/i1.jpg', 'Sesión de Compromiso', 'arch'),
+    defaultPhoto('gal-2', import.meta.env.BASE_URL + 'assets/templates/i3.jpg', 'Jardín y Flores', 'polaroid'),
+    defaultPhoto('gal-3', import.meta.env.BASE_URL + 'assets/templates/i6.jpg', 'Paseo al Atardecer', 'oval'),
+    defaultPhoto('gal-4', import.meta.env.BASE_URL + 'assets/templates/i8.jpg', 'Nuestra Promesa', 'heart'),
+    defaultPhoto('gal-5', import.meta.env.BASE_URL + 'assets/templates/i24.jpg', 'Risas Inolvidables', 'diamond'),
+    defaultPhoto('gal-6', import.meta.env.BASE_URL + 'assets/templates/i36.jpg', 'Celebración', 'polaroid'),
   ];
 
   return {

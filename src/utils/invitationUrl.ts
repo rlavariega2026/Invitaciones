@@ -10,3 +10,8 @@ export function getDigitalPassUrl(passCode: string): string {
   const safeCode = encodeURIComponent(passCode);
   return `https://lavdigitalagency.com/Invitaciones/QR/${safeCode}/`;
 }
+
+export function getDigitalPassImageUrl(passCode: string): string {
+  const safeCode = encodeURIComponent(passCode);
+  return `https://lavdigitalagency.com/Invitaciones/QR/${safeCode}.png`;
+}

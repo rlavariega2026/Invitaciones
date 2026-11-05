@@ -38,7 +38,9 @@ jobs:
           cp api.php .htaccess deployment/
           cp data/invitations.json deployment/data/
       - name: Install FTP client
-        run: npm install --no-save --ignore-scripts basic-ftp
+        run: |
+          mkdir -p "$RUNNER_TEMP/ftp-client"
+          npm install --prefix "$RUNNER_TEMP/ftp-client" --no-save --ignore-scripts basic-ftp
       - name: Verify FTP destination and upload without deleting remote files
         run: node .github/scripts/deploy-ftp.mjs
         env:

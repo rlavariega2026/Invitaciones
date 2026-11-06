@@ -48,7 +48,7 @@ try {
     try {
       await client.cd(initial);
       await client.cd(candidate);
-      const resolved = (await client.pwd()).replace(/\\+/g, '/').replace(/\\/+$/, '').toLowerCase();
+      const resolved = (await client.pwd()).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
       const valid = resolved.endsWith('/lavdigitalagency.com/public_html/invitaciones')
         || resolved.endsWith('/public_html/invitaciones');
       if (valid) {

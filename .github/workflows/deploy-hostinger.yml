@@ -41,7 +41,7 @@ jobs:
           cp -a dist/. deployment/
           mkdir -p deployment/Invitacionespost
           cp dist/index.html deployment/Invitacionespost/index.html
-          cp api.php .htaccess deployment/
+          cp api.php .htaccess .user.ini deployment/
           cp data/invitations.json deployment/data/
       - name: Install FTP client
         run: |

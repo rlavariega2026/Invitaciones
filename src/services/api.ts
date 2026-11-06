@@ -151,6 +151,31 @@ export const api = {
     return saveInvitationToServer(invitation);
   },
 
+  async duplicateInvitationChecked(id: string): Promise<Invitation> {
+    const response = await fetch(`${API_BASE}/invitations/${encodeURIComponent(id)}/duplicate`, { method: 'POST' });
+    if (!response.ok) throw new Error(`No se pudo crear la copia (HTTP ${response.status}).`);
+    const data = await response.json();
+    if (!data?.success || !data?.invitation?.id) throw new Error('El servidor no confirmó la copia de la invitación.');
+    cacheInvitation(data.invitation);
+    return data.invitation;
+  },
+
+  async saveTemplate(invitation: Invitation, name: string, category: Invitation['category'], description: string): Promise<Invitation> {
+    const template: Invitation = {
+      ...invitation,
+      id: `template-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: name,
+      category,
+      savedTemplate: true,
+      templateDescription: description,
+      hostingerPublish: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      stats: { views: 0, rsvps: 0 },
+    };
+    return this.saveInvitationChecked(template);
+  },
+
   async duplicateInvitation(id: string): Promise<Invitation | null> {
     try {
       const res = await fetch(`${API_BASE}/invitations/${id}/duplicate`, { method: 'POST' });

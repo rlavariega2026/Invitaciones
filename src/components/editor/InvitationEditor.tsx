@@ -58,6 +58,7 @@ import {
   FolderOpen,
   Box,
   Bookmark,
+  Copy,
   Move,
   Maximize,
   MapPin,
@@ -89,6 +90,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const [selectedSectionId, setSelectedSectionId] = useState<string>('sec-portada');
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [editingPhoto, setEditingPhoto] = useState<PhotoConfig | null>(null);
   const [showHostingerModal, setShowHostingerModal] = useState(false);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
@@ -108,18 +110,29 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const galleryMultipleInputRef = useRef<HTMLInputElement>(null);
   const motifUploadInputRef = useRef<HTMLInputElement>(null);
 
-  // Autosave when invitation changes with a debounce
+  // Autosave only reports success after the server confirms the write.
   useEffect(() => {
+    let active = true;
     const timer = setTimeout(async () => {
       setIsSaving(true);
-      await api.saveInvitation(invitation);
-      setIsSaving(false);
-      setShowSavedFeedback(true);
-      const hideFeedback = setTimeout(() => setShowSavedFeedback(false), 2000);
-      return () => clearTimeout(hideFeedback);
+      try {
+        await api.saveInvitationChecked(invitation);
+        if (!active) return;
+        setSaveError('');
+        setShowSavedFeedback(true);
+      } catch (error) {
+        if (!active) return;
+        setShowSavedFeedback(false);
+        setSaveError(error instanceof Error ? error.message : 'No se pudieron guardar los cambios en el servidor.');
+      } finally {
+        if (active) setIsSaving(false);
+      }
     }, 1200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [invitation]);
 
   const updateInvitationState = (updated: Invitation) => {
@@ -128,6 +141,33 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     newHistory.push(updated);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
+  };
+
+  const handleSaveAs = async () => {
+    const suggestedName = `${invitation.title || 'Invitación'} (Copia)`;
+    const name = window.prompt('Nombre de la nueva invitación:', suggestedName);
+    if (!name?.trim()) return;
+    const copy: Invitation = {
+      ...invitation,
+      id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: name.trim(),
+      savedTemplate: false,
+      templateDescription: undefined,
+      hostingerPublish: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      stats: { views: 0, rsvps: 0 },
+    };
+    try {
+      await api.saveInvitationChecked(copy);
+      updateInvitationState(copy);
+      setSaveError('');
+      alert('La copia se guardó como una invitación independiente.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo guardar la copia en el servidor.';
+      setSaveError(message);
+      alert(message);
+    }
   };
 
   const handleUndo = () => {
@@ -607,6 +647,8 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
           <div className="hidden md:flex items-center gap-1 text-[11px] text-stone-500">
             {isSaving ? (
               <span className="animate-pulse text-amber-700">Guardando cambios...</span>
+            ) : saveError ? (
+              <span className="text-rose-700" title={saveError}>Error al guardar</span>
             ) : showSavedFeedback ? (
               <span className="text-emerald-700 flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" /> Guardado
@@ -659,7 +701,16 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* Guardar en Mis Plantillas (Requirement: Poner nombre al guardar en plantillas) */}
+          <button
+            onClick={() => void handleSaveAs()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors cursor-pointer shadow-xs"
+            title="Guardar una copia independiente con otro nombre"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Guardar como</span>
+          </button>
+
+          {/* Guardar una copia reutilizable en Mis Plantillas */}
           <button
             onClick={() => setShowSaveTemplateModal(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors cursor-pointer shadow-xs"
@@ -760,7 +811,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 >
                   {invitation.sections.map((sec, idx) => (
                     <option key={sec.id} value={sec.id}>
-                      {idx + 1}. {sec.title} ({sec.presentationMode || 'card'})
+                      {idx + 1}. {sec.type === 'google_maps' ? 'Misa' : sec.title} ({sec.presentationMode || 'card'})
                     </option>
                   ))}
                 </select>
@@ -1899,22 +1950,22 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
               )}
 
               {/* 9. GESTOR ESPECIAL PARA LUGAR DEL EVENTO & GOOGLE MAPS (Campo para editar botón y link) */}
-              {selectedSection.type === 'ubicacion' && (
+              {(selectedSection.type === 'ubicacion' || selectedSection.type === 'google_maps') && (
                 <div className="p-3.5 rounded-2xl bg-gradient-to-tr from-[#FAF5EB] to-white border-2 border-[#DFC48B] space-y-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-[#9C7A3C]" />
                     <span className="font-serif font-bold text-slate-800 text-xs">
-                      Lugar del Evento & Botón de Google Maps
+                      {selectedSection.type === 'google_maps' ? 'Misa & Botón de Google Maps' : 'Lugar del Evento & Botón de Google Maps'}
                     </span>
                   </div>
 
                   <div>
                     <label className="block text-stone-700 font-semibold mb-1 text-[11px]">
-                      Nombre del Salón / Hacienda / Lugar
+                      {selectedSection.type === 'google_maps' ? 'Nombre de la Iglesia / Templo' : 'Nombre del Salón / Hacienda / Lugar'}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej. Hacienda San José de las Palmas"
+                      placeholder={selectedSection.type === 'google_maps' ? 'Ej. Parroquia de San José' : 'Ej. Hacienda San José de las Palmas'}
                       value={selectedSection.location?.venueName || ''}
                       onChange={(e) =>
                         updateSelectedSection({
@@ -1989,6 +2040,8 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       onChange={(e) =>
                         updateSelectedSection({
                           customButton: {
+                            buttonStyleId: selectedSection.customButton?.buttonStyleId || 'btn-1',
+                            ...selectedSection.customButton,
                             buttonStyleId: selectedSection.customButton?.buttonStyleId || 'btn-1',
                             label: e.target.value,
                             action: 'location',
@@ -2689,13 +2742,9 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
           invitation={invitation}
           isOpen={true}
           onClose={() => setShowSaveTemplateModal(false)}
-          onSaved={(name, cat) => {
-            const updated = {
-              ...invitation,
-              title: name,
-              category: cat as any,
-            };
-            updateInvitationState(updated);
+          onSaved={async (name, cat, description) => {
+            await api.saveTemplate(invitation, name, cat as Invitation['category'], description);
+            setSaveError('');
           }}
         />
       )}

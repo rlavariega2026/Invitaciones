@@ -47,10 +47,32 @@ function write_data(string $name, array $value): void {
 }
 
 function body_json(): array {
+    $contentLength = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+    $postMax = (string)ini_get('post_max_size');
+    $maxBytes = 0;
+    if (preg_match('/^([0-9]+)\s*([KMG])?$/i', trim($postMax), $match)) {
+        $maxBytes = (int)$match[1] * match (strtoupper($match[2] ?? '')) {
+            'G' => 1024 * 1024 * 1024,
+            'M' => 1024 * 1024,
+            'K' => 1024,
+            default => 1,
+        };
+    }
+    if ($contentLength > 0 && $maxBytes > 0 && $contentLength > $maxBytes) {
+        json_response(['success' => false, 'error' => 'La invitación supera el límite de recepción del servidor. Reduce el tamaño de las imágenes o aumenta post_max_size.'], 413);
+    }
     $raw = file_get_contents('php://input');
-    if (!$raw) return [];
+    if (!$raw) {
+        if ($contentLength > 0) {
+            json_response(['success' => false, 'error' => 'El servidor recibió una petición vacía. Puede haber excedido el límite PHP de tamaño de datos.'], 413);
+        }
+        return [];
+    }
     $value = json_decode($raw, true);
-    return is_array($value) ? $value : [];
+    if (!is_array($value)) {
+        json_response(['success' => false, 'error' => 'Los datos de la invitación no contienen JSON válido.'], 400);
+    }
+    return $value;
 }
 
 function now_iso(): string {

@@ -6,7 +6,7 @@ interface SaveTemplateModalProps {
   invitation: Invitation;
   isOpen: boolean;
   onClose: () => void;
-  onSaved: (templateName: string, category: string) => void;
+  onSaved: (templateName: string, category: string, description: string) => Promise<void>;
 }
 
 export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
@@ -15,8 +15,6 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  if (!isOpen) return null;
-
   const [templateName, setTemplateName] = useState(
     `${invitation.title || 'Mi Diseño'} (${new Date().toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })})`
   );
@@ -26,21 +24,29 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!templateName.trim()) return;
+    if (!templateName.trim() || isSaving) return;
 
     setIsSaving(true);
-    // Call parent handler
-    onSaved(templateName.trim(), category);
-    setIsSaving(false);
-    setSuccess(true);
-    setTimeout(() => {
-      setSuccess(false);
-      onClose();
-    }, 1200);
+    setError('');
+    try {
+      await onSaved(templateName.trim(), category, description.trim());
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 1200);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar la plantilla en el servidor.');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -112,6 +118,8 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
             />
           </div>
 
+          {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-rose-800">{error}</div>}
+
           {success && (
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -129,7 +137,7 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || success}
               className="flex-1 py-2.5 rounded-xl bg-[#DFC48B] hover:bg-[#D5B676] text-slate-900 font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />

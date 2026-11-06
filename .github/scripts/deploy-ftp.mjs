@@ -33,8 +33,8 @@ try {
   if (normalizedInitial.toLowerCase().endsWith('/public_html')) initialCandidates.push('Invitaciones');
   if (normalizedInitial.toLowerCase().endsWith('/domains')) initialCandidates.push('lavdigitalagency.com/public_html/Invitaciones');
   if (normalizedInitial === '/') {
-    initialCandidates.push('public_html/Invitaciones');
     initialCandidates.push('domains/lavdigitalagency.com/public_html/Invitaciones');
+    initialCandidates.push('public_html/Invitaciones');
   } else if (!normalizedInitial.toLowerCase().endsWith('/public_html')) {
     initialCandidates.push('domains/lavdigitalagency.com/public_html/Invitaciones');
     initialCandidates.push('public_html/Invitaciones');

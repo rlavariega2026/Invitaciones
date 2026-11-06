@@ -648,7 +648,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             {isSaving ? (
               <span className="animate-pulse text-amber-700">Guardando cambios...</span>
             ) : saveError ? (
-              <span className="text-rose-700" title={saveError}>Error al guardar</span>
+              <span className="text-rose-700 max-w-[260px] truncate" title={saveError}>Error: {saveError}</span>
             ) : showSavedFeedback ? (
               <span className="text-emerald-700 flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" /> Guardado

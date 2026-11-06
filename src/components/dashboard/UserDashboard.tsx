@@ -98,6 +98,27 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     }
   };
 
+  const handleCreateFromSavedTemplate = async (template: Invitation) => {
+    const newInvitation: Invitation = {
+      ...template,
+      id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: `${template.title} - Nueva invitación`,
+      savedTemplate: false,
+      templateDescription: undefined,
+      hostingerPublish: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      stats: { views: 0, rsvps: 0 },
+    };
+    try {
+      const saved = await api.saveInvitationChecked(newInvitation);
+      setInvitations((current) => [saved, ...current]);
+      onOpenEditor(saved);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo crear una invitación desde esta plantilla.');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm('¿Estás seguro de que deseas eliminar esta invitación?')) {
       await api.deleteInvitation(id);
@@ -109,6 +130,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     selectedCategory === 'todas'
       ? FEATURED_TEMPLATES
       : FEATURED_TEMPLATES.filter((t) => t.category === selectedCategory);
+  const savedTemplates = invitations.filter((item) => item.savedTemplate === true);
 
   const totalViews = invitations.reduce((acc, i) => acc + (i.stats?.views || 0), 0);
   const totalRsvps = invitations.reduce((acc, i) => acc + (i.stats?.rsvps || 0), 0);
@@ -408,6 +430,32 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         {/* VIEW: 12 PLANTILLAS */}
         {activeTab === 'templates' && (
           <section className="space-y-6">
+            {savedTemplates.length > 0 && (
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-lg font-serif font-bold text-slate-800">Mis Plantillas Guardadas ({savedTemplates.length})</h3>
+                  <p className="text-xs text-stone-500">Diseños propios guardados para reutilizarlos sin volver a configurarlos.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {savedTemplates.map((template) => (
+                    <article key={template.id} className="rounded-2xl border border-[#DFC48B] bg-white p-4 flex flex-col gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-[#9C7A3C] font-semibold">{template.category}</p>
+                        <h4 className="font-serif font-bold text-slate-800">{template.title}</h4>
+                        <p className="text-xs text-stone-500">{template.templateDescription || template.names}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateFromSavedTemplate(template)}
+                        className="mt-auto w-full rounded-xl bg-[#DFC48B] hover:bg-[#D5B676] px-3 py-2 text-xs font-semibold text-slate-900"
+                      >
+                        Crear invitación con esta plantilla
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h3 className="text-xl font-serif font-bold text-slate-800">Catálogo de {filteredTemplates.length} Plantillas Premium</h3>

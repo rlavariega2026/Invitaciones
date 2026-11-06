@@ -434,6 +434,9 @@ export interface Invitation {
   };
   createdAt?: string;
   updatedAt?: string;
+  /** Saved reusable design; kept separate from ordinary invitations in the dashboard. */
+  savedTemplate?: boolean;
+  templateDescription?: string;
 }
 
 export interface RSVPRecord {

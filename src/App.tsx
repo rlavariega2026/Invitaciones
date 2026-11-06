@@ -227,14 +227,9 @@ export default function App() {
             invitation={currentInvitation}
             isOpen={true}
             onClose={() => setShowSaveTemplateModal(false)}
-            onSaved={(name, cat) => {
-              const updated = {
-                ...currentInvitation,
-                title: name,
-                category: cat as any,
-              };
-              setCurrentInvitation(updated);
-              api.saveInvitation(updated);
+            onSaved={async (name, cat, description) => {
+              if (!currentInvitation) throw new Error('No hay una invitación activa para guardar como plantilla.');
+              await api.saveTemplate(currentInvitation, name, cat as Invitation['category'], description);
             }}
           />
         )}

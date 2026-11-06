@@ -42,8 +42,8 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
   onSelectSection,
   isSelectedInEditor = false,
 }) => {
-  // If section is disabled or is redundant google_maps, don't render separately
-  if (!section.enabled || section.type === 'google_maps') return null;
+  // Legacy google_maps sections are now presented as the separate Misa location.
+  if (!section.enabled) return null;
 
   const [copiedBank, setCopiedBank] = useState(false);
   const [isTabOpen, setIsTabOpen] = useState(true);
@@ -327,7 +327,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               textTransform: titleTypo.isUppercase ? 'uppercase' : 'none',
             }}
           >
-            {section.title}
+            {section.type === 'google_maps' ? 'Misa' : section.title}
           </h2>
         )}
 
@@ -475,7 +475,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
         )}
 
         {/* SPECIFIC: UBICACIÓN Y MAPS UNIFICADO (Sin duplicar sección) */}
-        {section.type === 'ubicacion' && (
+        {(section.type === 'ubicacion' || section.type === 'google_maps') && (
           <div className="mt-4 space-y-2.5">
             {section.location?.venueName && (
               <p className="text-xs text-stone-600 font-medium">{section.location.venueName}</p>
@@ -483,9 +483,10 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
             <CustomButtonRenderer
               config={{
                 buttonStyleId: 'btn-1',
-                label: 'Abrir Ubicación en Google Maps',
+                label: section.type === 'google_maps' ? 'Abrir ubicación de la misa en Google Maps' : 'Abrir Ubicación en Google Maps',
                 icon: 'MapPin',
                 action: 'location',
+                ...section.customButton,
               }}
               onClick={() => {
                 const url =
@@ -493,7 +494,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
                   `https://maps.google.com/?q=${encodeURIComponent(
                     section.location?.address || invitation.eventLocation
                   )}`;
-                window.open(url, '_blank');
+                window.open(url, '_blank', 'noopener,noreferrer');
               }}
             />
           </div>
@@ -689,7 +690,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
                   <span className="text-[10px] uppercase tracking-wider text-[#9C7A3C] font-semibold block">
                     {section.subtitle || 'Apartado'}
                   </span>
-                  <span className="text-sm font-serif font-bold text-slate-800">{section.title}</span>
+                  <span className="text-sm font-serif font-bold text-slate-800">{section.type === 'google_maps' ? 'Misa' : section.title}</span>
                 </div>
                 <div className="p-1 rounded-full bg-white border border-stone-200 text-stone-600">
                   {isTabOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

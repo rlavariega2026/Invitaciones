@@ -16,7 +16,7 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
   onSaved,
 }) => {
   const [templateName, setTemplateName] = useState(
-    `${invitation.title || 'Mi Diseño'} (${new Date().toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })})`
+    `${invitation.title || 'Mi Diseño'}`
   );
   const [category, setCategory] = useState(invitation.category || 'bodas');
   const [description, setDescription] = useState(

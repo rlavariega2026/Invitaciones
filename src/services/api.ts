@@ -6,9 +6,38 @@ const API_BASE = `${import.meta.env.BASE_URL}api`;
 const STORAGE_KEY_INVITATIONS = 'lav_invitations_cache';
 const STORAGE_KEY_RSVPS = 'lav_rsvps_cache';
 
+// Browser storage is only a convenience cache. The PHP API/server is the
+// source of truth, so quota errors must never prevent a server save.
+function safeStorageGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Could not read local cache "${key}"; continuing with server data.`, error);
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.warn(`Local cache "${key}" is full or unavailable; server data remains authoritative.`, error);
+    return false;
+  }
+}
+
+function safeStorageRemove(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Could not remove local cache "${key}".`, error);
+  }
+}
+
 // Seed initial invitations if storage is empty
 function getLocalInitialInvitations(): Invitation[] {
-  const cached = localStorage.getItem(STORAGE_KEY_INVITATIONS);
+  const cached = safeStorageGet(STORAGE_KEY_INVITATIONS);
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
@@ -21,7 +50,7 @@ function getLocalInitialInvitations(): Invitation[] {
     buildInvitationFromTemplate(t)
   );
 
-  localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(seeds));
+  safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(seeds));
   return seeds;
 }
 
@@ -31,7 +60,7 @@ function cacheInvitation(invitation: Invitation): void {
   const updated = { ...invitation, updatedAt: new Date().toISOString() };
   if (idx >= 0) local[idx] = updated;
   else local.unshift(updated);
-  localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
+  safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
 }
 
 async function saveInvitationToServer(invitation: Invitation): Promise<Invitation> {
@@ -85,7 +114,7 @@ export const api = {
       if (res.ok) {
         const data = await res.json();
         if (data.invitations && data.invitations.length > 0) {
-          localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(data.invitations));
+          safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(data.invitations));
           return data.invitations;
         }
       }
@@ -147,8 +176,14 @@ export const api = {
   },
 
   async saveInvitationChecked(invitation: Invitation): Promise<Invitation> {
-    cacheInvitation(invitation);
-    return saveInvitationToServer(invitation);
+    // Save remotely first. A full browser cache must never block the user's work.
+    const saved = await saveInvitationToServer(invitation);
+    try {
+      cacheInvitation(saved);
+    } catch (cacheError) {
+      console.warn('Invitation saved on server; local cache update was skipped.', cacheError);
+    }
+    return saved;
   },
 
   async duplicateInvitationChecked(id: string): Promise<Invitation> {
@@ -197,7 +232,7 @@ export const api = {
       updatedAt: new Date().toISOString(),
     };
     local.unshift(copy);
-    localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
+    safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
     return copy;
   },
 
@@ -243,9 +278,9 @@ export const api = {
       createdAt: new Date().toISOString(),
     };
 
-    const cachedRsvps = JSON.parse(localStorage.getItem(STORAGE_KEY_RSVPS) || '[]');
+    const cachedRsvps = JSON.parse(safeStorageGet(STORAGE_KEY_RSVPS) || '[]');
     cachedRsvps.unshift(newRsvp);
-    localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(cachedRsvps));
+    safeStorageSet(STORAGE_KEY_RSVPS, JSON.stringify(cachedRsvps));
 
     return newRsvp;
   },

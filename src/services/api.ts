@@ -238,7 +238,7 @@ export const api = {
 
   async deleteInvitation(id: string): Promise<boolean> {
     const local = getLocalInitialInvitations().filter((i) => i.id !== id);
-    localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
+    safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
 
     try {
       await fetch(`${API_BASE}/invitations/${id}`, { method: 'DELETE' });
@@ -307,7 +307,7 @@ export const api = {
       }
     } catch (e) {}
 
-    const cachedRsvps: RSVPRecord[] = JSON.parse(localStorage.getItem(STORAGE_KEY_RSVPS) || '[]');
+    const cachedRsvps: RSVPRecord[] = JSON.parse(safeStorageGet(STORAGE_KEY_RSVPS) || '[]');
     return cachedRsvps.filter((r) => r.invitationId === invitationId);
   },
 
@@ -335,7 +335,7 @@ export const api = {
 
     rsvp.checkedInCount = Math.min(rsvp.companionsCount, (rsvp.checkedInCount || 0) + count);
     rsvp.checkedIn = rsvp.checkedInCount >= rsvp.companionsCount;
-    localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(cachedRsvps));
+    safeStorageSet(STORAGE_KEY_RSVPS, JSON.stringify(cachedRsvps));
 
     return {
       success: true,

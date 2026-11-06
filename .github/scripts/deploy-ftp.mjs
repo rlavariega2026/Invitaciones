@@ -41,49 +41,31 @@ try {
   }
 
   let targetPwd = null;
-  // Prefer the domain-specific document root when the FTP account exposes Hostinger's domains tree.
-  try {
-    await client.cd('/');
-    await client.cd('/domains/lavdigitalagency.com/public_html');
-    await client.cd('Invitaciones');
-    targetPwd = await client.pwd();
-    console.log('Verified domain-specific FTP destination: /domains/lavdigitalagency.com/public_html/Invitaciones (resolved as ' + targetPwd + ')');
-  } catch {
-    console.log('Domain-specific FTP path is not exposed from this account root; checking the configured FTP document root.');
-  }
-
-  for (const candidate of targetPwd ? [] : [...new Set(initialCandidates)]) {
+  // Resolve the exact Hostinger File Manager folder relative to the FTP account's
+  // starting directory. In the /domains directory this is:
+  // lavdigitalagency.com/public_html/Invitaciones/
+  for (const candidate of [...new Set(initialCandidates)]) {
     try {
       await client.cd(initial);
       await client.cd(candidate);
-      const resolved = (await client.pwd()).replace(/\\+/g, '/').replace(/\/+$/, '').toLowerCase();
-      const valid = resolved.endsWith('/domains/lavdigitalagency.com/public_html/invitaciones')
-        || resolved.endsWith('/public_html/invitaciones')
-        || (candidate === 'Invitaciones' && normalizedInitial.toLowerCase().endsWith('/public_html') && resolved.endsWith('/invitaciones'));
+      const resolved = (await client.pwd()).replace(/\\\\+/g, '/').replace(/\\/+$/, '').toLowerCase();
+      const valid = resolved.endsWith('/lavdigitalagency.com/public_html/invitaciones')
+        || resolved.endsWith('/public_html/invitaciones');
       if (valid) {
         targetPwd = await client.pwd();
-        console.log('Verified FTP destination:', targetPwd);
+        console.log('Verified Hostinger destination: lavdigitalagency.com/public_html/Invitaciones/');
+        console.log('FTP directory identity verified:', targetPwd);
         break;
       }
-      console.log('Skipping non-matching FTP path:', resolved);
+      console.log('Skipping FTP directory outside the requested Hostinger destination:', resolved);
     } catch {
-      console.log('Target path unavailable from FTP start directory:', candidate);
+      console.log('Requested Hostinger directory is not available from FTP start directory:', candidate);
     }
   }
   if (!targetPwd) {
-    throw new Error('Could not verify the existing FTP directory for lavdigitalagency.com/public_html/Invitaciones; no files were uploaded.');
+    throw new Error('Could not verify lavdigitalagency.com/public_html/Invitaciones/; no files were uploaded.');
   }
 
-  // Compare FTP metadata to identify whether the account's generic /public_html path aliases this domain.
-  for (const candidatePath of ['/public_html/Invitaciones', '/domains/lavdigitalagency.com/public_html/Invitaciones']) {
-    try {
-      await client.cd(candidatePath);
-      const metadata = await client.send('MLST index.html');
-      console.log('FTP directory identity check:', candidatePath, JSON.stringify(metadata));
-    } catch (error) {
-      console.log('FTP directory identity unavailable:', candidatePath, String(error?.message || error));
-    }
-  }
 
   const root = path.resolve('deployment');
   const entries = [];

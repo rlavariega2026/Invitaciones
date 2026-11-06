@@ -69,9 +69,16 @@ async function saveInvitationToServer(invitation: Invitation): Promise<Invitatio
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(invitation),
   });
-  if (!response.ok) throw new Error(`El servidor rechazó el guardado (HTTP ${response.status}).`);
-  const data = await response.json();
-  if (!data?.success || !data?.invitation) throw new Error('El servidor no confirmó el guardado de la invitación.');
+  const responseText = await response.text();
+  let data: any = null;
+  try { data = responseText ? JSON.parse(responseText) : null; } catch { /* handled below with HTTP details */ }
+  if (!response.ok) {
+    const detail = typeof data?.error === 'string' ? data.error : responseText.slice(0, 500);
+    throw new Error(detail ? `No se pudo guardar (HTTP ${response.status}): ${detail}` : `No se pudo guardar (HTTP ${response.status}).`);
+  }
+  if (!data?.success || !data?.invitation) {
+    throw new Error(data?.error || 'El servidor no confirmó el guardado de la invitación.');
+  }
   return data.invitation;
 }
 

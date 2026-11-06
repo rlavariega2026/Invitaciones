@@ -2040,7 +2040,6 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       onChange={(e) =>
                         updateSelectedSection({
                           customButton: {
-                            buttonStyleId: selectedSection.customButton?.buttonStyleId || 'btn-1',
                             ...selectedSection.customButton,
                             buttonStyleId: selectedSection.customButton?.buttonStyleId || 'btn-1',
                             label: e.target.value,

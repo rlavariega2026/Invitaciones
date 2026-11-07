@@ -50,17 +50,13 @@ function getLocalInitialInvitations(): Invitation[] {
     buildInvitationFromTemplate(t)
   );
 
-  safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(seeds));
+  // Do not persist large invitation payloads in localStorage. The PHP API is authoritative.
   return seeds;
 }
 
-function cacheInvitation(invitation: Invitation): void {
-  const local = getLocalInitialInvitations();
-  const idx = local.findIndex((item) => item.id === invitation.id);
-  const updated = { ...invitation, updatedAt: new Date().toISOString() };
-  if (idx >= 0) local[idx] = updated;
-  else local.unshift(updated);
-  safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
+function cacheInvitation(_invitation: Invitation): void {
+  // Intentionally disabled: invitation objects can contain large uploaded media.
+  // Saving and loading invitations must use the server, never browser localStorage.
 }
 
 async function saveInvitationToServer(invitation: Invitation): Promise<Invitation> {
@@ -121,7 +117,6 @@ export const api = {
       if (res.ok) {
         const data = await res.json();
         if (data.invitations && data.invitations.length > 0) {
-          safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(data.invitations));
           return data.invitations;
         }
       }
@@ -285,10 +280,7 @@ export const api = {
       createdAt: new Date().toISOString(),
     };
 
-    const cachedRsvps = JSON.parse(safeStorageGet(STORAGE_KEY_RSVPS) || '[]');
-    cachedRsvps.unshift(newRsvp);
-    safeStorageSet(STORAGE_KEY_RSVPS, JSON.stringify(cachedRsvps));
-
+    // RSVP fallback is returned to the caller but not cached in browser storage.
     return newRsvp;
   },
 

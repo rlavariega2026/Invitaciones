@@ -12,7 +12,7 @@ const port = Number(process.env.FTP_PORT || 21);
 const client = new Client(15000);
 client.ftp.verbose = true;
 const candidates = [];
-const initialCandidates = [];
+const initialCandidates = ['../domains/lavdigitalagency.com/public_html/Invitaciones'];
 client.ftp.log = (message) => {
   if (!String(message).toLowerCase().includes('pass')) console.log('[FTP]', message);
 };
@@ -69,18 +69,9 @@ try {
     }
   }
   const normalizedInitial = initial.replace(/\\+/g, '/').replace(/\/+$/, '') || '/';
-  const domainRoot = '/domains/lavdigitalagency.com/public_html';
-  // Hostinger's live domain document root is lavdigitalagency.com/public_html;
-  // from this FTP account's filesystem root its absolute path is /domains/lavdigitalagency.com/public_html.
-  if (normalizedInitial.toLowerCase().endsWith(domainRoot)) initialCandidates.push('Invitaciones');
-  if (normalizedInitial.toLowerCase().endsWith('/domains')) initialCandidates.push('lavdigitalagency.com/public_html/Invitaciones');
-  if (normalizedInitial === '/') {
-    initialCandidates.push('domains/lavdigitalagency.com/public_html/Invitaciones');
-    initialCandidates.push('public_html/Invitaciones');
-  } else if (!normalizedInitial.toLowerCase().endsWith('/public_html')) {
-    initialCandidates.push('domains/lavdigitalagency.com/public_html/Invitaciones');
-    initialCandidates.push('public_html/Invitaciones');
-  }
+  // The FTP account starts in /public_html. The live domain folder is a sibling
+  // tree at /domains/lavdigitalagency.com/public_html/Invitaciones.
+
 
   let targetPwd = null;
   // Resolve the exact Hostinger File Manager folder relative to the FTP account's

@@ -184,3 +184,46 @@
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
 }
+
+/* LAV invitation typography entrance animations */
+@keyframes lavFadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lavFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lavZoomIn { from { opacity: 0; transform: scale(.88); } to { opacity: 1; transform: scale(1); } }
+@keyframes lavSlideLeft { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes lavBlurIn { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
+@keyframes lavFlipIn { from { opacity: 0; transform: perspective(600px) rotateX(18deg); } to { opacity: 1; transform: perspective(600px) rotateX(0); } }
+.lav-enter-none { animation: none; }
+.lav-enter-fade-up { animation: lavFadeUp .9s cubic-bezier(.2,.7,.2,1) both; }
+.lav-enter-fade-in { animation: lavFadeIn 1.1s ease both; }
+.lav-enter-zoom-in { animation: lavZoomIn .85s cubic-bezier(.2,.8,.2,1) both; }
+.lav-enter-slide-left { animation: lavSlideLeft .85s ease both; }
+.lav-enter-blur-in { animation: lavBlurIn 1.1s ease both; }
+.lav-enter-flip-in { animation: lavFlipIn .9s ease both; }
+
+/* Efectos ambientales aislados del contenido */
+.lav-visual-effect { position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; }
+.lav-effect-metallic::before, .lav-effect-diagonal-shine::before { content:""; position:absolute; inset:-30%; background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,0) 43%,rgba(255,255,255,.78) 49%,rgba(255,230,170,.34) 52%,transparent 59%); transform:translateX(-75%); animation:lavMetalSweep 5.5s ease-in-out infinite; }
+@keyframes lavMetalSweep { 0%,18% { transform:translateX(-75%); } 75%,100% { transform:translateX(75%); } }
+.lav-effect-diagonal-shine::before { animation-duration:4s; }
+.lav-effect-border-beam::before { content:""; position:absolute; inset:8px; border:1px solid transparent; border-radius:24px; background:linear-gradient(90deg,transparent,#fff1bf,#d8ad56,transparent) border-box; -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0); -webkit-mask-composite:xor; mask-composite:exclude; animation:lavBeam 4s linear infinite; }
+@keyframes lavBeam { to { filter:hue-rotate(35deg) brightness(1.4); } }
+.lav-effect-fluid-flow::before { content:""; position:absolute; inset:-35%; background:conic-gradient(from 0deg,transparent,rgba(255,226,168,.22),rgba(190,220,255,.18),transparent 45%); filter:blur(24px); animation:lavFluid 14s linear infinite; }
+@keyframes lavFluid { to { transform:rotate(360deg) scale(1.12); } }
+.lav-effect-glass-motion::before { content:""; position:absolute; inset:0; background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.28) 48%,rgba(255,255,255,.06) 53%,transparent 70%); backdrop-filter:blur(1px); animation:lavGlass 7s ease-in-out infinite; }
+@keyframes lavGlass { 0%,100% { transform:translateX(-35%); opacity:.25; } 50% { transform:translateX(35%); opacity:.8; } }
+.lav-effect-aurora::before { content:""; position:absolute; inset:-25%; background:radial-gradient(ellipse at 20% 40%,rgba(178,156,255,.24),transparent 48%),radial-gradient(ellipse at 75% 55%,rgba(120,220,205,.2),transparent 48%); filter:blur(28px); animation:lavAurora 10s ease-in-out infinite alternate; }
+@keyframes lavAurora { to { transform:translate(5%,-4%) scale(1.15); } }
+.lav-twinkle,.lav-dust,.lav-bokeh,.lav-petal { position:absolute; display:block; pointer-events:none; }
+.lav-twinkle { width:4px;height:4px;border-radius:50%;background:#fff8d8;box-shadow:0 0 5px 2px rgba(255,231,160,.9),0 0 13px 4px rgba(255,255,255,.4); animation:lavTwinkle 2.8s ease-in-out infinite; }
+@keyframes lavTwinkle { 0%,100% { opacity:.08; transform:scale(.55); } 48% { opacity:1; transform:scale(1.5); } }
+.lav-twinkle-0 { left:8%;top:18%;animation-delay:.2s; } .lav-twinkle-1 { left:22%;top:72%;animation-delay:1.1s; } .lav-twinkle-2 { left:39%;top:28%;animation-delay:1.8s; } .lav-twinkle-3 { left:57%;top:82%;animation-delay:.7s; } .lav-twinkle-4 { left:72%;top:16%;animation-delay:1.5s; } .lav-twinkle-5 { left:88%;top:57%;animation-delay:2.2s; } .lav-twinkle-6 { left:48%;top:48%;animation-delay:2.6s; }
+.lav-dust { width:3px;height:3px;border-radius:50%;background:#f6d98c;box-shadow:0 0 8px 2px rgba(246,217,140,.65); animation:lavDust 8s linear infinite; }
+@keyframes lavDust { from { transform:translate3d(0,35px,0);opacity:0; } 20% {opacity:.9;} to { transform:translate3d(20px,-90px,0);opacity:0; } }
+.lav-dust-0 {left:9%;top:70%;animation-delay:.1s}.lav-dust-1 {left:27%;top:82%;animation-delay:1.4s}.lav-dust-2 {left:45%;top:63%;animation-delay:2.7s}.lav-dust-3 {left:63%;top:78%;animation-delay:3.3s}.lav-dust-4 {left:79%;top:67%;animation-delay:4.1s}.lav-dust-5 {left:92%;top:88%;animation-delay:5s}
+.lav-bokeh { width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,rgba(255,244,205,.55),rgba(255,221,140,.08) 65%,transparent 72%);filter:blur(1px);animation:lavBokeh 6s ease-in-out infinite alternate; }
+@keyframes lavBokeh { to { transform:translate(12px,-18px) scale(1.6);opacity:.25; } }
+.lav-bokeh-0 {left:8%;top:20%}.lav-bokeh-1 {left:32%;top:70%;animation-delay:1s}.lav-bokeh-2 {left:58%;top:25%;animation-delay:2s}.lav-bokeh-3 {left:78%;top:62%;animation-delay:3s}.lav-bokeh-4 {left:90%;top:14%;animation-delay:4s}
+.lav-petal { color:rgba(255,235,241,.9);font-size:18px;text-shadow:0 0 8px rgba(255,255,255,.7);animation:lavPetal 11s ease-in-out infinite; }
+@keyframes lavPetal { 0% {transform:translate(0,30px) rotate(0);opacity:0} 20% {opacity:.8} 100% {transform:translate(35px,-120px) rotate(220deg);opacity:0} }
+.lav-petal-0 {left:12%;top:80%}.lav-petal-1 {left:31%;top:72%;animation-delay:1.5s}.lav-petal-2 {left:54%;top:86%;animation-delay:3s}.lav-petal-3 {left:73%;top:78%;animation-delay:4.5s}.lav-petal-4 {left:88%;top:84%;animation-delay:6s}
+@media (prefers-reduced-motion: reduce) { .lav-text-enter,.lav-visual-effect,.lav-visual-effect * { animation:none !important; } }

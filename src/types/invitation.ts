@@ -256,6 +256,7 @@ export interface TypographyConfig {
   textOutline?: boolean;
   textOutlineColor?: string;
   textOutlineWidth?: number;
+  textEntrance?: 'none' | 'fade-up' | 'fade-in' | 'zoom-in' | 'slide-left' | 'blur-in' | 'flip-in';
   alignment?: 'left' | 'center' | 'right';
 }
 
@@ -345,6 +346,7 @@ export interface SectionConfig {
   photoPosition?: 'top' | 'center' | 'bottom' | 'left' | 'right';
   offsetX?: number;
   offsetY?: number;
+  visualEffect?: 'none' | 'metallic' | 'twinkle' | 'border-beam' | 'fluid-flow' | 'glass-motion' | 'gold-dust' | 'bokeh' | 'aurora' | 'petals' | 'diagonal-shine';
   isFullScreen?: boolean;
   photo?: PhotoConfig;
   itinerary?: ItineraryItem[];

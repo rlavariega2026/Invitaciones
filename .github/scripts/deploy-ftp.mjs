@@ -56,7 +56,7 @@ try {
     console.log('[FTP ALTERNATE TREE] unavailable:', String(error?.message || error));
   }
   // Compare existing entry-point fingerprints in both same-named folders.
-  for (const probe of ['/public_html/Invitaciones', '/domains/lavdigitalagency.com/public_html/Invitaciones']) {
+  for (const probe of ['/public_html/Invitaciones', '/public_html/public_html/Invitaciones', '/domains/lavdigitalagency.com/public_html/Invitaciones']) {
     try {
       await client.cd(probe);
       const tmp = path.join(process.env.RUNNER_TEMP || '/tmp', 'lav-probe-' + probe.replace(/[^a-z0-9]/gi, '_') + '.html');

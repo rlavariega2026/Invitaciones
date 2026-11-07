@@ -59,7 +59,9 @@ jobs:
         run: |
           set -euo pipefail
           base="https://lavdigitalagency.com/Invitaciones"
-          if ! curl --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" -D "$RUNNER_TEMP/page-headers.txt" "$base/" -o "$RUNNER_TEMP/invitaciones.html"; then
+          # Bypass any CDN/Hostinger cached HTML and verify the page after all assets
+          # have been uploaded and index.html has been published last.
+          if ! curl --silent --show-error --retry 3 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" -H "Cache-Control: no-cache, no-store" -H "Pragma: no-cache" -D "$RUNNER_TEMP/page-headers.txt" "$base/?lav_deploy=${{ github.sha }}" -o "$RUNNER_TEMP/invitaciones.html"; then
             cat "$RUNNER_TEMP/page-headers.txt"
             head -c 1200 "$RUNNER_TEMP/invitaciones.html"
             exit 1

@@ -1260,8 +1260,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 </div>
 
                 {/* Ubicación de la Foto respecto al Texto */}
-                {
-                  <div>
+                <div>
                     <label className="block text-stone-600 mb-1 text-[11px]">Ubicación de la Fotografía</label>
                     <div className="grid grid-cols-3 gap-1.5 text-xs">
                       {[

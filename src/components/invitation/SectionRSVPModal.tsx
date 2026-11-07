@@ -33,6 +33,7 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    setCompanionsCount(authorizedPasses);
     setConfirmedRsvp(null);
     setQrDataUrl('');
     setTicketImageUrl('');
@@ -41,7 +42,8 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
 
   if (!isOpen) return null;
 
-  const maxAllowed = invitation.rsvpSettings?.maxCompanionsPerPass || 4;
+  const authorizedPasses = Math.min(5, Math.max(1, Number(invitation.rsvpSettings?.maxCompanionsPerPass) || 1));
+  const maxAllowed = authorizedPasses;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +55,7 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
         guestName,
         phone,
         email,
-        companionsCount,
+        companionsCount: authorizedPasses,
         attendance,
         dietaryRestrictions,
         message,
@@ -164,26 +166,10 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block font-medium text-slate-800 mb-1">
-                  Lugares que confirmas (Máximo {maxAllowed} personas)
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].slice(0, maxAllowed).map((num) => (
-                    <button
-                      type="button"
-                      key={num}
-                      onClick={() => setCompanionsCount(num)}
-                      className={`flex-1 py-2 rounded-xl border font-semibold text-xs transition-all ${
-                        companionsCount === num
-                          ? 'border-[#DFC48B] bg-[#FAF5EB] text-slate-900 ring-1 ring-[#DFC48B]'
-                          : 'border-stone-200 bg-white hover:bg-stone-50 text-stone-600'
-                      }`}
-                    >
-                      {num} {num === 1 ? 'Persona' : 'Lugares'}
-                    </button>
-                  ))}
-                </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                <p className="font-semibold text-slate-800">Lugares autorizados para esta invitación</p>
+                <p className="mt-1 text-amber-900 font-bold">{authorizedPasses} {authorizedPasses === 1 ? 'persona' : 'personas'}</p>
+                <p className="mt-1 text-[10px] text-stone-600">La cantidad de pases fue establecida por los anfitriones y no se puede modificar desde esta invitación.</p>
               </div>
 
               <div>

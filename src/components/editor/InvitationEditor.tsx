@@ -561,6 +561,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     { id: 'sora', label: 'Sora (Extra bold geométrica)' },
     { id: 'teko', label: 'Teko (Display compacta)' },
     { id: 'work_sans', label: 'Work Sans (Black editorial)' },
+    { id: 'archivo', label: 'Archivo (Extra bold editorial)' },
   ];
 
   const photoShapesList: Array<{ id: PhotoShape; label: string }> = [

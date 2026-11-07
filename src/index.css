@@ -113,6 +113,7 @@
 .font-sora { font-family: 'Sora', sans-serif; font-weight: 800; }
 .font-teko { font-family: 'Teko', sans-serif; font-weight: 700; }
 .font-work-sans { font-family: 'Work Sans', sans-serif; font-weight: 900; }
+.font-archivo { font-family: 'Archivo', sans-serif; font-weight: 900; }
 
 /* Shimmer & Golden Reflections for Premium Buttons */
 @keyframes goldShimmer {

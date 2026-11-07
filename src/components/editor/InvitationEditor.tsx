@@ -1320,7 +1320,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
               {/* Efectos visuales e iluminación activa por sección */}
               <div className="p-3.5 rounded-2xl bg-white border border-[#E8DEC8] space-y-2.5">
-                <span className="font-semibold text-slate-800 block text-xs">5. Efectos Visuales e Iluminación Activa</span>
+                <span className="font-semibold text-slate-800 block text-xs">Efectos Visuales e Iluminación Activa</span>
                 <label className="block text-stone-600 text-[11px]">Efecto ambiental de esta sección</label>
                 <select value={selectedSection.visualEffect || 'none'} onChange={(e) => updateSelectedSection({ visualEffect: e.target.value as SectionConfig['visualEffect'] })} className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs">
                   <option value="none">Sin efecto</option>

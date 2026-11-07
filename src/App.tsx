@@ -121,11 +121,8 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#DFC48B] via-[#EAE6F8] to-[#FCEFEF] flex items-center justify-center animate-pulse border border-[#DFC48B]/40 shadow-sm">
-          <span className="font-serif font-black text-slate-800 text-sm">LAV</span>
-        </div>
-        <p className="text-xs font-serif text-stone-500 mt-4 tracking-wider uppercase">
-          Cargando experiencia de gala...
+        <p className="text-xs font-serif text-stone-500 tracking-wider uppercase">
+          Cargando experiencia...
         </p>
       </div>
     );

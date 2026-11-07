@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: invitaciones-hostinger-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -73,11 +73,16 @@ jobs:
             head -c 1200 "$RUNNER_TEMP/invitaciones.html"
             exit 1
           fi
-          # Verify Hostinger serves this exact build, not merely any old app shell.
-          cmp deployment/index.html "$RUNNER_TEMP/invitaciones.html"
-          asset_path=$(grep -oE '/Invitaciones/assets/[^"]+[.]js' deployment/index.html | head -n 1)
-          test -n "$asset_path"
-          asset_relative=${asset_path#/Invitaciones/}
+          # Hostinger may add harmless HTML to its response, so compare the
+          # immutable Vite asset name and the actual JavaScript bytes.
+          expected_asset_path=$(grep -oE '/Invitaciones/assets/[^"]+[.]js' deployment/index.html | head -n 1)
+          live_asset_path=$(grep -oE '/Invitaciones/assets/[^"]+[.]js' "$RUNNER_TEMP/invitaciones.html" | head -n 1)
+          test -n "$expected_asset_path"
+          test "$live_asset_path" = "$expected_asset_path"
+          asset_relative=${expected_asset_path#/Invitaciones/}
+          curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/$asset_relative?lav_deploy=${{ github.sha }}" -o "$RUNNER_TEMP/deployed-app.js"
+          cmp "deployment/$asset_relative" "$RUNNER_TEMP/deployed-app.js"
+          echo "Exact deployed JavaScript bundle matches this GitHub build."
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/$asset_relative" -o "$RUNNER_TEMP/deployed-app.js"
           cmp "deployment/$asset_relative" "$RUNNER_TEMP/deployed-app.js"
           echo "Exact deployed index.html and JavaScript bundle match this GitHub build."

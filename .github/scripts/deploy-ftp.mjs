@@ -40,6 +40,21 @@ try {
     }
   }
   await client.cd(initial);
+  // Inspect the explicit no-upload marker and the alternate public_html subtree.
+  try {
+    await client.cd('/domains/lavdigitalagency.com');
+    const marker = path.join(process.env.RUNNER_TEMP || '/tmp', 'lav-do-not-upload-marker.txt');
+    await client.downloadTo(marker, 'DO_NOT_UPLOAD_HERE');
+    console.log('[FTP SAFETY MARKER]', (await fs.readFile(marker, 'utf8')).slice(0, 2000));
+  } catch (error) {
+    console.log('[FTP SAFETY MARKER] unavailable:', String(error?.message || error));
+  }
+  try {
+    await client.cd('/public_html/public_html');
+    console.log('[FTP ALTERNATE TREE] /public_html/public_html', (await client.list()).map(x => (x.isDirectory ? 'DIR ' : 'FILE ') + x.name).join(' | '));
+  } catch (error) {
+    console.log('[FTP ALTERNATE TREE] unavailable:', String(error?.message || error));
+  }
   // Compare existing entry-point fingerprints in both same-named folders.
   for (const probe of ['/public_html/Invitaciones', '/domains/lavdigitalagency.com/public_html/Invitaciones']) {
     try {

@@ -700,6 +700,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
           className="relative z-10 max-w-xl w-full transition-transform duration-150"
           style={{
             transform: `translate(${offsetX}px, ${offsetY}px)`,
+            alignSelf: horizontalAlign === 'left' ? 'flex-start' : horizontalAlign === 'right' ? 'flex-end' : 'center',
           }}
         >
           {/* 1. Modalidad Solo Texto (Plain): 100% SIN RECUADRO, SIN CAJAS, SIN BORDES */}

@@ -43,7 +43,12 @@ jobs:
           mkdir -p deployment/Invitacionespost
           cp dist/index.html deployment/Invitacionespost/index.html
           cp api.php .htaccess .user.ini deployment/
-          sed -i "/^RewriteBase /a RewriteRule ^index\\\\.html$ index-${GITHUB_SHA}.html [L]" deployment/.htaccess
+          cat > deployment/index.php <<PHP
+          <?php
+          $entry = __DIR__ . '/index-${GITHUB_SHA}.html';
+          if (!is_file($entry)) { http_response_code(503); exit('Application entry is unavailable.'); }
+          readfile($entry);
+          PHP
           cp data/invitations.json deployment/data/
       - name: Install FTP client
         run: |

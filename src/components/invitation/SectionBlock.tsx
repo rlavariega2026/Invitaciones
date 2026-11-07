@@ -318,7 +318,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
         {/* Subtítulo con sus CONTROLES INDEPENDIENTES */}
         {section.subtitle && (
           <div
-            className={`block uppercase font-semibold mb-2 ${getFontFamilyClass(subtitleTypo.fontFamily)}`}
+            className={`block uppercase font-semibold mb-2 lav-text-enter lav-enter-${subtitleTypo.textEntrance || 'none'} ${getFontFamilyClass(subtitleTypo.fontFamily)}`}
             style={{
               color: subtitleTypo.color || '#9C7A3C',
               fontSize: subtitleTypo.fontSize ? `${subtitleTypo.fontSize}px` : '12px',
@@ -339,7 +339,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
         {/* Título Principal con sus CONTROLES INDEPENDIENTES */}
         {section.title && (
           <h2
-            className={`font-serif tracking-tight leading-snug mb-3 break-words ${getFontFamilyClass(titleTypo.fontFamily)}`}
+            className={`font-serif tracking-tight leading-snug mb-3 break-words lav-text-enter lav-enter-${titleTypo.textEntrance || 'none'} ${getFontFamilyClass(titleTypo.fontFamily)}`}
             style={{
               color: titleTypo.color || '#1A202C',
               fontSize: titleTypo.fontSize ? `${titleTypo.fontSize}px` : '32px',
@@ -375,7 +375,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
         {/* Mensaje / Contenido de Texto con sus CONTROLES INDEPENDIENTES */}
         {section.content && (
           <p
-            className={`leading-relaxed font-light mx-auto max-w-md mb-4 break-words ${getFontFamilyClass(contentTypo.fontFamily)}`}
+            className={`leading-relaxed font-light mx-auto max-w-md mb-4 break-words lav-text-enter lav-enter-${contentTypo.textEntrance || 'none'} ${getFontFamilyClass(contentTypo.fontFamily)}`}
             style={{
               color: contentTypo.color || '#4A5568',
               fontSize: contentTypo.fontSize ? `${contentTypo.fontSize}px` : '14px',
@@ -680,8 +680,24 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
         sectionId={section.id}
         className={`w-full min-h-screen flex flex-col ${verticalJustifyClass} ${horizontalAlignClass} py-12 md:py-20 px-4 md:px-8 ${isPremiumInvitation ? 'premium-background-canvas' : ''}`}
       >
+        {section.visualEffect && section.visualEffect !== 'none' && (
+          <div aria-hidden="true" className={`lav-visual-effect lav-effect-${section.visualEffect}`}>
+            {section.visualEffect === 'twinkle' && Array.from({ length: 14 }, (_, i) => (
+              <span key={i} className={`lav-twinkle lav-twinkle-${i % 7}`} />
+            ))}
+            {section.visualEffect === 'gold-dust' && Array.from({ length: 18 }, (_, i) => (
+              <span key={i} className={`lav-dust lav-dust-${i % 6}`} />
+            ))}
+            {section.visualEffect === 'bokeh' && Array.from({ length: 9 }, (_, i) => (
+              <span key={i} className={`lav-bokeh lav-bokeh-${i % 5}`} />
+            ))}
+            {section.visualEffect === 'petals' && Array.from({ length: 10 }, (_, i) => (
+              <span key={i} className={`lav-petal lav-petal-${i % 5}`}>✿</span>
+            ))}
+          </div>
+        )}
         <div
-          className="max-w-xl mx-auto w-full transition-transform duration-150"
+          className="relative z-10 max-w-xl w-full transition-transform duration-150"
           style={{
             transform: `translate(${offsetX}px, ${offsetY}px)`,
           }}

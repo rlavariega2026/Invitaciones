@@ -101,6 +101,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const [buttonCategoryFilter, setButtonCategoryFilter] = useState<string>('todas');
   const [buttonTarget, setButtonTarget] = useState<'rsvp' | 'opening'>('rsvp');
   const [textureTab, setTextureTab] = useState<'zip' | 'telas' | 'metales' | 'flores' | 'fantasia'>('zip');
+  const [editingAuthorizedPasses, setEditingAuthorizedPasses] = useState(false);
 
   const audioFileInputRef = useRef<HTMLInputElement>(null);
   const bgImageInputRef = useRef<HTMLInputElement>(null);
@@ -2370,6 +2371,47 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       }
                       className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white text-xs"
                     />
+                  </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800">Pases autorizados por invitación</p>
+                        <p className="text-[10px] text-stone-600">Tú decides cuántas personas admite cada boleto. El invitado no podrá modificarlo.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingAuthorizedPasses((current) => !current)}
+                        className="shrink-0 rounded-lg border border-amber-300 bg-white px-3 py-2 text-[11px] font-semibold text-amber-900 hover:bg-amber-100"
+                      >
+                        {editingAuthorizedPasses ? 'Cerrar edición' : 'Editar pases'}
+                      </button>
+                    </div>
+                    {editingAuthorizedPasses && (
+                      <div>
+                        <label className="block text-stone-600 text-[11px] mb-1">Cantidad autorizada para cada boleto</label>
+                        <select
+                          value={Math.min(5, Math.max(1, Number(invitation.rsvpSettings?.maxCompanionsPerPass) || 1))}
+                          onChange={(e) => {
+                            updateInvitationState({
+                              ...invitation,
+                              rsvpSettings: {
+                                ...invitation.rsvpSettings,
+                                maxCompanionsPerPass: Number(e.target.value),
+                              },
+                            });
+                            setEditingAuthorizedPasses(false);
+                          }}
+                          className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs"
+                        >
+                          {[1, 2, 3, 4, 5].map((count) => (
+                            <option key={count} value={count}>{count} {count === 1 ? 'persona' : 'personas'}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <p className="text-[11px] font-semibold text-amber-900">
+                      Actualmente: {Math.min(5, Math.max(1, Number(invitation.rsvpSettings?.maxCompanionsPerPass) || 1))} {Number(invitation.rsvpSettings?.maxCompanionsPerPass) === 1 ? 'pase' : 'pases'} por boleto
+                    </p>
                   </div>
                   <div>
                     <label className="block text-stone-600 text-[11px] mb-0.5">Diseño del Botón (50 Botones)</label>

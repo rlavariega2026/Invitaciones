@@ -107,7 +107,11 @@ try {
         if (!String(error?.message || error).includes('550')) throw error;
       }
       await client.rename(temporaryName, filename);
-      console.log('Published index.html by verified FTP rename.');
+      const verificationFile = path.join(process.env.RUNNER_TEMP || '/tmp', 'lav-index-ftp-readback.html');
+      await client.downloadTo(verificationFile, filename);
+      const [localIndex, remoteIndex] = await Promise.all([fs.readFile(entry.full), fs.readFile(verificationFile)]);
+      if (!localIndex.equals(remoteIndex)) throw new Error('FTP read-back mismatch: index.html in /public_html/Invitaciones is not the uploaded build.');
+      console.log('FTP read-back verified: /public_html/Invitaciones/index.html exactly matches this build.');
     } else {
       const temporaryName = '.in.' + filename;
       try {

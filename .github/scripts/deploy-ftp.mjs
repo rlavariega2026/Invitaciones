@@ -40,6 +40,19 @@ try {
     }
   }
   await client.cd(initial);
+  // Compare existing entry-point fingerprints in both same-named folders.
+  for (const probe of ['/public_html/Invitaciones', '/domains/lavdigitalagency.com/public_html/Invitaciones']) {
+    try {
+      await client.cd(probe);
+      const tmp = path.join(process.env.RUNNER_TEMP || '/tmp', 'lav-probe-' + probe.replace(/[^a-z0-9]/gi, '_') + '.html');
+      await client.downloadTo(tmp, 'index.html');
+      const html = await fs.readFile(tmp, 'utf8');
+      const asset = html.match(/\/Invitaciones\/assets\/[^"']+\.js/)?.[0] || html.match(/assets\/[^"']+\.js/)?.[0] || 'NO JS ASSET FOUND';
+      console.log('[FTP INDEX FINGERPRINT]', probe, 'asset:', asset, 'bytes:', Buffer.byteLength(html));
+    } catch (error) {
+      console.log('[FTP INDEX FINGERPRINT] unavailable:', probe, String(error?.message || error));
+    }
+  }
   const normalizedInitial = initial.replace(/\\+/g, '/').replace(/\/+$/, '') || '/';
   const domainRoot = '/domains/lavdigitalagency.com/public_html';
   if (normalizedInitial.toLowerCase().endsWith(domainRoot)) initialCandidates.push('Invitaciones');

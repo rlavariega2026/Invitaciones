@@ -27,6 +27,19 @@ try {
   const initial = await client.pwd();
   console.log('FTP initial directory:', initial);
 
+  // Read-only directory discovery: identify every plausible Invitaciones folder
+  // visible to this FTP account before selecting or changing any destination.
+  for (const probe of ['/', '/public_html', '/domains', '/domains/lavdigitalagency.com', '/domains/lavdigitalagency.com/public_html']) {
+    try {
+      await client.cd(probe);
+      const here = await client.pwd();
+      const listing = await client.list();
+      console.log('[FTP DISCOVERY]', here, listing.map(x => (x.isDirectory ? 'DIR ' : 'FILE ') + x.name).join(' | '));
+    } catch (error) {
+      console.log('[FTP DISCOVERY] unavailable:', probe, String(error?.message || error));
+    }
+  }
+  await client.cd(initial);
   const normalizedInitial = initial.replace(/\\+/g, '/').replace(/\/+$/, '') || '/';
   const domainRoot = '/domains/lavdigitalagency.com/public_html';
   if (normalizedInitial.toLowerCase().endsWith(domainRoot)) initialCandidates.push('Invitaciones');

@@ -1073,6 +1073,20 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                   </div>
                 </div>
 
+                {/* Entrada animada del texto */}
+                <div>
+                  <label className="block text-stone-600 mb-1 text-[11px]">Animación de entrada del texto</label>
+                  <select value={activeElementTypo.textEntrance || 'none'} onChange={(e) => updateElementTypography(selectedTextElement, { textEntrance: e.target.value as TypographyConfig['textEntrance'] })} className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs">
+                    <option value="none">Sin animación</option>
+                    <option value="fade-up">Aparecer desde abajo</option>
+                    <option value="fade-in">Desvanecer suavemente</option>
+                    <option value="zoom-in">Zoom elegante</option>
+                    <option value="slide-left">Deslizar desde la izquierda</option>
+                    <option value="blur-in">Enfoque progresivo</option>
+                    <option value="flip-in">Giro delicado</option>
+                  </select>
+                </div>
+
                 {/* Font Size Slider & Number */}
                 <div>
                   <div className="flex justify-between text-stone-700 mb-1 text-[11px]">
@@ -1246,7 +1260,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 </div>
 
                 {/* Ubicación de la Foto respecto al Texto */}
-                {selectedSection.photo && (
+                {
                   <div>
                     <label className="block text-stone-600 mb-1 text-[11px]">Ubicación de la Fotografía</label>
                     <div className="grid grid-cols-3 gap-1.5 text-xs">
@@ -1270,7 +1284,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       ))}
                     </div>
                   </div>
-                )}
+
 
                 {/* Desplazamiento Fino Vertical (Offset Y) */}
                 <div>
@@ -1305,7 +1319,27 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 </div>
               </div>
 
-              {/* 5. FONDO, DEGRADADOS & 35+ TEXTURAS (CON PALETA REAL) */}
+              {/* Efectos visuales e iluminación activa por sección */}
+              <div className="p-3.5 rounded-2xl bg-white border border-[#E8DEC8] space-y-2.5">
+                <span className="font-semibold text-slate-800 block text-xs">5. Efectos Visuales e Iluminación Activa</span>
+                <label className="block text-stone-600 text-[11px]">Efecto ambiental de esta sección</label>
+                <select value={selectedSection.visualEffect || 'none'} onChange={(e) => updateSelectedSection({ visualEffect: e.target.value as SectionConfig['visualEffect'] })} className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs">
+                  <option value="none">Sin efecto</option>
+                  <option value="metallic">Reflejo metálico en movimiento</option>
+                  <option value="twinkle">Estrellitas que titilan</option>
+                  <option value="border-beam">Border Beam — luz que recorre el borde</option>
+                  <option value="fluid-flow">Fluid Flow — ondas luminosas fluidas</option>
+                  <option value="glass-motion">Glass Motion — reflejo de cristal</option>
+                  <option value="gold-dust">Polvo mágico dorado</option>
+                  <option value="bokeh">Bokeh — luces desenfocadas</option>
+                  <option value="aurora">Aurora suave</option>
+                  <option value="petals">Pétalos flotantes</option>
+                  <option value="diagonal-shine">Destello diagonal</option>
+                </select>
+                <p className="text-[10px] text-stone-500">Puedes elegir un efecto distinto en cada una de las 22 secciones.</p>
+              </div>
+
+              {/* 6. FONDO, DEGRADADOS & 35+ TEXTURAS (CON PALETA REAL) */}
               <div className="p-3.5 rounded-2xl bg-white border border-[#E8DEC8] space-y-3.5">
                 <span className="font-semibold text-slate-800 block text-xs">
                   5. Fondo, Degradados & Texturas

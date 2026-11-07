@@ -179,7 +179,52 @@ app.post('/api/invitations/:id/rsvp', (req: Request, res: Response) => {
     writeData(INVITATIONS_FILE, invitations);
   }
 
-  res.status(201).json({ success: true, rsvp: newRsvp });
+  // Send an automatic WhatsApp Business template notification to the event client's number.
+  // Credentials are configured only as server environment variables; never expose tokens in the browser.
+  let whatsappNotification: { sent: boolean; reason?: string } = { sent: false, reason: 'WhatsApp Business API no está configurada.' };
+  const clientPhone = String(inv?.clientWhatsApp || '').replace(/[^0-9]/g, '');
+  const waToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const waPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const waTemplateName = process.env.WHATSAPP_RSVP_TEMPLATE || 'lav_rsvp_notification';
+  const waLanguage = process.env.WHATSAPP_TEMPLATE_LANGUAGE || 'es_MX';
+  if (clientPhone && waToken && waPhoneNumberId) {
+    try {
+      const response = await fetch(`https://graph.facebook.com/v22.0/${waPhoneNumberId}/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${waToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: clientPhone,
+          type: 'template',
+          template: {
+            name: waTemplateName,
+            language: { code: waLanguage },
+            components: [{
+              type: 'body',
+              parameters: [
+                { type: 'text', text: String(newRsvp.guestName).slice(0, 200) },
+                { type: 'text', text: newRsvp.attendance ? 'CONFIRMÓ ASISTENCIA' : 'NO PODRÁ ASISTIR' },
+                { type: 'text', text: String(newRsvp.companionsCount) },
+                { type: 'text', text: String(inv?.title || 'Evento').slice(0, 200) },
+                { type: 'text', text: newRsvp.qrCode }
+              ]
+            }]
+          }
+        })
+      });
+      const waResult: any = await response.json().catch(() => ({}));
+      whatsappNotification = response.ok
+        ? { sent: true }
+        : { sent: false, reason: waResult?.error?.message || `WhatsApp API respondió HTTP ${response.status}` };
+    } catch (error) {
+      whatsappNotification = { sent: false, reason: error instanceof Error ? error.message : 'Error de conexión con WhatsApp.' };
+    }
+  } else if (!clientPhone) {
+    whatsappNotification = { sent: false, reason: 'Falta configurar el WhatsApp del cliente en esta invitación.' };
+  }
+
+  res.status(201).json({ success: true, rsvp: newRsvp, whatsappNotification });
 });
 
 // Check-in verification endpoint for Host QR Scanner

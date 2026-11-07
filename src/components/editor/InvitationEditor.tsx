@@ -18,7 +18,6 @@ import { BUTTON_CATALOG } from '../../data/buttonCatalog';
 import { InvitationContainer } from '../invitation/InvitationContainer';
 import { PhotoEditorModal } from '../photo-editor/PhotoEditorModal';
 import { HostingerPublishModal } from '../hostinger/HostingerPublishModal';
-import { SaveTemplateModal } from '../templates/SaveTemplateModal';
 import { CustomButtonRenderer } from '../buttons/CustomButtonRenderer';
 import { ambientMusic } from '../../audio/ambientMusic';
 import { MOTIF_LIBRARY } from '../../data/motifLibrary';
@@ -93,7 +92,6 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const [saveError, setSaveError] = useState('');
   const [editingPhoto, setEditingPhoto] = useState<PhotoConfig | null>(null);
   const [showHostingerModal, setShowHostingerModal] = useState(false);
-  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [selectedMotifId, setSelectedMotifId] = useState<string | null>(null);
 
   // Sub-tab for independent text elements: Título, Subtítulo, Contenido
@@ -168,6 +166,21 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
       const message = error instanceof Error ? error.message : 'No se pudo guardar la copia en el servidor.';
       setSaveError(message);
       alert(message);
+    }
+  };
+
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setShowSavedFeedback(false);
+    setSaveError('');
+    try {
+      await api.saveInvitationChecked({ ...invitation, updatedAt: new Date().toISOString() });
+      setShowSavedFeedback(true);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la invitación.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -730,15 +743,11 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             <Copy className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Guardar como</span>
           </button>
-
-          {/* Guardar una copia reutilizable en Mis Plantillas */}
-          <button
-            onClick={() => setShowSaveTemplateModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors cursor-pointer shadow-xs"
-            title="Guardar como plantilla propia"
-          >
-            <Bookmark className="w-3.5 h-3.5 text-[#9C7A3C]" />
-            <span className="hidden sm:inline">Guardar Plantilla</span>
+          <button onClick={() => void handleSave()} disabled={isSaving}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#DFC48B] hover:bg-[#D5B676] disabled:opacity-60 text-slate-900 text-xs font-semibold border border-[#DFC48B] transition-colors cursor-pointer shadow-xs"
+            title="Guardar cambios en esta misma invitación">
+            <Check className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{isSaving ? 'Guardando…' : 'Guardar'}</span>
           </button>
 
           {/* Hostinger Publishing Button */}
@@ -2856,18 +2865,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
         />
       )}
 
-      {/* Embedded Save Template Modal */}
-      {showSaveTemplateModal && (
-        <SaveTemplateModal
-          invitation={invitation}
-          isOpen={true}
-          onClose={() => setShowSaveTemplateModal(false)}
-          onSaved={async (name, cat, description) => {
-            await api.saveTemplate(invitation, name, cat as Invitation['category'], description);
-            setSaveError('');
-          }}
-        />
-      )}
+
     </div>
   );
 };

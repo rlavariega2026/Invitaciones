@@ -1,7 +1,7 @@
 Options -Indexes
 RewriteEngine On
 RewriteBase /Invitaciones/
-DirectoryIndex index.php index.html
+DirectoryIndex index.html index.php
 
 # Always check the app shell and service worker for updates after deployment.
 <IfModule mod_headers.c>

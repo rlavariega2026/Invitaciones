@@ -80,7 +80,13 @@ jobs:
             exit 1
           fi
           asset_relative=${expected_asset_path#/Invitaciones/}
-          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/$asset_relative?lav_deploy=${{ github.sha }}" -o "$RUNNER_TEMP/deployed-app.js"
+          asset_status=$(curl --silent --show-error -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" -D "$RUNNER_TEMP/asset-headers.txt" -o "$RUNNER_TEMP/deployed-app.js" -w "%{http_code}" "$base/$asset_relative?lav_deploy=${{ github.sha }}")
+          echo "Public JavaScript bundle HTTP status: $asset_status"
+          if [ "$asset_status" != "200" ]; then
+            cat "$RUNNER_TEMP/asset-headers.txt"
+            head -c 2000 "$RUNNER_TEMP/deployed-app.js"
+            exit 1
+          fi
           cmp "deployment/$asset_relative" "$RUNNER_TEMP/deployed-app.js"
           echo "Hostinger index.html and exact JavaScript bundle verified."
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/assets/templates/i1.jpg" -o "$RUNNER_TEMP/template.jpg"

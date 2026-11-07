@@ -10,11 +10,11 @@ try {
     try {
       storageSetItem.call(this, key, value);
     } catch (error) {
-      const isInvitationCache = key === 'lav_invitations_cache' || key === 'lav_rsvps_cache';
-      const isQuotaError = error instanceof DOMException &&
-        (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED');
-      if (!isInvitationCache || !isQuotaError) throw error;
-      console.warn('LAV: se omitió la caché local llena; el guardado remoto continúa.');
+      const isOptionalLAVCache = key === 'lav_invitations_cache' || key === 'lav_rsvps_cache';
+      if (!isOptionalLAVCache) throw error;
+      // These keys are disposable caches, never the saved invitation itself.
+      // Suppress any browser storage failure for them so editing cannot be interrupted.
+      console.warn('LAV: caché local omitida; el guardado remoto continúa.', error);
     }
   };
 } catch (error) {

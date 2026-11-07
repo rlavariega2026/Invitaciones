@@ -239,7 +239,8 @@ export type FontFamilyType =
   | 'rubik'
   | 'sora'
   | 'teko'
-  | 'work_sans';
+  | 'work_sans'
+  | 'archivo';
 
 export interface TypographyConfig {
   fontFamily: FontFamilyType;

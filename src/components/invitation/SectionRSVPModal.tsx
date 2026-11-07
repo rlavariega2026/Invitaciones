@@ -21,7 +21,6 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
   const [guestName, setGuestName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [companionsCount, setCompanionsCount] = useState(1);
   const [attendance, setAttendance] = useState(true);
   const [dietaryRestrictions, setDietaryRestrictions] = useState('');
   const [message, setMessage] = useState('');
@@ -33,7 +32,6 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setCompanionsCount(authorizedPasses);
     setConfirmedRsvp(null);
     setQrDataUrl('');
     setTicketImageUrl('');
@@ -43,7 +41,6 @@ export const SectionRSVPModal: React.FC<SectionRSVPModalProps> = ({
   if (!isOpen) return null;
 
   const authorizedPasses = Math.min(5, Math.max(1, Number(invitation.rsvpSettings?.maxCompanionsPerPass) || 1));
-  const maxAllowed = authorizedPasses;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

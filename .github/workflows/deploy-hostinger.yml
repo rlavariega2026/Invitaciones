@@ -39,6 +39,8 @@ jobs:
         run: |
           mkdir -p deployment/data
           cp -a dist/. deployment/
+          cp dist/index.html "deployment/index-${GITHUB_SHA}.html"
+          sed -i "/^RewriteBase /a RewriteRule ^index\\\\.html$ index-${GITHUB_SHA}.html [L]" deployment/.htaccess
           mkdir -p deployment/Invitacionespost
           cp dist/index.html deployment/Invitacionespost/index.html
           cp api.php .htaccess .user.ini deployment/

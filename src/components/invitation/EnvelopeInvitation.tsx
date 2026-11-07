@@ -27,6 +27,7 @@ export const EnvelopeInvitation: React.FC<EnvelopeInvitationProps> = ({
   const [isOpening, setIsOpening] = useState(false);
   const premiumTemplate = PREMIUM_TEMPLATE_CATALOG.find((template) => template.id === invitation.templateId);
   const openingStyle = premiumTemplate?.premiumStyle.openingStyle;
+  const selectedOpeningButton = invitation.envelope.openingButton || invitation.sections.find((section) => section.type === 'rsvp')?.customButton;
   const premiumOpeningVariables = premiumTemplate ? {
     '--premium-primary': invitation.primaryColor,
     '--premium-accent': invitation.accentColor,
@@ -78,10 +79,10 @@ export const EnvelopeInvitation: React.FC<EnvelopeInvitationProps> = ({
               }}
             />
             <div className="absolute z-20 top-24 flex flex-col items-center">
-              {invitation.envelope.openingButton ? (
+              {selectedOpeningButton ? (
                 <div data-premium-opening-button="true" className="premium-opening-seal">
                   <CustomButtonRenderer
-                    config={{ ...invitation.envelope.openingButton, label: 'Abrir invitación' }}
+                    config={{ ...selectedOpeningButton, label: 'Abrir invitación' }}
                     className="!min-h-[3.5rem] !px-5 !py-3 !text-xs"
                   />
                 </div>

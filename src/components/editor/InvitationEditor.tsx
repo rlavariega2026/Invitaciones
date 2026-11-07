@@ -102,6 +102,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   // Filter for templates drawer
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('todas');
   const [buttonCategoryFilter, setButtonCategoryFilter] = useState<string>('todas');
+  const [buttonTarget, setButtonTarget] = useState<'rsvp' | 'opening'>('rsvp');
   const [textureTab, setTextureTab] = useState<'zip' | 'telas' | 'metales' | 'flores' | 'fantasia'>('zip');
 
   const audioFileInputRef = useRef<HTMLInputElement>(null);
@@ -2528,6 +2529,17 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 <p className="text-stone-500 text-[11px] mt-0.5">
                   Elige y personaliza el diseño de los botones para RSVP, ubicación y accesos:
                 </p>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button type="button" onClick={() => setButtonTarget('rsvp')} className={`rounded-xl border px-3 py-2 text-xs font-semibold ${buttonTarget === 'rsvp' ? 'border-[#DFC48B] bg-[#FAF5EB] text-stone-900' : 'border-stone-200 bg-white text-stone-600'}`}>
+                    Botones de secciones
+                  </button>
+                  <button type="button" onClick={() => setButtonTarget('opening')} className={`rounded-xl border px-3 py-2 text-xs font-semibold ${buttonTarget === 'opening' ? 'border-[#DFC48B] bg-[#FAF5EB] text-stone-900' : 'border-stone-200 bg-white text-stone-600'}`}>
+                    Botón de apertura
+                  </button>
+                </div>
+                <p className="text-[10px] text-stone-500 mt-2">
+                  {buttonTarget === 'opening' ? 'Este diseño aparecerá en la portada pública para abrir la invitación.' : 'Este diseño se aplicará al botón de confirmación de asistencia.'}
+                </p>
               </div>
 
               <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px]">
@@ -2563,6 +2575,20 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                   <div
                     key={btn.id}
                     onClick={() => {
+                      if (buttonTarget === 'opening') {
+                        updateInvitationState({
+                          ...invitation,
+                          envelope: {
+                            ...invitation.envelope,
+                            openingButton: {
+                              buttonStyleId: btn.id,
+                              label: 'Abrir invitación',
+                              fontFamily: btn.fontFamily,
+                            },
+                          },
+                        });
+                        return;
+                      }
                       const rsvpSection = invitation.sections.find((s) => s.type === 'rsvp');
                       if (rsvpSection) {
                         updateInvitationState({
@@ -2584,7 +2610,9 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                       }
                     }}
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center justify-center space-y-2 ${
-                      invitation.sections.find((s) => s.type === 'rsvp')?.customButton?.buttonStyleId === btn.id
+                      (buttonTarget === 'opening'
+                        ? invitation.envelope.openingButton?.buttonStyleId === btn.id
+                        : invitation.sections.find((s) => s.type === 'rsvp')?.customButton?.buttonStyleId === btn.id)
                         ? 'border-[#DFC48B] bg-[#FAF5EB] ring-2 ring-[#DFC48B]'
                         : 'border-stone-200 bg-white hover:border-stone-300'
                     }`}

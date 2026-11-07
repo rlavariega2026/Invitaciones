@@ -91,6 +91,25 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
         return 'font-urbanist';
       case 'montserrat':
         return 'font-montserrat';
+      case 'anton': return 'font-anton';
+      case 'archivo_black': return 'font-archivo-black';
+      case 'barlow_condensed': return 'font-barlow-condensed';
+      case 'bebas_neue': return 'font-bebas-neue';
+      case 'black_ops_one': return 'font-black-ops-one';
+      case 'bungee': return 'font-bungee';
+      case 'changa_one': return 'font-changa-one';
+      case 'exo_2': return 'font-exo-2';
+      case 'fjalla_one': return 'font-fjalla-one';
+      case 'league_spartan': return 'font-league-spartan';
+      case 'lexend': return 'font-lexend';
+      case 'manrope': return 'font-manrope';
+      case 'oswald': return 'font-oswald';
+      case 'raleway': return 'font-raleway';
+      case 'roboto_condensed': return 'font-roboto-condensed';
+      case 'rubik': return 'font-rubik';
+      case 'sora': return 'font-sora';
+      case 'teko': return 'font-teko';
+      case 'work_sans': return 'font-work-sans';
       case 'sans':
       default:
         return 'font-sans-clean';
@@ -307,6 +326,9 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               fontWeight: subtitleTypo.fontWeight || '600',
               fontStyle: subtitleTypo.isItalic ? 'italic' : 'normal',
               textTransform: subtitleTypo.isUppercase ? 'uppercase' : 'none',
+              lineHeight: subtitleTypo.lineHeight || undefined,
+              textShadow: subtitleTypo.textShadow ? '0 2px 5px rgba(0,0,0,0.45)' : 'none',
+              WebkitTextStroke: subtitleTypo.textOutline ? `${subtitleTypo.textOutlineWidth || 1}px ${subtitleTypo.textOutlineColor || '#FFFFFF'}` : '0 transparent',
             }}
           >
             {section.subtitle}
@@ -325,6 +347,9 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               fontWeight: titleTypo.fontWeight || 'bold',
               fontStyle: titleTypo.isItalic ? 'italic' : 'normal',
               textTransform: titleTypo.isUppercase ? 'uppercase' : 'none',
+              lineHeight: titleTypo.lineHeight || undefined,
+              textShadow: titleTypo.textShadow ? '0 2px 5px rgba(0,0,0,0.45)' : 'none',
+              WebkitTextStroke: titleTypo.textOutline ? `${titleTypo.textOutlineWidth || 1}px ${titleTypo.textOutlineColor || '#FFFFFF'}` : '0 transparent',
             }}
           >
             {section.type === 'google_maps' ? 'Misa' : section.title}
@@ -357,6 +382,9 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               fontWeight: contentTypo.fontWeight || 'normal',
               fontStyle: contentTypo.isItalic ? 'italic' : 'normal',
               textTransform: contentTypo.isUppercase ? 'uppercase' : 'none',
+              lineHeight: contentTypo.lineHeight || undefined,
+              textShadow: contentTypo.textShadow ? '0 2px 5px rgba(0,0,0,0.45)' : 'none',
+              WebkitTextStroke: contentTypo.textOutline ? `${contentTypo.textOutlineWidth || 1}px ${contentTypo.textOutlineColor || '#FFFFFF'}` : '0 transparent',
             }}
           >
             {section.content}

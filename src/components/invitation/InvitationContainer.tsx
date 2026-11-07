@@ -198,6 +198,7 @@ export const InvitationContainer: React.FC<InvitationContainerProps> = ({
         <SectionMusicPlayer
           styleName={invitation.audioTrack.synthStyle}
           autoplayAfterOpen={invitation.audioTrack.autoplayAfterOpen}
+          customAudioUrl={invitation.audioTrack.type === 'custom_upload' ? invitation.audioTrack.customAudioUrl : undefined}
         />
       )}
 

@@ -437,6 +437,8 @@ export interface Invitation {
   eventDate: string; // YYYY-MM-DD
   eventTime: string; // HH:mm
   eventLocation: string;
+  /** WhatsApp Business number of the event organizer/client who receives RSVP notifications. */
+  clientWhatsApp?: string;
   presentationFormat: PresentationFormat;
   primaryColor: string;
   accentColor: string;

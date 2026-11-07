@@ -56,7 +56,6 @@ import {
   Camera,
   FolderOpen,
   Box,
-  Bookmark,
   Copy,
   Move,
   Maximize,

@@ -67,7 +67,7 @@ jobs:
           set -euo pipefail
           base="https://lavdigitalagency.com/Invitaciones"
           # Read the exact published index file, bypassing directory/CDN cache.
-          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" -H "Cache-Control: no-cache, no-store" -H "Pragma: no-cache" -D "$RUNNER_TEMP/page-headers.txt" "$base/index.html?lav_deploy=${{ github.sha }}" -o "$RUNNER_TEMP/invitaciones.html"
+          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" -H "Cache-Control: no-cache, no-store" -H "Pragma: no-cache" -D "$RUNNER_TEMP/page-headers.txt" "$base/?lav_deploy=${{ github.sha }}" -o "$RUNNER_TEMP/invitaciones.html"
           page_status=$(sed -n 's/^HTTP\/[^ ]* \([0-9][0-9][0-9]\).*/\1/p' "$RUNNER_TEMP/page-headers.txt" | tail -n 1)
           echo "Published index.html HTTP status: ${page_status:-unknown}"
           expected_asset_path=$(grep -oE '/Invitaciones/assets/[^"]+[.]js' deployment/index.html | head -n 1)

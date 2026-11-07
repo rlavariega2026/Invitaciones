@@ -155,6 +155,17 @@ try {
       await client.uploadFrom(entry.full, filename);
     }
   }
+  // Verify the exact JS bundle over FTP before checking the public HTTP response.
+  const jsEntry = entries.find((entry) => entry.rel.startsWith('assets/') && entry.rel.endsWith('.js'));
+  if (!jsEntry) throw new Error('Deployment package is missing its JavaScript bundle.');
+  await client.cd(targetPwd);
+  await client.downloadTo(path.join(process.env.RUNNER_TEMP || '/tmp', 'lav-app-bundle-ftp-readback.js'), jsEntry.rel);
+  const [localBundle, remoteBundle] = await Promise.all([
+    fs.readFile(jsEntry.full),
+    fs.readFile(path.join(process.env.RUNNER_TEMP || '/tmp', 'lav-app-bundle-ftp-readback.js')),
+  ]);
+  if (!localBundle.equals(remoteBundle)) throw new Error('FTP read-back mismatch: JavaScript bundle differs from this build.');
+  console.log('[FTP BUNDLE READBACK] exact JavaScript bundle verified:', jsEntry.rel, localBundle.length, 'bytes');
   console.log('Uploaded', entries.length, 'files. No remote files were deleted.');
 } finally {
   client.close();

@@ -2389,7 +2389,7 @@ export function buildInvitationFromTemplate(template: TemplateDefinition, custom
     rsvpSettings: {
       enabled: true,
       deadlineDate: '2027-09-15',
-      maxCompanionsPerPass: 4,
+      maxCompanionsPerPass: 1,
       customMessage: 'Nos encantará compartir este gran momento contigo. Por favor confirma tus lugares autorizados.',
       collectDietaryInfo: true,
       collectPhone: true,

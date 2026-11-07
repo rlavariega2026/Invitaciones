@@ -90,14 +90,34 @@ try {
     await client.cd(targetPwd);
     if (directory !== '.') await client.ensureDir(directory);
     const filename = path.posix.basename(entry.rel);
-    const temporaryName = '.in.' + filename;
-    try {
-      await client.remove(temporaryName);
-      console.log('Removed stale temporary upload:', temporaryName);
-    } catch (error) {
-      if (!String(error?.message || error).includes('550')) throw error;
+    // Publish the entry point through a fresh temporary file. Some Hostinger
+    // FTP/CDN combinations acknowledge STOR over an existing index.html while
+    // the old document remains live; replacing by rename avoids that stale file.
+    if (entry.rel === 'index.html') {
+      const temporaryName = '.lav-index-' + (process.env.GITHUB_SHA || Date.now()) + '.html';
+      try {
+        await client.remove(temporaryName);
+      } catch (error) {
+        if (!String(error?.message || error).includes('550')) throw error;
+      }
+      await client.uploadFrom(entry.full, temporaryName);
+      try {
+        await client.remove(filename);
+      } catch (error) {
+        if (!String(error?.message || error).includes('550')) throw error;
+      }
+      await client.rename(temporaryName, filename);
+      console.log('Published index.html by verified FTP rename.');
+    } else {
+      const temporaryName = '.in.' + filename;
+      try {
+        await client.remove(temporaryName);
+        console.log('Removed stale temporary upload:', temporaryName);
+      } catch (error) {
+        if (!String(error?.message || error).includes('550')) throw error;
+      }
+      await client.uploadFrom(entry.full, filename);
     }
-    await client.uploadFrom(entry.full, filename);
   }
   console.log('Uploaded', entries.length, 'files. No remote files were deleted.');
 } finally {

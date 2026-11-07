@@ -220,7 +220,26 @@ export type FontFamilyType =
   | 'outfit'
   | 'urbanist'
   | 'montserrat'
-  | 'sans';
+  | 'sans'
+  | 'anton'
+  | 'archivo_black'
+  | 'barlow_condensed'
+  | 'bebas_neue'
+  | 'black_ops_one'
+  | 'bungee'
+  | 'changa_one'
+  | 'exo_2'
+  | 'fjalla_one'
+  | 'league_spartan'
+  | 'lexend'
+  | 'manrope'
+  | 'oswald'
+  | 'raleway'
+  | 'roboto_condensed'
+  | 'rubik'
+  | 'sora'
+  | 'teko'
+  | 'work_sans';
 
 export interface TypographyConfig {
   fontFamily: FontFamilyType;
@@ -233,6 +252,9 @@ export interface TypographyConfig {
   isItalic?: boolean;
   isUppercase?: boolean;
   textShadow?: boolean;
+  textOutline?: boolean;
+  textOutlineColor?: string;
+  textOutlineWidth?: number;
   alignment?: 'left' | 'center' | 'right';
 }
 

@@ -110,6 +110,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
       case 'sora': return 'font-sora';
       case 'teko': return 'font-teko';
       case 'work_sans': return 'font-work-sans';
+      case 'archivo': return 'font-archivo';
       case 'sans':
       default:
         return 'font-sans-clean';

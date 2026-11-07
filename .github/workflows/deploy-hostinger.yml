@@ -71,6 +71,14 @@ jobs:
             head -c 1200 "$RUNNER_TEMP/invitaciones.html"
             exit 1
           fi
+          # Verify Hostinger serves this exact build, not merely any old app shell.
+          cmp deployment/index.html "$RUNNER_TEMP/invitaciones.html"
+          asset_path=$(grep -oE '/Invitaciones/assets/[^"]+\\.js' deployment/index.html | head -n 1)
+          test -n "$asset_path"
+          asset_relative=${asset_path#/Invitaciones/}
+          curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/$asset_relative" -o "$RUNNER_TEMP/deployed-app.js"
+          cmp "deployment/$asset_relative" "$RUNNER_TEMP/deployed-app.js"
+          echo "Exact deployed index.html and JavaScript bundle match this GitHub build."
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/assets/templates/i1.jpg" -o "$RUNNER_TEMP/template.jpg"
           test -s "$RUNNER_TEMP/template.jpg"
           curl --fail --silent --show-error --retry 2 --retry-all-errors --retry-delay 3 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36" "$base/QR/" -o "$RUNNER_TEMP/digital-pass.html"

@@ -78,6 +78,9 @@ try {
     }
   }
   await walk(root);
+  // Upload every asset and backend file first; publish index.html last so the
+  // public entry point never points at bundles that have not arrived yet.
+  entries.sort((a, b) => Number(a.rel === 'index.html') - Number(b.rel === 'index.html'));
   if (!entries.some((entry) => entry.rel === 'index.html') || !entries.some((entry) => entry.rel === 'api.php')) {
     throw new Error('Deployment package is incomplete; expected index.html and api.php.');
   }

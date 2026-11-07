@@ -76,13 +76,12 @@ export function createDigitalPassImage(invitation: Invitation, pass: RSVPRecord)
   ctx.fillStyle = theme.accent;
   ctx.font = 'bold 26px Arial';
   ctx.fillText(categoryLabels[invitation.category] || categoryLabels.especiales, center, y + 205);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '48px Georgia';
-  const titleLines = fitText(ctx, invitation.title || 'Invitación', 820);
-  titleLines.forEach((line, index) => ctx.fillText(line, center, y + 285 + index * 58));
+  // El boleto muestra el nombre personalizado de los anfitriones, nunca el
+  // título interno de la plantilla/archivo.
   ctx.fillStyle = '#FFFFFFD9';
-  ctx.font = 'italic 32px Georgia';
-  ctx.fillText(invitation.names || 'Nuestros anfitriones', center, y + 450);
+  ctx.font = 'italic 38px Georgia';
+  fitText(ctx, invitation.names || 'Nuestros anfitriones', 820)
+    .forEach((line, index) => ctx.fillText(line, center, y + 365 + index * 48));
 
   ctx.textAlign = 'left';
   ctx.fillStyle = '#7A7881';

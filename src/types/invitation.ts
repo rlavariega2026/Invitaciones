@@ -449,6 +449,7 @@ export interface Invitation {
   envelope: {
     waxColor: string;
     sealIcon: 'initials' | 'heart' | 'ring' | 'crown' | 'star' | 'butterfly' | 'flower';
+    openingButton?: ButtonCustomConfig;
     paperColor: string;
     liningPattern: 'floral' | 'marble' | 'gold_leaves' | 'solid' | 'fairytale';
   };

@@ -542,6 +542,25 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     { id: 'urbanist', label: 'Urbanist (Geométrica Limpia)' },
     { id: 'montserrat', label: 'Montserrat (Gala Urbana)' },
     { id: 'sans', label: 'Plus Jakarta Sans (Sans Limpia)' },
+    { id: 'anton', label: 'Anton (Extra gruesa)' },
+    { id: 'archivo_black', label: 'Archivo Black (Negra contundente)' },
+    { id: 'barlow_condensed', label: 'Barlow Condensed (Gruesa compacta)' },
+    { id: 'bebas_neue', label: 'Bebas Neue (Display fuerte)' },
+    { id: 'black_ops_one', label: 'Black Ops One (Impacto)' },
+    { id: 'bungee', label: 'Bungee (Volumen urbano)' },
+    { id: 'changa_one', label: 'Changa One (Redonda pesada)' },
+    { id: 'exo_2', label: 'Exo 2 (Geométrica bold)' },
+    { id: 'fjalla_one', label: 'Fjalla One (Condensada fuerte)' },
+    { id: 'league_spartan', label: 'League Spartan (Extra bold)' },
+    { id: 'lexend', label: 'Lexend (Sólida y legible)' },
+    { id: 'manrope', label: 'Manrope (Moderna extra bold)' },
+    { id: 'oswald', label: 'Oswald (Condensada gruesa)' },
+    { id: 'raleway', label: 'Raleway (Black elegante)' },
+    { id: 'roboto_condensed', label: 'Roboto Condensed (Bold)' },
+    { id: 'rubik', label: 'Rubik (Black redondeada)' },
+    { id: 'sora', label: 'Sora (Extra bold geométrica)' },
+    { id: 'teko', label: 'Teko (Display compacta)' },
+    { id: 'work_sans', label: 'Work Sans (Black editorial)' },
   ];
 
   const photoShapesList: Array<{ id: PhotoShape; label: string }> = [
@@ -1124,6 +1143,46 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                     ))}
                   </div>
                 </div>
+
+                {/* Interlineado independiente */}
+                <div>
+                  <div className="flex justify-between text-stone-600 mb-1 text-[11px]">
+                    <label>Separación entre líneas</label>
+                    <span className="font-semibold">{(activeElementTypo.lineHeight || 1.4).toFixed(1)}×</span>
+                  </div>
+                  <input type="range" min="0.8" max="2.5" step="0.1"
+                    value={activeElementTypo.lineHeight || 1.4}
+                    onChange={(e) => updateElementTypography(selectedTextElement, { lineHeight: Number(e.target.value) })}
+                    className="w-full accent-[#9C7A3C] cursor-pointer"
+                  />
+                </div>
+
+                {/* Efectos de texto independientes */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" aria-pressed={!!activeElementTypo.textShadow}
+                    onClick={() => updateElementTypography(selectedTextElement, { textShadow: !activeElementTypo.textShadow })}
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold ${activeElementTypo.textShadow ? 'bg-[#DFC48B] border-[#9C7A3C] text-slate-900' : 'bg-stone-50 border-stone-300 text-stone-600'}`}>
+                    Sombra {activeElementTypo.textShadow ? 'activada' : 'desactivada'}
+                  </button>
+                  <button type="button" aria-pressed={!!activeElementTypo.textOutline}
+                    onClick={() => updateElementTypography(selectedTextElement, { textOutline: !activeElementTypo.textOutline })}
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold ${activeElementTypo.textOutline ? 'bg-[#DFC48B] border-[#9C7A3C] text-slate-900' : 'bg-stone-50 border-stone-300 text-stone-600'}`}>
+                    Contorno {activeElementTypo.textOutline ? 'activado' : 'desactivado'}
+                  </button>
+                </div>
+                {activeElementTypo.textOutline && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] text-stone-600 flex-1">Color del contorno</label>
+                    <input type="color" value={activeElementTypo.textOutlineColor || '#FFFFFF'}
+                      onChange={(e) => updateElementTypography(selectedTextElement, { textOutlineColor: e.target.value })}
+                      className="w-9 h-8 rounded-lg border border-stone-300 p-0.5" />
+                    <label className="text-[11px] text-stone-600">Grosor</label>
+                    <input type="range" min="0.5" max="4" step="0.5"
+                      value={activeElementTypo.textOutlineWidth || 1}
+                      onChange={(e) => updateElementTypography(selectedTextElement, { textOutlineWidth: Number(e.target.value) })}
+                      className="w-20 accent-[#9C7A3C]" />
+                  </div>
+                )}
               </div>
 
               {/* 4. POSICIÓN DE TEXTO & FOTO EN PANTALLA (Mover a cualquier lado) */}

@@ -94,6 +94,7 @@ function send_client_whatsapp_notification(array $invitation, array $rsvp): arra
         (string)($rsvp['companionsCount'] ?? 1),
         (string)($invitation['title'] ?? 'Evento'),
         (string)($rsvp['qrCode'] ?? ''),
+        'https://lavdigitalagency.com/Invitaciones/QR/' . rawurlencode((string)($rsvp['qrCode'] ?? '')) . '/',
     ];
     $bodyParameters = array_map(static fn($value) => ['type' => 'text', 'text' => mb_substr($value, 0, 200)], $parameters);
     $payload = [

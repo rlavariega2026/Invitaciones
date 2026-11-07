@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Barlow+Condensed:wght@600;700;800;900&family=Bebas+Neue&family=Black+Ops+One&family=Bungee&family=Changa+One&family=Exo+2:wght@600;700;800;900&family=Fjalla+One&family=League+Spartan:wght@600;700;800;900&family=Lexend:wght@600;700;800;900&family=Manrope:wght@600;700;800&family=Oswald:wght@600;700&family=Raleway:wght@700;800;900&family=Roboto+Condensed:wght@700;800;900&family=Rubik:wght@700;800;900&family=Sora:wght@700;800&family=Teko:wght@600;700&family=Work+Sans:wght@700;800;900&display=swap');
+
 @import "tailwindcss";
 
 @layer base {
@@ -91,6 +93,26 @@
 .font-sans-clean {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
+
+.font-anton { font-family: 'Anton', sans-serif; font-weight: 400; }
+.font-archivo-black { font-family: 'Archivo Black', sans-serif; font-weight: 400; }
+.font-barlow-condensed { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; }
+.font-bebas-neue { font-family: 'Bebas Neue', sans-serif; font-weight: 400; }
+.font-black-ops-one { font-family: 'Black Ops One', sans-serif; font-weight: 400; }
+.font-bungee { font-family: 'Bungee', sans-serif; font-weight: 400; }
+.font-changa-one { font-family: 'Changa One', sans-serif; font-weight: 400; }
+.font-exo-2 { font-family: 'Exo 2', sans-serif; font-weight: 800; }
+.font-fjalla-one { font-family: 'Fjalla One', sans-serif; font-weight: 400; }
+.font-league-spartan { font-family: 'League Spartan', sans-serif; font-weight: 900; }
+.font-lexend { font-family: 'Lexend', sans-serif; font-weight: 800; }
+.font-manrope { font-family: 'Manrope', sans-serif; font-weight: 800; }
+.font-oswald { font-family: 'Oswald', sans-serif; font-weight: 700; }
+.font-raleway { font-family: 'Raleway', sans-serif; font-weight: 900; }
+.font-roboto-condensed { font-family: 'Roboto Condensed', sans-serif; font-weight: 800; }
+.font-rubik { font-family: 'Rubik', sans-serif; font-weight: 900; }
+.font-sora { font-family: 'Sora', sans-serif; font-weight: 800; }
+.font-teko { font-family: 'Teko', sans-serif; font-weight: 700; }
+.font-work-sans { font-family: 'Work Sans', sans-serif; font-weight: 900; }
 
 /* Shimmer & Golden Reflections for Premium Buttons */
 @keyframes goldShimmer {

@@ -38,16 +38,18 @@ export const EnvelopeInvitation: React.FC<EnvelopeInvitationProps> = ({
 
   const handleOpenEnvelope = () => {
     setIsOpening(true);
+    // Start the selected track directly from the guest's tap so mobile browsers
+    // recognize the audio as a user-initiated playback request.
+    if (invitation.audioTrack?.autoplayAfterOpen) {
+      const uploadedTrack = invitation.audioTrack.type === 'custom_upload'
+        ? invitation.audioTrack.customAudioUrl || null
+        : null;
+      ambientMusic.setCustomAudio(uploadedTrack);
+      ambientMusic.play(invitation.audioTrack.synthStyle);
+    }
     setTimeout(() => {
       setIsOpen(true);
       setIsOpening(false);
-      if (invitation.audioTrack?.autoplayAfterOpen) {
-        const uploadedTrack = invitation.audioTrack.type === 'custom_upload'
-          ? invitation.audioTrack.customAudioUrl || null
-          : null;
-        ambientMusic.setCustomAudio(uploadedTrack);
-        ambientMusic.play(invitation.audioTrack.synthStyle);
-      }
     }, 900);
   };
 

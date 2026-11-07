@@ -2793,6 +2793,20 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
               </div>
 
               <div>
+                <label className="block font-medium text-stone-700 mb-1">WhatsApp del cliente (recibe avisos de asistencia)</label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="Ej. +52 777 123 4567"
+                  value={invitation.clientWhatsApp || ''}
+                  onChange={(e) => updateInvitationState({ ...invitation, clientWhatsApp: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#DFC48B]"
+                />
+                <p className="mt-1 text-[10px] text-stone-500">Escribe el número del organizador de este evento, con código de país. No se utiliza tu WhatsApp personal.</p>
+              </div>
+
+              <div>
                 <label className="block font-medium text-stone-700 mb-1">Lugar / Salón / Hacienda</label>
                 <input
                   type="text"

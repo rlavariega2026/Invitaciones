@@ -5,15 +5,21 @@ import { Volume2, VolumeX, Music, Play, Pause } from 'lucide-react';
 interface SectionMusicPlayerProps {
   styleName?: string;
   autoplayAfterOpen?: boolean;
+  customAudioUrl?: string;
 }
 
 export const SectionMusicPlayer: React.FC<SectionMusicPlayerProps> = ({
   styleName = 'romantic_harp',
   autoplayAfterOpen = true,
+  customAudioUrl,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+
+  useEffect(() => {
+    ambientMusic.setCustomAudio(customAudioUrl || null);
+  }, [customAudioUrl]);
 
   useEffect(() => {
     const unsubscribe = ambientMusic.subscribe((state) => {

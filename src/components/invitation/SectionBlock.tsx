@@ -323,6 +323,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               color: subtitleTypo.color || '#9C7A3C',
               fontSize: subtitleTypo.fontSize ? `${subtitleTypo.fontSize}px` : '12px',
               textAlign: subtitleTypo.alignment || 'center',
+              whiteSpace: 'pre-wrap',
               letterSpacing: subtitleTypo.letterSpacing ? `${subtitleTypo.letterSpacing}px` : '2px',
               fontWeight: subtitleTypo.fontWeight || '600',
               fontStyle: subtitleTypo.isItalic ? 'italic' : 'normal',
@@ -345,6 +346,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               fontSize: titleTypo.fontSize ? `${titleTypo.fontSize}px` : '32px',
               letterSpacing: titleTypo.letterSpacing ? `${titleTypo.letterSpacing}px` : '1px',
               textAlign: titleTypo.alignment || 'center',
+              whiteSpace: 'pre-wrap',
               fontWeight: titleTypo.fontWeight || 'bold',
               fontStyle: titleTypo.isItalic ? 'italic' : 'normal',
               textTransform: titleTypo.isUppercase ? 'uppercase' : 'none',
@@ -380,6 +382,7 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
               color: contentTypo.color || '#4A5568',
               fontSize: contentTypo.fontSize ? `${contentTypo.fontSize}px` : '14px',
               textAlign: contentTypo.alignment || 'center',
+              whiteSpace: 'pre-wrap',
               fontWeight: contentTypo.fontWeight || 'normal',
               fontStyle: contentTypo.isItalic ? 'italic' : 'normal',
               textTransform: contentTypo.isUppercase ? 'uppercase' : 'none',
@@ -733,10 +736,10 @@ export const SectionBlock: React.FC<SectionBlockProps> = ({
                 className={`w-full flex items-center justify-between p-4 bg-[#FAF8F5] hover:bg-[#F5EFE4] transition-colors text-left cursor-pointer ${isPremiumInvitation ? 'premium-section-tab-heading' : ''}`}
               >
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-[#9C7A3C] font-semibold block">
+                  <span className="text-[10px] uppercase tracking-wider text-[#9C7A3C] font-semibold block" style={{ whiteSpace: 'pre-wrap' }}>
                     {section.subtitle || 'Apartado'}
                   </span>
-                  <span className="text-sm font-serif font-bold text-slate-800">{section.type === 'google_maps' ? 'Misa' : section.title}</span>
+                  <span className="text-sm font-serif font-bold text-slate-800" style={{ whiteSpace: 'pre-wrap' }}>{section.type === 'google_maps' ? 'Misa' : section.title}</span>
                 </div>
                 <div className="p-1 rounded-full bg-white border border-stone-200 text-stone-600">
                   {isTabOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

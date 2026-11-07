@@ -941,20 +941,20 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                 </span>
                 <div>
                   <label className="block text-stone-600 mb-0.5 text-[11px]">Título Principal</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={selectedSection.title}
                     onChange={(e) => updateSelectedSection({ title: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white"
+                    className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white resize-y"
                   />
                 </div>
                 <div>
                   <label className="block text-stone-600 mb-0.5 text-[11px]">Subtítulo o Frase Superior</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={selectedSection.subtitle || ''}
                     onChange={(e) => updateSelectedSection({ subtitle: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white"
+                    className="w-full px-3 py-1.5 rounded-xl border border-stone-300 bg-white resize-y"
                   />
                 </div>
                 <div>

@@ -75,6 +75,59 @@ function body_json(): array {
     return $value;
 }
 
+
+/** Send one approved WhatsApp Cloud API template to the event organizer. */
+function send_client_whatsapp_notification(array $invitation, array $rsvp): array {
+    $rawPhone = (string)($invitation['clientWhatsApp'] ?? '');
+    $phone = preg_replace('/[^0-9]/', '', $rawPhone);
+    $token = (string)getenv('WHATSAPP_ACCESS_TOKEN');
+    $phoneNumberId = (string)getenv('WHATSAPP_PHONE_NUMBER_ID');
+    $templateName = (string)(getenv('WHATSAPP_RSVP_TEMPLATE') ?: 'lav_rsvp_notification');
+    $language = (string)(getenv('WHATSAPP_TEMPLATE_LANGUAGE') ?: 'es_MX');
+    if ($phone === '') return ['sent' => false, 'reason' => 'Falta configurar el WhatsApp del cliente en esta invitación.'];
+    if ($token === '' || $phoneNumberId === '') return ['sent' => false, 'reason' => 'Faltan las credenciales de WhatsApp Business Cloud API en el servidor.'];
+    if (!function_exists('curl_init')) return ['sent' => false, 'reason' => 'La extensión cURL de PHP no está disponible en el servidor.'];
+
+    $parameters = [
+        (string)($rsvp['guestName'] ?? ''),
+        !empty($rsvp['attendance']) ? 'CONFIRMÓ ASISTENCIA' : 'NO PODRÁ ASISTIR',
+        (string)($rsvp['companionsCount'] ?? 1),
+        (string)($invitation['title'] ?? 'Evento'),
+        (string)($rsvp['qrCode'] ?? ''),
+    ];
+    $bodyParameters = array_map(static fn($value) => ['type' => 'text', 'text' => mb_substr($value, 0, 200)], $parameters);
+    $payload = [
+        'messaging_product' => 'whatsapp',
+        'recipient_type' => 'individual',
+        'to' => $phone,
+        'type' => 'template',
+        'template' => [
+            'name' => $templateName,
+            'language' => ['code' => $language],
+            'components' => [['type' => 'body', 'parameters' => $bodyParameters]],
+        ],
+    ];
+    $ch = curl_init('https://graph.facebook.com/v22.0/' . rawurlencode($phoneNumberId) . '/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+    $decoded = is_string($response) ? json_decode($response, true) : null;
+    if ($httpCode >= 200 && $httpCode < 300 && !empty($decoded['messages'][0]['id'])) {
+        return ['sent' => true, 'messageId' => $decoded['messages'][0]['id']];
+    }
+    $reason = $curlError !== '' ? $curlError : (string)($decoded['error']['message'] ?? ('WhatsApp API respondió HTTP ' . $httpCode));
+    return ['sent' => false, 'reason' => $reason];
+}
+
 function now_iso(): string {
     return gmdate('c');
 }
@@ -190,7 +243,14 @@ if (($segments[0] ?? '') === 'invitations') {
             }
         }
         write_data('invitations.json', $invitations);
-        json_response(['success' => true, 'rsvp' => $rsvp], 201);
+        $matchedInvitation = null;
+        foreach ($invitations as $savedInvitation) {
+            if (($savedInvitation['id'] ?? '') === $id) { $matchedInvitation = $savedInvitation; break; }
+        }
+        $whatsappNotification = $matchedInvitation
+            ? send_client_whatsapp_notification($matchedInvitation, $rsvp)
+            : ['sent' => false, 'reason' => 'No se encontró la invitación para notificar al cliente.'];
+        json_response(['success' => true, 'rsvp' => $rsvp, 'whatsappNotification' => $whatsappNotification], 201);
     }
 }
 

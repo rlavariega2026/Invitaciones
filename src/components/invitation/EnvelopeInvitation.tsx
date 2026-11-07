@@ -42,6 +42,10 @@ export const EnvelopeInvitation: React.FC<EnvelopeInvitationProps> = ({
       setIsOpen(true);
       setIsOpening(false);
       if (invitation.audioTrack?.autoplayAfterOpen) {
+        const uploadedTrack = invitation.audioTrack.type === 'custom_upload'
+          ? invitation.audioTrack.customAudioUrl || null
+          : null;
+        ambientMusic.setCustomAudio(uploadedTrack);
         ambientMusic.play(invitation.audioTrack.synthStyle);
       }
     }, 900);
@@ -101,7 +105,6 @@ export const EnvelopeInvitation: React.FC<EnvelopeInvitationProps> = ({
               </span>
             </div>
             <div className="absolute bottom-4 text-center px-4">
-              <p className={`text-xs font-serif text-slate-700 ${openingStyle ? 'premium-opening-title' : ''}`}>{invitation.title}</p>
               <p className="text-[10px] text-stone-400 mt-0.5">{invitation.eventDate}</p>
             </div>
           </div>

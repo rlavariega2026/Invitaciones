@@ -224,11 +224,19 @@ if (($segments[0] ?? '') === 'invitations') {
     if ($id && ($segments[2] ?? '') === 'rsvp' && $method === 'POST') {
         $guest = trim((string)($body['guestName'] ?? ''));
         if ($guest === '') json_response(['success' => false, 'error' => 'El nombre del invitado es obligatorio'], 400);
+        $invitations = read_data('invitations.json');
+        $authorizedPasses = 1;
+        foreach ($invitations as $savedInvitation) {
+            if (($savedInvitation['id'] ?? '') === $id) {
+                $authorizedPasses = min(5, max(1, (int)($savedInvitation['rsvpSettings']['maxCompanionsPerPass'] ?? 1)));
+                break;
+            }
+        }
         $rsvps = read_data('rsvps.json');
         $rsvp = [
             'id' => safe_id('rsvp'), 'invitationId' => $id, 'guestName' => $guest,
             'phone' => $body['phone'] ?? '', 'email' => $body['email'] ?? '',
-            'companionsCount' => min(max((int)($body['companionsCount'] ?? 1), 1), 5),
+            'companionsCount' => $authorizedPasses,
             'attendance' => $body['attendance'] ?? true,
             'dietaryRestrictions' => $body['dietaryRestrictions'] ?? '', 'message' => $body['message'] ?? '',
             'qrCode' => 'LAV-' . strtoupper(substr($id, -6)) . '-' . strtoupper(bin2hex(random_bytes(3))),
@@ -236,7 +244,6 @@ if (($segments[0] ?? '') === 'invitations') {
         ];
         array_unshift($rsvps, $rsvp);
         write_data('rsvps.json', $rsvps);
-        $invitations = read_data('invitations.json');
         foreach ($invitations as &$inv) {
             if (($inv['id'] ?? '') === $id) {
                 $inv['stats'] = $inv['stats'] ?? ['views' => 0, 'rsvps' => 0];

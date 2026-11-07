@@ -2611,7 +2611,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
                     }}
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center justify-center space-y-2 ${
                       (buttonTarget === 'opening'
-                        ? invitation.envelope.openingButton?.buttonStyleId === btn.id
+                        ? (invitation.envelope.openingButton?.buttonStyleId || invitation.sections.find((s) => s.type === 'rsvp')?.customButton?.buttonStyleId) === btn.id
                         : invitation.sections.find((s) => s.type === 'rsvp')?.customButton?.buttonStyleId === btn.id)
                         ? 'border-[#DFC48B] bg-[#FAF5EB] ring-2 ring-[#DFC48B]'
                         : 'border-stone-200 bg-white hover:border-stone-300'

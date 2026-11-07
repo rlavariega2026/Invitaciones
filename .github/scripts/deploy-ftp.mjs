@@ -70,8 +70,9 @@ try {
   }
   const normalizedInitial = initial.replace(/\\+/g, '/').replace(/\/+$/, '') || '/';
   const domainRoot = '/domains/lavdigitalagency.com/public_html';
+  // Hostinger's live domain document root is lavdigitalagency.com/public_html;
+  // from this FTP account's filesystem root its absolute path is /domains/lavdigitalagency.com/public_html.
   if (normalizedInitial.toLowerCase().endsWith(domainRoot)) initialCandidates.push('Invitaciones');
-  if (normalizedInitial.toLowerCase().endsWith('/public_html')) initialCandidates.push('Invitaciones');
   if (normalizedInitial.toLowerCase().endsWith('/domains')) initialCandidates.push('lavdigitalagency.com/public_html/Invitaciones');
   if (normalizedInitial === '/') {
     initialCandidates.push('domains/lavdigitalagency.com/public_html/Invitaciones');
@@ -90,8 +91,7 @@ try {
       await client.cd(initial);
       await client.cd(candidate);
       const resolved = (await client.pwd()).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
-      const valid = resolved.endsWith('/lavdigitalagency.com/public_html/invitaciones')
-        || resolved.endsWith('/public_html/invitaciones');
+      const valid = resolved.endsWith('/domains/lavdigitalagency.com/public_html/invitaciones');
       if (valid) {
         targetPwd = await client.pwd();
         console.log('Verified Hostinger destination: lavdigitalagency.com/public_html/Invitaciones/');
@@ -104,7 +104,7 @@ try {
     }
   }
   if (!targetPwd) {
-    throw new Error('Could not verify lavdigitalagency.com/public_html/Invitaciones/; no files were uploaded.');
+    throw new Error('Could not verify the live Hostinger document root lavdigitalagency.com/public_html/Invitaciones/; no files were uploaded.');
   }
 
 

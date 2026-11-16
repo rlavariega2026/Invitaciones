@@ -34,7 +34,7 @@ export const GalleryInvitation: React.FC<GalleryInvitationProps> = ({
         {invitation.gallery.map((photo, i) => (
           <div
             key={photo.id || i}
-            onClick={() => setSelectedPhoto(photo)}
+            data-lav-interactive onClick={() => setSelectedPhoto(photo)}
             className="group relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer shadow-sm border border-stone-200 hover:shadow-lg transition-all"
           >
             <img
@@ -66,12 +66,12 @@ export const GalleryInvitation: React.FC<GalleryInvitationProps> = ({
       {/* Photo Lightbox Modal */}
       {selectedPhoto && (
         <div
-          onClick={() => setSelectedPhoto(null)}
+          data-lav-interactive onClick={() => setSelectedPhoto(null)}
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in"
         >
           <div className="relative max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-black">
             <button
-              onClick={() => setSelectedPhoto(null)}
+              data-lav-interactive onClick={() => setSelectedPhoto(null)}
               className="absolute top-3 right-3 p-1.5 text-white bg-black/50 hover:bg-black/80 rounded-full"
             >
               <X className="w-5 h-5" />

@@ -1,3 +1,4 @@
+import { api } from '../../services/api';
 import React, { useState } from 'react';
 import { PhotoConfig, PhotoShape, PhotoFilter, PhotoAdjustments } from '../../types/invitation';
 import {
@@ -74,16 +75,13 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({
     { id: 'portrait', label: 'Retrato Fino' },
   ];
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setCurrentUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      setCurrentUrl(await api.uploadImage(file));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo guardar la fotografía.');
     }
   };
 

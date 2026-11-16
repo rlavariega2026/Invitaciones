@@ -7,7 +7,9 @@ import { InvitationContainer } from './components/invitation/InvitationContainer
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 import { SaveTemplateModal } from './components/templates/SaveTemplateModal';
 import { HostingerPublishModal } from './components/hostinger/HostingerPublishModal';
-import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from './data/templates';
+import { AccountPanel, Login } from './components/dashboard/Access';
+import { PublicInvitation } from './components/invitation/PublicInvitation';
+import { Account, sessionAction } from './services/session';
 import { getDigitalPassUrl, getInvitationUrl } from './utils/invitationUrl';
 import { createDigitalPassImage } from './utils/digitalPassImage';
 import { ArrowLeft, Bookmark, Globe, Share2 } from 'lucide-react';
@@ -18,6 +20,21 @@ export default function App() {
   const [digitalPassImage, setDigitalPassImage] = useState('');
   const [digitalPassError, setDigitalPassError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<Account | null>(null);
+  const [showAccounts, setShowAccounts] = useState(false);
+  const [publicError, setPublicError] = useState('');
+  useEffect(() => {
+    const expire = () => {
+      setUser(null);
+      setCurrentInvitation(null);
+      setShowAccounts(false);
+      setShowHostingerModal(false);
+      setShowSaveTemplateModal(false);
+      setViewMode('dashboard');
+    };
+    window.addEventListener('lav-session-expired', expire);
+    return () => window.removeEventListener('lav-session-expired', expire);
+  }, []);
   const [showHostingerModal, setShowHostingerModal] = useState(false);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
 
@@ -37,12 +54,12 @@ export default function App() {
       void loadDigitalPass(passCode);
       return;
     }
-    const invitationIdParam = params.get('invitationId') || params.get('id');
-
-    if (invitationIdParam) {
-      loadDirectInvitation(invitationIdParam);
+    const id = params.get('invitationId') || params.get('id') || '';
+    const route = window.location.pathname.match(/^\/Invitaciones\/Invitacionespost\/(.*)/i)?.[1] || '';
+    if (id || route) {
+      void loadDirectInvitation(id, route);
     } else {
-      setLoading(false);
+      void sessionAction('status').then(result => setUser(result.user)).catch(() => setUser(null)).finally(() => setLoading(false));
     }
   }, []);
 
@@ -85,21 +102,12 @@ export default function App() {
     }
   };
 
-  const loadDirectInvitation = async (id: string) => {
-    setLoading(true);
+  const loadDirectInvitation = async (id: string, route: string) => {
+    setViewMode('direct_guest');
     try {
-      const inv = await api.getInvitationById(id);
-      if (inv) {
-        setCurrentInvitation(inv);
-        setViewMode('direct_guest');
-      } else {
-        // Fallback to first template
-        const fallback = buildInvitationFromTemplate(TEMPLATES_CATALOG[0], id);
-        setCurrentInvitation(fallback);
-        setViewMode('direct_guest');
-      }
-    } catch (err) {
-      console.error(err);
+      setCurrentInvitation(await api.getPublicInvitation(id, route));
+    } catch (error) {
+      setPublicError(error instanceof Error ? error.message : 'Invitación no disponible');
     } finally {
       setLoading(false);
     }
@@ -146,14 +154,12 @@ export default function App() {
   }
 
   // 1. Direct Guest View (via shared link)
-  if (viewMode === 'direct_guest' && currentInvitation) {
-    return (
-      <div className="min-h-screen bg-[#FDFBF7]">
-        <InvitationContainer invitation={currentInvitation} isEditor={false} />
-        <OfflineIndicator />
-      </div>
-    );
+  if (viewMode === 'direct_guest') {
+    return currentInvitation ? <PublicInvitation invitation={currentInvitation} /> :
+      <main className="grid min-h-dvh place-items-center p-5"><p role="alert">{publicError}</p></main>;
   }
+
+  if (!user) return <Login onLogin={setUser} />;
 
   // 2. Fullscreen Preview View (from Dashboard or Editor)
   if (viewMode === 'preview' && currentInvitation) {
@@ -190,7 +196,11 @@ export default function App() {
 
             <button
               onClick={() => {
-                const url = getInvitationUrl(currentInvitation.id, {}, currentInvitation.hostingerPublish?.remoteSlug);
+                if (currentInvitation.hostingerPublish?.publishStatus !== 'published') {
+                  setShowHostingerModal(true);
+                  return;
+                }
+                const url = currentInvitation.hostingerPublish?.publicUrl || getInvitationUrl(currentInvitation.id, {}, currentInvitation.hostingerPublish?.remoteSlug);
                 navigator.clipboard.writeText(url);
                 alert('¡Enlace de la invitación copiado al portapapeles!');
               }}
@@ -213,7 +223,7 @@ export default function App() {
             onClose={() => setShowHostingerModal(false)}
             onUpdateInvitation={(updated) => {
               setCurrentInvitation(updated);
-              api.saveInvitation(updated);
+
             }}
           />
         )}
@@ -241,7 +251,7 @@ export default function App() {
         <InvitationEditor
           initialInvitation={currentInvitation}
           onBack={() => setViewMode('dashboard')}
-          onPreviewPublic={() => setViewMode('preview')}
+          onPreviewPublic={handlePreviewInvitation}
         />
         <OfflineIndicator />
       </div>
@@ -251,10 +261,23 @@ export default function App() {
   // 4. Default: User Control Panel & 30-Template Catalog
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
+      <div className="flex flex-wrap items-center justify-end gap-3 border-b border-stone-200 px-4 py-2 text-sm">
+        <span>{user.name}</span>
+        {user.role === 'superadmin' && <button className="underline" onClick={() => setShowAccounts(true)}>Administración de usuarios</button>}
+        <button className="underline" onClick={async () => {
+          try {
+            await sessionAction('logout', {});
+            window.dispatchEvent(new Event('lav-session-expired'));
+          } catch (error) {
+            window.alert(error instanceof Error ? error.message : 'No se pudo cerrar sesión');
+          }
+        }}>Cerrar sesión</button>
+      </div>
+      {showAccounts && user.role === 'superadmin' && <AccountPanel onClose={() => setShowAccounts(false)} />}
       <UserDashboard
         onOpenEditor={handleOpenEditor}
         onPreviewInvitation={handlePreviewInvitation}
-        onOpenAdmin={() => {}}
+        onOpenAdmin={() => { if (user.role === 'superadmin') setShowAccounts(true); }}
       />
       <OfflineIndicator />
     </div>

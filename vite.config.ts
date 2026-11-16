@@ -14,7 +14,7 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         workbox: {
           // QR pages are standalone HTML tickets, never the React app shell.
-          navigateFallbackDenylist: [/^\/Invitaciones\/QR(?:\/|$)/],
+          navigateFallbackDenylist: [/^\/Invitaciones\/(?:QR|api)(?:\/|$)/],
         },
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {

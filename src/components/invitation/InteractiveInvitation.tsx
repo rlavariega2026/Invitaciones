@@ -54,7 +54,7 @@ export const InteractiveInvitation: React.FC<InteractiveInvitationProps> = ({
               {/* Accordion Header */}
               <button
                 type="button"
-                onClick={() => !isEditor && toggleSection(sec.id)}
+                data-lav-interactive onClick={() => !isEditor && toggleSection(sec.id)}
                 className="w-full flex items-center justify-between p-4 bg-[#FAF8F5] hover:bg-[#F5EFE4] transition-colors text-left"
               >
                 <div>

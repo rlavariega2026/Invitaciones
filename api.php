@@ -2,6 +2,10 @@
 declare(strict_types=1);
 
 header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
+require_once __DIR__ . '/lav-security.php';
+require_once __DIR__ . '/lav-publication.php';
+require_once __DIR__ . '/lav-media.php';
 
 function json_response(array $data, int $status = 200): never {
     http_response_code($status);
@@ -40,7 +44,7 @@ function write_data(string $name, array $value): void {
     $file = storage_dir() . '/' . $name;
     $temporary = $file . '.tmp';
     $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-    if ($encoded === false || file_put_contents($temporary, $encoded, LOCK_EX) === false || !rename($temporary, $file)) {
+    if ($encoded === false || file_put_contents($temporary, $encoded, LOCK_EX) !== strlen($encoded) || !rename($temporary, $file)) {
         @unlink($temporary);
         json_response(['success' => false, 'error' => 'No se pudieron guardar los datos'], 500);
     }
@@ -140,7 +144,28 @@ function safe_id(string $prefix): string {
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $path = trim((string)($_GET['path'] ?? ''), '/');
 $segments = $path === '' ? [] : array_map('rawurldecode', explode('/', $path));
-$body = body_json();
+$body = $segments === ['media', 'chunk'] ? [] : body_json();
+// Serialize JSON read/modify/write operations across editor and guest requests.
+$lock = fopen(storage_dir() . '/lav-api.lock', 'c');
+if (!$lock || !flock($lock, LOCK_EX)) json_response(['error' => 'Almacenamiento ocupado'], 503);
+
+if ($segments === ['auth']) lav_auth_run($method, $body);
+if ($method === 'GET' && $segments === ['health']) json_response(['success' => true]);
+if ($method === 'GET' && $segments === ['public', 'invitation']) lav_public_invitation();
+if ($method === 'GET' && $segments === ['public', 'manifest']) lav_public_manifest();
+if (in_array($method, ['GET', 'HEAD'], true) && count($segments) === 3 && array_slice($segments, 0, 2) === ['media', 'file']) {
+    flock($lock, LOCK_UN);
+    lav_media_file($segments[2], $method);
+}
+$guestRsvp = $method === 'POST' && count($segments) === 3 && $segments[0] === 'invitations' && $segments[2] === 'rsvp';
+$guestPass = ($method === 'GET' && count($segments) === 3 && $segments[0] === 'rsvps' && $segments[1] === 'pass')
+    || ($method === 'POST' && $segments === ['rsvps', 'pass-image']);
+if (!$guestRsvp && !$guestPass) lav_require();
+$publicRsvp = $guestRsvp ? lav_public_record($segments[1]) : null;
+if ($guestRsvp && !$publicRsvp && !lav_current()) json_response(['error' => 'Invitación no encontrada'], 404);
+if ($method === 'POST' && $segments === ['media', 'chunk']) lav_media_chunk();
+if ($method === 'POST' && $segments === ['media', 'finish']) lav_media_finish($body);
+
 
 if (($segments[0] ?? '') === 'invitations') {
     $id = $segments[1] ?? null;
@@ -164,6 +189,7 @@ if (($segments[0] ?? '') === 'invitations') {
     if ($method === 'POST' && !$id) {
         $items = read_data('invitations.json');
         $new = $body;
+        unset($new['hostingerPublish']);
         $new['id'] = $new['id'] ?? safe_id('inv');
         $new['createdAt'] = now_iso();
         $new['updatedAt'] = now_iso();
@@ -174,10 +200,12 @@ if (($segments[0] ?? '') === 'invitations') {
     }
 
     if ($id && count($segments) === 2 && $method === 'PUT') {
+        unset($body['hostingerPublish']);
         $items = read_data('invitations.json');
         $found = false;
         foreach ($items as $index => $item) {
             if (($item['id'] ?? '') === $id) {
+                lav_preserve_legacy_publication($item);
                 $items[$index] = array_merge($item, $body, ['id' => $id, 'updatedAt' => now_iso()]);
                 $found = true;
                 break;
@@ -193,6 +221,7 @@ if (($segments[0] ?? '') === 'invitations') {
     }
 
     if ($id && count($segments) === 2 && $method === 'DELETE') {
+        lav_unpublish($id);
         $items = array_values(array_filter(read_data('invitations.json'), fn($item) => ($item['id'] ?? '') !== $id));
         write_data('invitations.json', $items);
         json_response(['success' => true, 'message' => 'Invitación eliminada']);
@@ -203,6 +232,7 @@ if (($segments[0] ?? '') === 'invitations') {
         foreach ($items as $item) {
             if (($item['id'] ?? '') === $id) {
                 $copy = $item;
+                unset($copy['hostingerPublish']);
                 $copy['id'] = safe_id('inv');
                 $copy['title'] = (string)($item['title'] ?? 'Invitación') . ' (Copia)';
                 $copy['createdAt'] = now_iso();
@@ -228,7 +258,7 @@ if (($segments[0] ?? '') === 'invitations') {
         $authorizedPasses = 1;
         foreach ($invitations as $savedInvitation) {
             if (($savedInvitation['id'] ?? '') === $id) {
-                $authorizedPasses = min(5, max(1, (int)($savedInvitation['rsvpSettings']['maxCompanionsPerPass'] ?? 1)));
+                $authorizedPasses = min(5, max(1, (int)(($publicRsvp ?? $savedInvitation)['rsvpSettings']['maxCompanionsPerPass'] ?? 1)));
                 break;
             }
         }
@@ -255,6 +285,7 @@ if (($segments[0] ?? '') === 'invitations') {
         foreach ($invitations as $savedInvitation) {
             if (($savedInvitation['id'] ?? '') === $id) { $matchedInvitation = $savedInvitation; break; }
         }
+        flock($lock, LOCK_UN);
         $whatsappNotification = $matchedInvitation
             ? send_client_whatsapp_notification($matchedInvitation, $rsvp)
             : ['sent' => false, 'reason' => 'No se encontró la invitación para notificar al cliente.'];
@@ -363,18 +394,7 @@ if ($segments === ['upload'] && $method === 'POST') {
 }
 
 if ($segments === ['hostinger', 'publish'] && $method === 'POST') {
-    $items = read_data('invitations.json');
-    $id = (string)($body['invitationId'] ?? '');
-    foreach ($items as &$inv) {
-        if (($inv['id'] ?? '') !== $id) continue;
-        $slug = strtolower((string)preg_replace('/[^a-z0-9-]/', '-', (string)($body['slug'] ?? $inv['title'] ?? $id)));
-        $domain = 'https://lavdigitalagency.com';
-        $url = $domain . '/Invitaciones/Invitacionespost/' . rawurlencode($slug) . '/?invitationId=' . rawurlencode($id);
-        $inv['hostingerPublish'] = ['isConfigured' => true, 'remoteDir' => '/public_html/Invitaciones/Invitacionespost/', 'remoteSlug' => $slug, 'customDomain' => $domain, 'publicUrl' => $url, 'lastPublishedAt' => now_iso(), 'publishStatus' => 'published'];
-        write_data('invitations.json', $items);
-        json_response(['success' => true, 'message' => 'Invitación empaquetada y lista para Hostinger', 'publicUrl' => $url, 'slug' => $slug]);
-    }
-    json_response(['success' => false, 'error' => 'Invitación no encontrada'], 404);
+    lav_publish($body);
 }
 
 if (($segments[0] ?? '') === 'hostinger' && ($segments[1] ?? '') === 'export-html' && isset($segments[2]) && $method === 'GET') {
@@ -387,7 +407,8 @@ if (($segments[0] ?? '') === 'hostinger' && ($segments[1] ?? '') === 'export-htm
         $time = htmlspecialchars((string)($inv['eventTime'] ?? ''), ENT_QUOTES, 'UTF-8');
         $location = htmlspecialchars((string)($inv['eventLocation'] ?? ''), ENT_QUOTES, 'UTF-8');
         $color = htmlspecialchars((string)($inv['backgroundColor'] ?? '#FDFBF7'), ENT_QUOTES, 'UTF-8');
-        $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $title . ' — Invitación de Gala</title><meta name="description" content="Invitación digital exclusiva para ' . $names . '."><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet"><style>body{font-family:"Plus Jakarta Sans",sans-serif;background:' . $color . ';color:#2D3748}.card{max-width:640px;margin:2rem auto;padding:2rem;background:#ffffffdd;text-align:center;border-radius:1rem}.script{font-family:"Great Vibes",cursive;font-size:3rem}</style></head><body><main class="card"><small>' . $title . '</small><h1 class="script">' . $names . '</h1><p>' . $date . ' · ' . $time . ' hrs</p><h2>Lugar de Celebración</h2><p>' . $location . '</p><a href="https://lavdigitalagency.com/Invitaciones/Invitacionespost/' . rawurlencode((string)($inv['hostingerPublish']['remoteSlug'] ?? $inv['id'])) . '/?invitationId=' . rawurlencode((string)$inv['id']) . '">Confirmar Asistencia (RSVP)</a></main></body></html>';
+        $link = htmlspecialchars((string)($inv['hostingerPublish']['publicUrl'] ?? ('https://lavdigitalagency.com/Invitaciones/?invitationId=' . rawurlencode((string)$inv['id']))), ENT_QUOTES, 'UTF-8');
+        $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $title . ' — Invitación de Gala</title><meta name="description" content="Invitación digital exclusiva para ' . $names . '."><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet"><style>body{font-family:"Plus Jakarta Sans",sans-serif;background:' . $color . ';color:#2D3748}.card{max-width:640px;margin:2rem auto;padding:2rem;background:#ffffffdd;text-align:center;border-radius:1rem}.script{font-family:"Great Vibes",cursive;font-size:3rem}</style></head><body><main class="card"><small>' . $title . '</small><h1 class="script">' . $names . '</h1><p>' . $date . ' · ' . $time . ' hrs</p><h2>Lugar de Celebración</h2><p>' . $location . '</p><a href="' . $link . '">Confirmar Asistencia (RSVP)</a></main></body></html>';
         header('Content-Type: text/html; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$inv['id']) . '-hostinger.html"');
         echo $html;

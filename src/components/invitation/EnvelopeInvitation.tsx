@@ -26,7 +26,7 @@ export const EnvelopeInvitation: React.FC<EnvelopeInvitationProps> = ({
   const [isOpen, setIsOpen] = useState(isEditor);
   const [isOpening, setIsOpening] = useState(false);
   const premiumTemplate = PREMIUM_TEMPLATE_CATALOG.find((template) => template.id === invitation.templateId);
-  const openingStyle = premiumTemplate?.premiumStyle.openingStyle;
+  const openingStyle = premiumTemplate?.premiumStyle?.openingStyle;
   const selectedOpeningButton = invitation.envelope.openingButton || invitation.sections.find((section) => section.type === 'rsvp')?.customButton;
   const premiumOpeningVariables = premiumTemplate ? {
     '--premium-primary': invitation.primaryColor,

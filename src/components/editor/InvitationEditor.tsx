@@ -109,8 +109,11 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   const galleryMultipleInputRef = useRef<HTMLInputElement>(null);
   const motifUploadInputRef = useRef<HTMLInputElement>(null);
 
+  const [pendingPhotos, setPendingPhotos] = useState(0);
+
   // Autosave only reports success after the server confirms the write.
   useEffect(() => {
+    if (pendingPhotos) return;
     let active = true;
     const timer = setTimeout(async () => {
       setIsSaving(true);
@@ -132,7 +135,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
       active = false;
       clearTimeout(timer);
     };
-  }, [invitation]);
+  }, [invitation, pendingPhotos]);
 
   const updateInvitationState = (updated: Invitation) => {
     setInvitation(updated);
@@ -143,6 +146,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   };
 
   const handleSaveAs = async () => {
+    if (pendingPhotos) return;
     const suggestedName = `${invitation.title || 'Invitación'} (Copia)`;
     const name = window.prompt('Nombre de la nueva invitación:', suggestedName);
     if (!name?.trim()) return;
@@ -158,8 +162,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
       stats: { views: 0, rsvps: 0 },
     };
     try {
-      await api.saveInvitationChecked(copy);
-      updateInvitationState(copy);
+      const saved = await api.saveInvitationChecked(copy);
+      setInvitation(saved);
+      setHistory([saved]);
+      setHistoryIndex(0);
       setSaveError('');
       alert('La copia se guardó como una invitación independiente.');
     } catch (error) {
@@ -170,7 +176,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
   };
 
   const handleSave = async () => {
-    if (isSaving) return;
+    if (isSaving || pendingPhotos) return;
     setIsSaving(true);
     setShowSavedFeedback(false);
     setSaveError('');
@@ -265,7 +271,8 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     e.target.value = '';
     if (!file || !file.name.toLowerCase().endsWith('.png') || (file.type && file.type !== 'image/png')) return;
     try {
-      const imageUrl = await api.uploadImage(file);
+      const imageUrl = await uploadPhoto(file);
+      if (!imageUrl) return;
       if (selectedMotif) updateMotif({ src: imageUrl, name: file.name });
       else addMotif(imageUrl, file.name);
     } catch (error) {
@@ -328,14 +335,27 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     }
   };
 
+  const uploadPhoto = async (file: File) => {
+    setPendingPhotos(count => count + 1);
+    setShowSavedFeedback(false);
+    try {
+      return await api.uploadImage(file);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo guardar la fotografía.';
+      setSaveError(message);
+      alert(message);
+      return null;
+    } finally {
+      setPendingPhotos(count => count - 1);
+    }
+  };
+
   // Section photo upload handler
-  const handleSectionPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSectionPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedSection) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+    const dataUrl = await uploadPhoto(file);
       if (dataUrl) {
         const newPhoto: PhotoConfig = {
           id: selectedSection.photo?.id || `ph-${Date.now()}`,
@@ -362,8 +382,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
         };
         updateSelectedSection({ photo: newPhoto });
       }
-    };
-    reader.readAsDataURL(file);
+
   };
 
   // Multiple photos upload for Gallery section
@@ -371,10 +390,10 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
+    setPendingPhotos(count => count + 1);
+    void Array.from(files).reduce(async (pending, file) => {
+      await pending;
+      const dataUrl = await uploadPhoto(file);
         if (dataUrl) {
           const newPhoto: PhotoConfig = {
             id: `gal-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -425,9 +444,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             };
           });
         }
-      };
-      reader.readAsDataURL(file);
-    });
+    }, Promise.resolve()).finally(() => setPendingPhotos(count => count - 1));
   };
 
   // Custom audio upload handler
@@ -460,9 +477,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
     const file = e.target.files?.[0];
     if (!file || !selectedSection) return;
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
+    const dataUrl = await uploadPhoto(file);
       if (dataUrl) {
         updateSelectedSection({
           background: {
@@ -473,8 +488,7 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
           },
         });
       }
-    };
-    reader.readAsDataURL(file);
+
   };
 
   // 24 Curated Pastel & Luxury Colors Palette
@@ -743,15 +757,16 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
             <Copy className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Guardar como</span>
           </button>
-          <button onClick={() => void handleSave()} disabled={isSaving}
+          <button onClick={() => void handleSave()} disabled={isSaving || pendingPhotos > 0}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#DFC48B] hover:bg-[#D5B676] disabled:opacity-60 text-slate-900 text-xs font-semibold border border-[#DFC48B] transition-colors cursor-pointer shadow-xs"
             title="Guardar cambios en esta misma invitación">
             <Check className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isSaving ? 'Guardando…' : 'Guardar'}</span>
+            <span className="hidden sm:inline">{pendingPhotos ? 'Subiendo fotos…' : isSaving ? 'Guardando…' : 'Guardar'}</span>
           </button>
 
           {/* Hostinger Publishing Button */}
           <button
+            disabled={pendingPhotos > 0}
             onClick={() => setShowHostingerModal(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-semibold border border-purple-200 transition-colors cursor-pointer shadow-xs"
             title="Publicar en Hostinger"
@@ -770,7 +785,11 @@ export const InvitationEditor: React.FC<InvitationEditorProps> = ({
 
           <button
             onClick={() => {
-              const url = getInvitationUrl(invitation.id, {}, invitation.hostingerPublish?.remoteSlug);
+              if (invitation.hostingerPublish?.publishStatus !== 'published') {
+                setShowHostingerModal(true);
+                return;
+              }
+              const url = invitation.hostingerPublish?.publicUrl || getInvitationUrl(invitation.id, {}, invitation.hostingerPublish?.remoteSlug);
               navigator.clipboard.writeText(url);
               alert('¡Enlace de la invitación copiado al portapapeles!');
             }}

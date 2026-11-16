@@ -420,6 +420,8 @@ export interface HostingerPublishConfig {
   ftpPort?: number;
   remoteDir?: string;
   remoteSlug?: string;
+  clientFolder?: string;
+  mode?: 'demo' | 'final';
   customDomain?: string;
   publicUrl?: string;
   lastPublishedAt?: string;

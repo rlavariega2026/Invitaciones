@@ -140,7 +140,7 @@ app.get('/api/invitations/:id/rsvps', (req: Request, res: Response) => {
   res.json({ success: true, rsvps: eventRsvps });
 });
 
-app.post('/api/invitations/:id/rsvp', (req: Request, res: Response) => {
+app.post('/api/invitations/:id/rsvp', async (req: Request, res: Response) => {
   const rsvps = readData<any[]>(RSVPS_FILE, []);
   const { guestName, phone, email, companionsCount, attendance, dietaryRestrictions, message } = req.body;
 

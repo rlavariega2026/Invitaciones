@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Invitation } from '../../types/invitation';
 import { api } from '../../services/api';
-import { getInvitationUrl } from '../../utils/invitationUrl';
 import {
   Globe,
   X,
@@ -32,47 +31,45 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
   const [remoteSlug, setRemoteSlug] = useState(
     invitation.title.toLowerCase().replace(/[^a-z0-9-]/g, '-') || invitation.id
   );
+  const [clientFolder, setClientFolder] = useState(invitation.hostingerPublish?.clientFolder || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
+    setClientFolder(invitation.hostingerPublish?.clientFolder || '');
     setRemoteSlug(invitation.hostingerPublish?.remoteSlug || invitation.title.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id);
-  }, [invitation.id, invitation.title, invitation.hostingerPublish?.remoteSlug]);
+  }, [invitation.id, invitation.title, invitation.hostingerPublish?.remoteSlug, invitation.hostingerPublish?.clientFolder]);
 
   if (!isOpen) return null;
 
   const isPublished = invitation.hostingerPublish?.isConfigured === true
     && invitation.hostingerPublish?.publishStatus === 'published';
-  const publicUrl = getInvitationUrl(invitation.id, {}, remoteSlug);
-
-  const handleSaveConfig = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const publicUrl = invitation.hostingerPublish?.publicUrl || '';
+  const folderName = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
+  const handleSaveConfig = async (mode: 'demo' | 'final') => {
+    const client = folderName(clientFolder);
+    const slug = folderName(remoteSlug);
+    if (!client || !slug) {
+      setSaveError('Escribe las carpetas del cliente y de la publicación.');
+      return;
+    }
+    const confirmDemo = mode === 'demo' && isPublished && invitation.hostingerPublish?.mode !== 'demo';
+    if (confirmDemo && !window.confirm('¿Reemplazar la versión definitiva por una DEMO?')) return;
     setIsSaving(true);
     setSaveMessage(null);
     setSaveError(null);
-
-    const safeSlug = remoteSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || invitation.id;
-    const nextPublicUrl = getInvitationUrl(invitation.id, {}, safeSlug);
-
-    const updatedInvitation: Invitation = {
-      ...invitation,
-      hostingerPublish: {
-        isConfigured: true,
-        customDomain: 'https://lavdigitalagency.com',
-        remoteDir: '/public_html/Invitaciones/Invitacionespost/',
-        remoteSlug: safeSlug,
-        publicUrl: nextPublicUrl,
-        publishStatus: 'published',
-      },
-    };
     try {
-      const savedInvitation = await api.saveInvitationChecked(updatedInvitation);
-      setRemoteSlug(safeSlug);
-      onUpdateInvitation(savedInvitation);
-      setSaveMessage(`Invitación publicada correctamente: ${nextPublicUrl}`);
+      // Save the editor's latest values, then publish a separate snapshot.
+      await api.saveInvitationChecked(invitation);
+      const saved = await api.publishInvitation(invitation.id, client, slug, mode, confirmDemo);
+      setRemoteSlug(slug);
+      setClientFolder(client);
+      onUpdateInvitation(saved);
+      setSaveMessage(`Publicada: ${saved.hostingerPublish?.publicUrl}`);
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la configuración en el servidor.');
+      setSaveError(error instanceof Error ? error.message : 'No se pudo publicar en Hostinger.');
     } finally {
       setIsSaving(false);
     }
@@ -125,15 +122,18 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
             <p className="text-[11px] text-stone-600 leading-relaxed">
               Publícala en la ruta fija de Hostinger. El enlace permanecerá visible aquí para abrirlo o copiarlo.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => void handleSaveConfig()}
+                onClick={() => void handleSaveConfig('final')}
                 disabled={isSaving}
                 className="flex-1 py-2 px-3 rounded-xl bg-[#DFC48B] hover:bg-[#D5B676] disabled:opacity-60 text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span>{isSaving ? 'Publicando…' : isPublished ? 'Publicar cambios' : 'Publicar invitación'}</span>
+                <span>{isSaving ? 'Publicando…' : 'Publicar definitiva'}</span>
+              </button>
+              <button type="button" disabled={isSaving} onClick={() => void handleSaveConfig('demo')} className="flex-1 rounded-xl bg-violet-100 px-3 py-2 font-bold text-violet-900 disabled:opacity-60">
+                Publicar DEMO en Hostinger
               </button>
               {isPublished && <>
                 <button type="button" onClick={handlePreviewLive} className="py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-semibold text-xs transition-colors cursor-pointer">
@@ -172,10 +172,10 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
           </div>
 
           {/* Opción 3: Ruta fija de publicación */}
-          <form onSubmit={handleSaveConfig} className="p-4 rounded-2xl bg-white border border-[#E8DEC8] space-y-3">
+          <form onSubmit={(event) => { event.preventDefault(); void handleSaveConfig('final'); }} className="p-4 rounded-2xl bg-white border border-[#E8DEC8] space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-serif font-bold text-slate-900 text-xs">
-                3. Ruta fija de publicación
+                3. Carpetas de publicación
               </span>
               <Server className="w-4 h-4 text-stone-400" />
             </div>
@@ -188,9 +188,13 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
               <div className="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 font-mono text-[10px] text-slate-700">https://lavdigitalagency.com/Invitaciones/Invitacionespost/</div>
             </div>
 
+            <label className="block font-medium text-slate-700 text-[11px]">
+              Carpeta del cliente
+              <input type="text" value={clientFolder} onChange={event => setClientFolder(event.target.value)} placeholder="nombre-del-cliente" className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-1.5" />
+            </label>
             <div>
               <label className="block font-medium text-slate-700 mb-1 text-[11px]">
-                Nombre de la Ruta / Archivo
+                Carpeta de la publicación
               </label>
               <input
                 type="text"
@@ -213,13 +217,6 @@ export const HostingerPublishModal: React.FC<HostingerPublishModalProps> = ({
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-800 font-semibold text-xs border border-stone-300 transition-colors cursor-pointer"
-            >
-              {isSaving ? 'Publicando…' : 'Guardar Configuración de Dominio'}
-            </button>
           </form>
         </div>
       </div>

@@ -227,3 +227,36 @@
 @keyframes lavPetal { 0% {transform:translate(0,30px) rotate(0);opacity:0} 20% {opacity:.8} 100% {transform:translate(35px,-120px) rotate(220deg);opacity:0} }
 .lav-petal-0 {left:12%;top:80%}.lav-petal-1 {left:31%;top:72%;animation-delay:1.5s}.lav-petal-2 {left:54%;top:86%;animation-delay:3s}.lav-petal-3 {left:73%;top:78%;animation-delay:4.5s}.lav-petal-4 {left:88%;top:84%;animation-delay:6s}
 @media (prefers-reduced-motion: reduce) { .lav-text-enter,.lav-visual-effect,.lav-visual-effect * { animation:none !important; } }
+
+.lav-public-invitation {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.lav-demo-mark {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: .4rem;
+  pointer-events: none;
+  opacity: .23;
+  color: #58318a;
+  font-weight: 800;
+}
+
+.lav-demo-mark img { width: min(42vw, 240px); max-height: 24vh; object-fit: contain; }
+.lav-demo-mark strong {
+  font-size: clamp(3rem, 13vw, 9rem);
+  line-height: 1;
+  background: linear-gradient(90deg, #1654b7, #7136a8, #54247d);
+  color: transparent;
+  background-clip: text;
+}

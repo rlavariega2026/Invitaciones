@@ -86,9 +86,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       template,
       `inv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
     );
-    const saved = await api.saveInvitation(newInv);
-    setInvitations([saved, ...invitations]);
-    onOpenEditor(saved);
+    try {
+      const saved = await api.saveInvitationChecked(newInv);
+      setInvitations(current => [saved, ...current]);
+      onOpenEditor(saved);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo crear la invitación.');
+    }
   };
 
   const handleDuplicate = async (id: string) => {
@@ -393,7 +397,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              const shareUrl = getInvitationUrl(inv.id, {}, inv.hostingerPublish?.remoteSlug);
+                              if (inv.hostingerPublish?.publishStatus !== 'published') {
+                                setPublishingInv(inv);
+                                return;
+                              }
+                              const shareUrl = inv.hostingerPublish?.publicUrl || getInvitationUrl(inv.id, {}, inv.hostingerPublish?.remoteSlug);
                               navigator.clipboard.writeText(shareUrl);
                               alert('¡Enlace de invitación copiado al portapapeles!');
                             }}

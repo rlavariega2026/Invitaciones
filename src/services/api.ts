@@ -1,3 +1,4 @@
+import { sessionFetch } from './session';
 import { Invitation, RSVPRecord } from '../types/invitation';
 import { TEMPLATES_CATALOG, buildInvitationFromTemplate } from '../data/templates';
 
@@ -60,7 +61,7 @@ function cacheInvitation(_invitation: Invitation): void {
 }
 
 async function saveInvitationToServer(invitation: Invitation): Promise<Invitation> {
-  const response = await fetch(`${API_BASE}/invitations/${invitation.id}`, {
+  const response = await sessionFetch(`${API_BASE}/invitations/${invitation.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(invitation),
@@ -80,7 +81,7 @@ async function saveInvitationToServer(invitation: Invitation): Promise<Invitatio
 
 export const api = {
   async getDigitalPass(passCode: string): Promise<{ pass: Partial<RSVPRecord> & { ticketImageUrl?: string | null }; invitation: Partial<Invitation> }> {
-    const response = await fetch(`${API_BASE}/rsvps/pass/${encodeURIComponent(passCode)}`, {
+    const response = await sessionFetch(`${API_BASE}/rsvps/pass/${encodeURIComponent(passCode)}`, {
       headers: { Accept: 'application/json' },
     });
     const data = await response.json();
@@ -91,57 +92,69 @@ export const api = {
   },
 
   async uploadImage(file: File): Promise<string> {
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(reader.error || new Error('No se pudo leer la imagen'));
-      reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Imagen inválida'));
-      reader.readAsDataURL(file);
-    });
-    try {
-      const response = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filedata: dataUrl, filename: file.name }),
-      });
-      const result = await response.json();
-      if (response.ok && result.success && typeof result.url === 'string') return result.url;
-    } catch (error) {
-      console.warn('Image upload endpoint unavailable; retaining the original image in the invitation data.');
+    const hashBytes = async (bytes: ArrayBuffer) => Array.from(
+      new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+      byte => byte.toString(16).padStart(2, '0'),
+    ).join('');
+    if (!file.size) throw new Error('El archivo está vacío.');
+    const hash = await hashBytes(await file.arrayBuffer());
+    const size = 512 * 1024;
+    const count = Math.ceil(file.size / size);
+    async function send(path: string, init: RequestInit) {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const response = await sessionFetch(`${API_BASE}/media/${path}`, init);
+          const result = await response.json();
+          if (response.ok && result.success) return result;
+          if (response.status < 500 || response.status === 507 || attempt >= 2) {
+            return Promise.reject(new Error(result.error || `No se pudo guardar la foto (HTTP ${response.status})`));
+          }
+        } catch (error) {
+          if (attempt >= 2) throw error;
+        }
+      }
     }
-    return dataUrl;
+    for (let index = 0; index < count; index++) {
+      const chunk = await file.slice(index * size, (index + 1) * size).arrayBuffer();
+      const checksum = await hashBytes(chunk);
+      await send(`chunk?hash=${hash}&index=${index}&checksum=${checksum}`, { method: 'POST', body: chunk });
+    }
+    const result = await send('finish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash, count }),
+    });
+    return result.url;
+  },
+
+  async getPublicInvitation(id: string, route: string): Promise<Invitation> {
+    const query = new URLSearchParams({ id, route });
+    const response = await sessionFetch(`${API_BASE}/public/invitation?${query}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok || !data.invitation) throw new Error(data.error || 'Invitación no disponible.');
+    return data.invitation;
+  },
+
+  async publishInvitation(invitationId: string, client: string, slug: string, mode: 'demo' | 'final', confirmDemo: boolean): Promise<Invitation> {
+    const response = await sessionFetch(`${API_BASE}/hostinger/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invitationId, client, slug, mode, confirmDemo }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.invitation) throw new Error(data.error || 'No se pudo publicar la invitación.');
+    return data.invitation;
   },
 
   async getInvitations(): Promise<Invitation[]> {
-    try {
-      const res = await fetch(`${API_BASE}/invitations`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.invitations && data.invitations.length > 0) {
-          return data.invitations;
-        }
-      }
-    } catch (err) {
-      console.warn('Backend /api/invitations unreachable, using local storage cache');
-    }
-
-    // Fallback: seed or read local storage
-    const local = getLocalInitialInvitations();
-    // Try sending initial seeds to backend if empty
-    try {
-      for (const item of local.slice(0, 3)) {
-        fetch(`${API_BASE}/invitations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item),
-        }).catch(() => {});
-      }
-    } catch (e) {}
-    return local;
+    const response = await sessionFetch(`${API_BASE}/invitations`);
+    if (!response.ok) throw new Error('No se pudieron cargar las invitaciones.');
+    return (await response.json()).invitations;
   },
 
   async getInvitationById(id: string): Promise<Invitation | null> {
     try {
-      const res = await fetch(`${API_BASE}/invitations/${id}`);
+      const res = await sessionFetch(`${API_BASE}/invitations/${id}`);
       if (res.ok) {
         const data = await res.json();
         return data.invitation;
@@ -189,7 +202,7 @@ export const api = {
   },
 
   async duplicateInvitationChecked(id: string): Promise<Invitation> {
-    const response = await fetch(`${API_BASE}/invitations/${encodeURIComponent(id)}/duplicate`, { method: 'POST' });
+    const response = await sessionFetch(`${API_BASE}/invitations/${encodeURIComponent(id)}/duplicate`, { method: 'POST' });
     if (!response.ok) throw new Error(`No se pudo crear la copia (HTTP ${response.status}).`);
     const data = await response.json();
     if (!data?.success || !data?.invitation?.id) throw new Error('El servidor no confirmó la copia de la invitación.');
@@ -215,7 +228,7 @@ export const api = {
 
   async duplicateInvitation(id: string): Promise<Invitation | null> {
     try {
-      const res = await fetch(`${API_BASE}/invitations/${id}/duplicate`, { method: 'POST' });
+      const res = await sessionFetch(`${API_BASE}/invitations/${id}/duplicate`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         return data.invitation;
@@ -243,14 +256,14 @@ export const api = {
     safeStorageSet(STORAGE_KEY_INVITATIONS, JSON.stringify(local));
 
     try {
-      await fetch(`${API_BASE}/invitations/${id}`, { method: 'DELETE' });
+      await sessionFetch(`${API_BASE}/invitations/${id}`, { method: 'DELETE' });
     } catch (e) {}
     return true;
   },
 
   async submitRSVP(invitationId: string, payload: any): Promise<RSVPRecord> {
     try {
-      const res = await fetch(`${API_BASE}/invitations/${invitationId}/rsvp`, {
+      const res = await sessionFetch(`${API_BASE}/invitations/${invitationId}/rsvp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -285,7 +298,7 @@ export const api = {
   },
 
   async saveDigitalPassImage(passCode: string, filedata: string): Promise<string> {
-    const response = await fetch(`${API_BASE}/rsvps/pass-image`, {
+    const response = await sessionFetch(`${API_BASE}/rsvps/pass-image`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ passCode, filedata }),
@@ -299,7 +312,7 @@ export const api = {
 
   async getRSVPs(invitationId: string): Promise<RSVPRecord[]> {
     try {
-      const res = await fetch(`${API_BASE}/invitations/${invitationId}/rsvps`);
+      const res = await sessionFetch(`${API_BASE}/invitations/${invitationId}/rsvps`);
       if (res.ok) {
         const data = await res.json();
         return data.rsvps;
@@ -312,7 +325,7 @@ export const api = {
 
   async checkInGuest(qrCode: string, peopleCount?: number): Promise<{ success: boolean; message: string; rsvp?: RSVPRecord }> {
     try {
-      const res = await fetch(`${API_BASE}/rsvps/checkin`, {
+      const res = await sessionFetch(`${API_BASE}/rsvps/checkin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ qrCode, peopleCheckingIn: peopleCount }),
